@@ -9,15 +9,15 @@ defmodule MBS.Workflow do
 
   def workflow(manifests, %Config.Data{} = config, reporter, job_fun) do
     workflow =
-      Enum.reduce(manifests, Workflow.new(), fn %Manifest.Data{} = manifest, workflow ->
-        Workflow.job(workflow, manifest.name, job_fun.(reporter, config, manifest))
+      Enum.reduce(manifests, Dask.new(), fn %Manifest.Data{} = manifest, workflow ->
+        Dask.job(workflow, manifest.name, job_fun.(reporter, config, manifest))
       end)
 
     Enum.reduce(manifests, workflow, fn %Manifest.Data{} = manifest, workflow ->
       try do
-        Workflow.depends_on(workflow, manifest.name, manifest.job.dependencies)
+        Dask.depends_on(workflow, manifest.name, manifest.job.dependencies)
       rescue
-        error in [Workflow.Error] ->
+        error in [Dask.Error] ->
           Utils.halt("Error in#{manifest.dir}:\n  #{error.message}")
       end
     end)

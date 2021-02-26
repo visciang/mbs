@@ -1,16 +1,16 @@
-defmodule Workflow.Exec do
+defmodule Dask.Exec do
   @moduledoc false
 
-  alias Workflow.Job
-  alias Workflow.JobExec
-  alias Workflow.Limiter
+  alias Dask.Job
+  alias Dask.JobExec
+  alias Dask.Limiter
 
   @type t :: %__MODULE__{graph: :digraph.graph(), task: Task.t()}
   @enforce_keys [:graph, :task]
   defstruct [:graph, :task]
 
   @spec exec(:digraph.graph(), Job.t(), Limiter.max_concurrency()) :: :error | :ok
-  def exec(graph, %Job{} = workflow_end_job, max_concurrency) do
+  def exec(graph, %Job{} = end_job, max_concurrency) do
     {:ok, limiter} = Limiter.start_link(max_concurrency)
 
     :digraph_utils.topsort(graph)
@@ -19,7 +19,7 @@ defmodule Workflow.Exec do
       task = async_workflow_job_task(graph, job, job_to_task_map, limiter)
       Map.put(job_to_task_map, job, task)
     end)
-    |> Map.fetch!(workflow_end_job)
+    |> Map.fetch!(end_job)
     |> Task.await(:infinity)
     |> case do
       {:job_ok, _} -> :ok

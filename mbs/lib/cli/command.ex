@@ -36,7 +36,7 @@ defmodule MBS.CLI.Command do
           IO.puts("  job.dependencies: #{inspect(manifest.job.dependencies)}")
           IO.puts("  job.targets: #{inspect(manifest.job.targets)}")
           IO.puts("  job.files:")
-          Enum.each(manifest.job.files, & IO.puts("    #{&1}"))
+          Enum.each(manifest.job.files, &IO.puts("    #{&1}"))
         end
       else
         &IO.puts(IO.ANSI.format([:bright, &1.name], true))
@@ -52,42 +52,42 @@ defmodule MBS.CLI.Command do
   def cmd(%Args.Graph{png_file: png_file}, %MBS.Config.Data{} = config, reporter) do
     Manifest.find_all()
     |> MBS.Workflow.workflow(config, reporter, fn _, _, _ -> :ok end)
-    |> Workflow.Dot.export()
-    |> Workflow.Utils.dot_to_png(png_file)
+    |> Dask.Dot.export()
+    |> Dask.Utils.dot_to_png(png_file)
 
     :ok
   end
 
   def cmd(%Args.Run{}, %MBS.Config.Data{} = config, reporter) do
-    workflow =
+    dask =
       Manifest.find_all()
       |> MBS.Workflow.workflow(config, reporter, &Job.job_fun/3)
 
-    workflow =
+    dask =
       try do
-        Workflow.async(workflow, config.parallelism)
+        Dask.async(dask, config.parallelism)
       rescue
-        error in [Workflow.Error] ->
+        error in [Dask.Error] ->
           Utils.halt(error.message)
       end
 
-    Workflow.await(workflow)
+    Dask.await(dask)
   end
 
   def cmd(%Args.Outdated{}, %MBS.Config.Data{} = config, reporter) do
-    workflow =
+    dask =
       Manifest.find_all()
       |> MBS.Workflow.workflow(config, reporter, &Job.outdated_fun/3)
 
-    workflow =
+    dask =
       try do
-        Workflow.async(workflow, config.parallelism)
+        Dask.async(dask, config.parallelism)
       rescue
-        error in [Workflow.Error] ->
+        error in [Dask.Error] ->
           Utils.halt(error.message)
       end
 
-    Workflow.await(workflow)
+    Dask.await(dask)
   end
 
   defp print_tree(names, manifests_map, indent) do

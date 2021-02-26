@@ -1,14 +1,14 @@
-defmodule Workflow.Dot do
+defmodule Dask.Dot do
   @moduledoc """
-  Workflow to dot (https://graphviz.org/)
+  Dask to dot (https://graphviz.org/)
   """
-  alias Workflow.Job
+  alias Dask.Job
 
   @doc """
   Export a workflow to dot graph.
   """
-  @spec export(Workflow.t()) :: iodata()
-  def export(%Workflow{jobs: jobs}) do
+  @spec export(Dask.t()) :: iodata()
+  def export(%Dask{jobs: jobs}) do
     ["strict digraph {\n", Enum.flat_map(Map.values(jobs), &job_edge/1), "}\n"]
   end
 

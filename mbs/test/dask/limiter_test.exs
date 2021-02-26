@@ -3,7 +3,7 @@ defmodule Test.Limiter do
 
   test "workflow limiter" do
     max_concurrency = 2
-    {:ok, wl} = Workflow.Limiter.start_link(max_concurrency)
+    {:ok, wl} = Dask.Limiter.start_link(max_concurrency)
 
     t1 = start_task(wl, :t1)
     t2 = start_task(wl, :t2)
@@ -29,7 +29,7 @@ defmodule Test.Limiter do
       Task.start_link(fn ->
         send(test_pid, {task_id, :up})
 
-        :ok = Workflow.Limiter.wait_my_turn(workflow_limiter)
+        :ok = Dask.Limiter.wait_my_turn(workflow_limiter)
 
         receive do
           :proceed -> send(test_pid, {task_id, :done})
@@ -56,10 +56,10 @@ defmodule Test.Limiter do
 
   defp assert_limiter_converge_to_zero_running_jobs(wl, retry \\ 3, retry_period \\ 100) do
     if retry == 0 do
-      flunk("Workflow limiter didn't reach zero running jobs")
+      flunk("Dask limiter didn't reach zero running jobs")
     end
 
-    Workflow.Limiter.stats(wl)
+    Dask.Limiter.stats(wl)
     |> case do
       [running: 0, waiting: 0] ->
         :ok

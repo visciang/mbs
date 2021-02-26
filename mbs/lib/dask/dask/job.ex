@@ -1,4 +1,4 @@
-defmodule Workflow.Job do
+defmodule Dask.Job do
   @moduledoc false
 
   @type id :: term()

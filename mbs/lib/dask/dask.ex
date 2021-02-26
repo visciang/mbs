@@ -1,4 +1,4 @@
-defmodule Workflow do
+defmodule Dask do
   @moduledoc """
   Workflow DAG
   """
@@ -7,15 +7,15 @@ defmodule Workflow do
   end
 
   alias __MODULE__, as: M
-  alias Workflow.Exec
-  alias Workflow.Job
-  alias Workflow.Limiter
+  alias Dask.Exec
+  alias Dask.Job
+  alias Dask.Limiter
 
   @type t :: %M{jobs: %{Job.id() => Job.t()}}
   defstruct [:jobs]
 
-  def workflow_start_job_id, do: :__workflow_start_job__
-  def workflow_end_job_id, do: :__workflow_end_job__
+  def start_job_id, do: :__start_job__
+  def end_job_id, do: :__end_job__
 
   @spec new :: M.t()
   def new do
@@ -56,8 +56,8 @@ defmodule Workflow do
 
   @spec async(M.t(), Limiter.max_concurrency()) :: Exec.t()
   def async(%M{} = workflow, max_concurrency \\ nil) do
-    {graph, workflow_end_job} = build_workflow_graph(workflow)
-    exec_async_workflow(graph, workflow_end_job, max_concurrency)
+    {graph, end_job} = build_workflow_graph(workflow)
+    exec_async_workflow(graph, end_job, max_concurrency)
   end
 
   @spec await(Exec.t(), timeout()) :: :ok | :error | :timeout
@@ -90,14 +90,14 @@ defmodule Workflow do
     leafs = Enum.filter(:digraph.vertices(graph), &(:digraph.out_degree(graph, &1) == 0))
 
     start_job = %Job{
-      id: workflow_start_job_id(),
+      id: start_job_id(),
       fun: fn _, _ -> :ok end,
       timeout: :infinity,
       downstream_jobs: MapSet.new()
     }
 
     end_job = %Job{
-      id: workflow_end_job_id(),
+      id: end_job_id(),
       fun: fn _, _ -> :ok end,
       timeout: :infinity,
       downstream_jobs: MapSet.new()
@@ -133,7 +133,7 @@ defmodule Workflow do
     end
   end
 
-  defp exec_async_workflow(graph, %Job{} = workflow_end_job, max_concurrency) do
-    %Exec{graph: graph, task: Task.async(fn -> Exec.exec(graph, workflow_end_job, max_concurrency) end)}
+  defp exec_async_workflow(graph, %Job{} = end_job, max_concurrency) do
+    %Exec{graph: graph, task: Task.async(fn -> Exec.exec(graph, end_job, max_concurrency) end)}
   end
 end

@@ -71,4 +71,8 @@ defmodule MBS.CLI.Args do
   def parse([cmd | _args]) do
     Utils.halt("Unknown command #{cmd}")
   end
+
+  def parse([]) do
+    Utils.halt("No command specified")
+  end
 end

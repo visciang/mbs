@@ -53,10 +53,14 @@ defmodule MBS.Manifest do
   end
 
   defp files(dir, file_globs) do
-    Enum.flat_map(file_globs, &Path.wildcard(Path.join(dir, &1), match_dot: true))
+    [@manifest_filename | file_globs]
+    |> Enum.flat_map(&Path.wildcard(Path.join(dir, &1), match_dot: true))
+    |> Enum.uniq()
   end
 
   defp targets(dir, targets) do
-    Enum.map(targets, &Path.join(dir, &1))
+    targets
+    |> Enum.map(&Path.join(dir, &1))
+    |> Enum.uniq()
   end
 end

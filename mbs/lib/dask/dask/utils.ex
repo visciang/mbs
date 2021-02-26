@@ -1,6 +1,6 @@
-defmodule Workflow.Utils do
+defmodule Dask.Utils do
   @moduledoc """
-  Workflow utilities
+  Dask utilities
   """
 
   @minute 60
@@ -12,7 +12,7 @@ defmodule Workflow.Utils do
   @doc """
   Seconds duration to compound representation
 
-    ex> Workflow.Utils.seconds_to_compound_duration(12034)
+    ex> Dask.Utils.seconds_to_compound_duration(12034)
     "3 hr, 20 min, 34 sec"
   """
   @spec seconds_to_compound_duration(number()) :: String.t()

@@ -1,0 +1,17 @@
+{
+    "name": "mbs",
+    "job": {
+        "command": [
+            "$MBS_CWD/build.sh"
+        ],
+        "files": [
+            "build.sh",
+            ".formatter.exs",
+            "mix.{exs,lock}",
+            "{lib,test}/**/*.{ex,exs}"
+        ],
+        "targets": [
+            "mbs"
+        ]
+    }
+}

@@ -66,7 +66,7 @@ defmodule MBS.CLI.Reporter do
 
     duration =
       if elapsed != nil do
-        "  (#{Workflow.Utils.seconds_to_compound_duration(elapsed)})"
+        "  (#{Dask.Utils.seconds_to_compound_duration(elapsed)})"
       else
         ""
       end
@@ -88,7 +88,7 @@ defmodule MBS.CLI.Reporter do
         :timeout -> IO.ANSI.format([:red, "Timeout"], true)
       end
 
-    duration = Workflow.Utils.seconds_to_compound_duration(end_time - state.start_time)
+    duration = Dask.Utils.seconds_to_compound_duration(end_time - state.start_time)
 
     IO.puts("\n#{log_message} (#{duration})")
 

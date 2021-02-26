@@ -1,10 +1,10 @@
-defmodule Workflow.JobExec do
+defmodule Dask.JobExec do
   @moduledoc false
 
   require Logger
-  alias Workflow.Job
-  alias Workflow.Limiter
-  alias Workflow.Utils
+  alias Dask.Job
+  alias Dask.Limiter
+  alias Dask.Utils
 
   @type exec_result :: {:job_ok, Job.result()} | {:job_error, Job.result()} | :job_skipped | :job_timeout
 

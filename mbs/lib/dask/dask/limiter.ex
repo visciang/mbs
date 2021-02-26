@@ -1,4 +1,4 @@
-defmodule Workflow.Limiter do
+defmodule Dask.Limiter do
   @moduledoc false
 
   use GenServer

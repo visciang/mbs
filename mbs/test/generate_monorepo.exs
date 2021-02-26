@@ -50,7 +50,7 @@ component_ids_max_len = String.length(to_string(n_components))
     {
       "name": "#{component_name}",
       "job": {
-          "command": ["$__MBS_DEPS_TOOLCHAINS_CATTER__/catter.sh", "#{component_name}.target"],
+          "command": ["$MBS_DEPS_TOOLCHAINS_CATTER/catter.sh", "#{component_name}.target"],
           "files": [
               "*.txt"
           ],

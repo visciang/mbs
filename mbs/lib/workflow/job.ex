@@ -114,8 +114,8 @@ defmodule MBS.Workflow.Job do
          cache_directory,
          upstream_results
        ) do
-    env = job_commands_env_vars(manifest)
-    {command, args} = job_command(manifest, cache_directory, env, upstream_results)
+    env = job_commands_env_vars(manifest, cache_directory, upstream_results)
+    {command, args} = job_command(manifest, env)
 
     try do
       System.cmd(command, args, cd: dir, env: env, stderr_to_stdout: true)
@@ -123,47 +123,47 @@ defmodule MBS.Workflow.Job do
       error in [ErlangError] ->
         case error do
           %ErlangError{original: :enoent} ->
-            {:error, "Unknown command '#{command}'"}
+            {:error, "Unknown command #{inspect(command)}"}
 
           %ErlangError{original: :eaccess} ->
-            {:error, "The command '#{command}' does not point to an executable file"}
+            {:error, "The command #{inspect(command)} does not point to an executable file"}
         end
     else
-      {_cmd_result, cmd_exit_status} ->
+      {cmd_result, cmd_exit_status} ->
         if cmd_exit_status != 0 do
-          {:error, "Command error '#{inspect(job.command)}': exit status #{cmd_exit_status}"}
+          {:error, "Command error #{inspect(job.command)}: exit status #{cmd_exit_status}\n\n#{cmd_result}"}
         else
           :ok
         end
     end
   end
 
-  defp job_command(%Manifest.Data{} = manifest, cache_directory, env, upstream_results) do
+  defp job_command(%Manifest.Data{} = manifest, env) do
     [command | args] =
       Enum.map(manifest.job.command, fn cmd ->
-        cmd =
-          Enum.reduce(env, cmd, fn {env_name, env_value}, cmd ->
-            String.replace(cmd, "$#{env_name}", env_value)
-          end)
-
-        Enum.reduce(manifest.job.dependencies, cmd, fn deps_name, cmd ->
-          %JobFunResult{checksum: deps_checksum} = Map.fetch!(upstream_results, deps_name)
-
-          shell_deps_name =
-            deps_name
-            |> String.upcase()
-            |> String.replace(":", "_")
-
-          deps_path = Cache.path(cache_directory, deps_name, deps_checksum)
-          String.replace(cmd, "$__MBS_DEPS_#{shell_deps_name}__", deps_path)
+        Enum.reduce(env, cmd, fn {env_name, env_value}, cmd ->
+          String.replace(cmd, "$#{env_name}", env_value)
         end)
       end)
 
     {command, args}
   end
 
-  defp job_commands_env_vars(%Manifest.Data{} = manifest) do
-    [{"__MBS_NAME__", manifest.name}, {"__MBT_CWD__", manifest.dir}]
+  defp job_commands_env_vars(%Manifest.Data{} = manifest, cache_directory, upstream_results) do
+    envs =
+      Enum.map(manifest.job.dependencies, fn deps_name ->
+        %JobFunResult{checksum: deps_checksum} = Map.fetch!(upstream_results, deps_name)
+
+        shell_deps_name =
+          deps_name
+          |> String.upcase()
+          |> String.replace(":", "_")
+
+        deps_path = Cache.path(cache_directory, deps_name, deps_checksum)
+        {"MBS_DEPS_#{shell_deps_name}", deps_path}
+      end)
+
+    [{"MBS_NAME", manifest.name}, {"MBS_CWD", manifest.dir} | envs]
   end
 
   defp assert_targets([]), do: :ok
