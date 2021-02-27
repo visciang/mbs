@@ -2,8 +2,12 @@ FROM elixir:1.11.3-alpine AS builder
 ENV MIX_ENV prod
 RUN mix local.rebar --force
 RUN mix local.hex --force
-COPY mbs /mbs
 WORKDIR /mbs/
+COPY mbs/config ./config
+COPY mbs/lib ./lib
+COPY mbs/test ./test
+COPY mbs/mix.exs mbs/mix.lock ./
+COPY mbs/.formatter.exs ./
 RUN mix deps.get
 RUN mix compile --warnings-as-errors
 RUN mix escript.build

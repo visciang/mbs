@@ -18,7 +18,7 @@ defmodule MBS.Workflow.Job do
 
   def job_fun(reporter, %Config.Data{} = config, %Manifest.Data{name: name, job: job} = manifest) do
     fn job_id, upstream_results ->
-      start_time = System.monotonic_time(:second)
+      start_time = Reporter.time()
 
       upstream_results = filter_upstream_results(upstream_results, job.dependencies)
       checksum = checksum(job.files, upstream_results)
@@ -37,7 +37,7 @@ defmodule MBS.Workflow.Job do
             Reporter.Status.error(reason)
         end
 
-      end_time = System.monotonic_time(:second)
+      end_time = Reporter.time()
 
       Reporter.job_report(reporter, job_id, report_status, end_time - start_time)
 

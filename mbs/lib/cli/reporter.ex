@@ -24,6 +24,8 @@ defmodule MBS.CLI.Reporter do
   @moduledoc """
   CLI information reporter
   """
+  @time_unit :millisecond
+  @time_unit_scale 0.001
 
   use GenServer
 
@@ -37,7 +39,7 @@ defmodule MBS.CLI.Reporter do
   end
 
   def start_link do
-    GenServer.start_link(__MODULE__, start_time: System.monotonic_time(:second))
+    GenServer.start_link(__MODULE__, start_time: time())
   end
 
   def stop(pid, workflow_status) do
@@ -46,6 +48,14 @@ defmodule MBS.CLI.Reporter do
 
   def job_report(pid, job_id, status, elapsed) do
     GenServer.cast(pid, %Report{job_id: job_id, status: status, elapsed: elapsed})
+  end
+
+  def time do
+    System.monotonic_time(@time_unit)
+  end
+
+  defp delta_time_string(elapsed) do
+    Dask.Utils.seconds_to_compound_duration(elapsed * @time_unit_scale)
   end
 
   @impl true
@@ -66,7 +76,7 @@ defmodule MBS.CLI.Reporter do
 
     duration =
       if elapsed != nil do
-        "  (#{Dask.Utils.seconds_to_compound_duration(elapsed)})"
+        "  (#{delta_time_string(elapsed)})"
       else
         ""
       end
@@ -79,7 +89,7 @@ defmodule MBS.CLI.Reporter do
 
   @impl true
   def handle_call({:stop, reason}, _from, %State{} = state) do
-    end_time = System.monotonic_time(:second)
+    end_time = time()
 
     log_message =
       case reason do
@@ -88,7 +98,7 @@ defmodule MBS.CLI.Reporter do
         :timeout -> IO.ANSI.format([:red, "Timeout"], true)
       end
 
-    duration = Dask.Utils.seconds_to_compound_duration(end_time - state.start_time)
+    duration = delta_time_string(end_time - state.start_time)
 
     IO.puts("\n#{log_message} (#{duration})")
 

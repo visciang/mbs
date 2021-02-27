@@ -1,7 +1,7 @@
 n_components = 100
 n_files_per_component = 10
 n_dep_per_component = 3
-file_size = 20_000
+file_size = 2_000
 
 defmodule Utils do
   def rand_file_content(len, chars \\ "abcdefghijklmnopqrstuvwxyz") do
