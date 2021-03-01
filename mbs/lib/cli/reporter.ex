@@ -17,7 +17,7 @@ end
 
 defmodule MBS.CLI.Reporter.Report do
   @moduledoc false
-  defstruct [:job_id, :status, :elapsed]
+  defstruct [:job_id, :status, :description, :elapsed]
 end
 
 defmodule MBS.CLI.Reporter do
@@ -46,8 +46,8 @@ defmodule MBS.CLI.Reporter do
     GenServer.call(pid, {:stop, workflow_status})
   end
 
-  def job_report(pid, job_id, status, elapsed) do
-    GenServer.cast(pid, %Report{job_id: job_id, status: status, elapsed: elapsed})
+  def job_report(pid, job_id, status, description, elapsed) do
+    GenServer.cast(pid, %Report{job_id: job_id, status: status, description: description, elapsed: elapsed})
   end
 
   def time do
@@ -64,7 +64,7 @@ defmodule MBS.CLI.Reporter do
   end
 
   @impl true
-  def handle_cast(%Report{job_id: job_id, status: status, elapsed: elapsed}, %State{} = state) do
+  def handle_cast(%Report{job_id: job_id, status: status, description: description, elapsed: elapsed}, %State{} = state) do
     {status_icon, status_info} =
       case status do
         Status.ok() -> {IO.ANSI.format([:green, "✔"], true), nil}
@@ -74,14 +74,16 @@ defmodule MBS.CLI.Reporter do
         Status.timeout() -> {"⏰", nil}
       end
 
-    duration =
-      if elapsed != nil do
-        "  (#{delta_time_string(elapsed)})"
-      else
-        ""
-      end
+    duration = if elapsed != nil, do: " (#{delta_time_string(elapsed)})", else: ""
+    description = if description != nil, do: "~ #{description}", else: ""
 
-    IO.puts(IO.ANSI.format([status_icon, " - ", :bright, job_id, :normal, duration], true))
+    IO.puts(
+      IO.ANSI.format(
+        [status_icon, " - ", :bright, job_id, :normal, "  ", duration, " ", description],
+        true
+      )
+    )
+
     if status_info, do: IO.puts("  - #{status_info}")
 
     {:noreply, state}

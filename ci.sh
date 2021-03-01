@@ -2,10 +2,10 @@
 
 set -e
 
-docker build --target slim --tag mbs:slim .
-docker build --target full --tag mbs:full .
+docker build --rm --target slim --tag mbs:slim .
+docker build --rm --target full --tag mbs:full .
 
-alias mbs="docker run --rm --volume $PWD:/code -w /code mbs:slim"
+alias mbs="docker run --rm -t -v $PWD:$PWD -v /var/run/docker.sock:/var/run/docker.sock -w $PWD mbs:slim"
 
 mbs version
 mbs ls --verbose

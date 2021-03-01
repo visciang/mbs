@@ -1,0 +1,16 @@
+{
+    "id": "mbs-toolchain",
+    "toolchain": {
+        "dockerfile": "Dockerfile",
+        "files": [
+            "build.sh"
+        ],
+        "steps": [
+            "deps",
+            "compile",
+            "lint",
+            "test",
+            "build"
+        ]
+    }
+}

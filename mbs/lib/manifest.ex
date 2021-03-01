@@ -1,14 +1,13 @@
-defmodule MBS.Manifest.Data do
+defmodule MBS.Manifest.Component do
   @moduledoc false
 
-  defmodule Job do
-    @moduledoc false
-    @enforce_keys [:command, :files, :targets]
-    defstruct [:command, :files, :targets, :dependencies]
-  end
+  defstruct [:id, :dir, :toolchain, :files, :targets, :dependencies]
+end
 
-  @enforce_keys [:name, :dir, :job]
-  defstruct [:name, :dir, :job]
+defmodule MBS.Manifest.Toolchain do
+  @moduledoc false
+
+  defstruct [:id, :dir, :checksum, :dockerfile, :files, :steps]
 end
 
 defmodule MBS.Manifest do
@@ -16,7 +15,8 @@ defmodule MBS.Manifest do
   .mbs.json manifest
   """
 
-  alias MBS.Manifest.{Data, Validator}
+  alias MBS.Checksum
+  alias MBS.Manifest.{Component, Toolchain, Validator}
 
   @manifest_filename ".mbs.json"
 
@@ -28,27 +28,31 @@ defmodule MBS.Manifest do
       |> Map.put("dir", Path.dirname(Path.expand(manifest_path)))
     end)
     |> Validator.validate()
-    |> Enum.map(&to_struct/1)
+    |> Enum.map(&to_struct(&1))
+    |> add_toolchain_data()
   end
 
-  defp to_struct(manifest_json) do
-    dir = Map.get(manifest_json, "dir")
-    name = Map.get(manifest_json, "name")
-    job = Map.get(manifest_json, "job")
-    command = Map.get(job, "command")
-    files_ = files(dir, Map.get(job, "files"))
-    targets_ = targets(dir, Map.get(job, "targets"))
-    dependencies = Map.get(job, "dependencies", [])
-
-    %Data{
+  defp to_struct(%{"id" => id, "dir" => dir, "component" => component}) do
+    %Component{
+      id: id,
       dir: dir,
-      name: name,
-      job: %Data.Job{
-        command: command,
-        files: files_,
-        targets: targets_,
-        dependencies: dependencies
-      }
+      toolchain: component["toolchain"],
+      files: files(dir, component["files"]),
+      targets: targets(dir, component["targets"]),
+      dependencies: component["dependencies"] || []
+    }
+  end
+
+  defp to_struct(%{"id" => id, "dir" => dir, "toolchain" => toolchain}) do
+    files_ = files(dir, [toolchain["dockerfile"], toolchain["files"]])
+
+    %Toolchain{
+      id: id,
+      dir: dir,
+      checksum: Checksum.files_checksum(files_),
+      dockerfile: Path.join(dir, toolchain["dockerfile"]),
+      files: files_,
+      steps: toolchain["steps"]
     }
   end
 
@@ -62,5 +66,17 @@ defmodule MBS.Manifest do
     targets
     |> Enum.map(&Path.join(dir, &1))
     |> Enum.uniq()
+  end
+
+  defp add_toolchain_data(manifests) do
+    toolchains = Enum.filter(manifests, &match?(%Toolchain{}, &1))
+    get_toolchain = Map.new(toolchains, &{&1.id, &1})
+
+    components =
+      manifests
+      |> Stream.filter(&match?(%Component{}, &1))
+      |> Enum.map(&put_in(&1.toolchain, get_toolchain[&1.toolchain]))
+
+    toolchains ++ components
   end
 end

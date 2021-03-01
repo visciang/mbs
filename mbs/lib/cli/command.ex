@@ -19,8 +19,9 @@ defmodule MBS.CLI.Command do
   def cmd(%Args.Tree{}, %MBS.Config.Data{}, _reporter) do
     manifests_map =
       Manifest.find_all()
-      |> Map.new(&{&1.name, &1})
+      |> Map.new(&{&1.id, &1})
 
+    IO.puts("")
     print_tree(Map.keys(manifests_map), manifests_map, "")
 
     :ok
@@ -29,21 +30,46 @@ defmodule MBS.CLI.Command do
   def cmd(%Args.Ls{verbose: verbose}, %MBS.Config.Data{}, _reporter) do
     print_fun =
       if verbose do
-        fn %Manifest.Data{} = manifest ->
-          IO.puts(IO.ANSI.format([:bright, "\n- #{manifest.name}"], true))
-          IO.puts("  directory: #{manifest.dir}")
-          IO.puts("  job.command: #{inspect(manifest.job.command)}")
-          IO.puts("  job.dependencies: #{inspect(manifest.job.dependencies)}")
-          IO.puts("  job.targets: #{inspect(manifest.job.targets)}")
-          IO.puts("  job.files:")
-          Enum.each(manifest.job.files, &IO.puts("    #{&1}"))
+        fn
+          %Manifest.Component{} = component ->
+            IO.puts(IO.ANSI.format([:bright, "#{component.id}", :normal, ":"], true))
+            IO.puts("  directory:")
+            IO.puts("    #{component.dir}")
+            IO.puts("  toolchain:")
+            IO.puts("    #{component.toolchain.id}")
+            IO.puts("  targets:")
+            Enum.each(component.targets, &IO.puts("    - #{&1}"))
+            IO.puts("  files:")
+            Enum.each(component.files, &IO.puts("    - #{&1}"))
+
+            if component.dependencies != [] do
+              IO.puts("  dependencies:")
+              Enum.each(component.dependencies, &IO.puts("    - #{&1}"))
+            end
+
+            IO.puts("")
+
+          %Manifest.Toolchain{} = toolchain ->
+            IO.puts(IO.ANSI.format([:bright, "#{toolchain.id}", :normal, ":"], true))
+            IO.puts("  directory:")
+            IO.puts("    #{toolchain.dir}")
+            IO.puts("  dockerfile:")
+            IO.puts("    #{toolchain.dockerfile}")
+            IO.puts("  steps:")
+            Enum.each(toolchain.steps, &IO.puts("    - #{&1}"))
+            IO.puts("  files:")
+            Enum.each(toolchain.files, &IO.puts("    - #{&1}"))
+
+            IO.puts("")
         end
       else
-        &IO.puts(IO.ANSI.format([:bright, &1.name], true))
+        &IO.puts(IO.ANSI.format([:bright, &1.id], true))
       end
 
+    IO.puts("")
+
     Manifest.find_all()
-    |> Enum.sort_by(& &1.name)
+    |> Enum.sort_by(& &1.id)
     |> Enum.each(print_fun)
 
     :ok
@@ -93,9 +119,16 @@ defmodule MBS.CLI.Command do
   defp print_tree(names, manifests_map, indent) do
     names
     |> Enum.sort()
-    |> Enum.each(fn name ->
-      IO.puts(IO.ANSI.format([indent, :bright, name], true))
-      print_tree(manifests_map[name].job.dependencies, manifests_map, ["  " | indent])
+    |> Enum.each(fn id ->
+      IO.puts(IO.ANSI.format([indent, :bright, id], true))
+
+      dependencies =
+        case manifests_map[id] do
+          %Manifest.Component{toolchain: toolchain} -> [toolchain.id | manifests_map[id].dependencies]
+          %Manifest.Toolchain{} -> []
+        end
+
+      print_tree(dependencies, manifests_map, ["  " | indent])
     end)
   end
 end

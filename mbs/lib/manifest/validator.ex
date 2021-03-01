@@ -5,40 +5,40 @@ defmodule MBS.Manifest.Validator do
 
   alias MBS.Utils
 
-  @name_regex "^[a-zA-Z0-9_:]+$"
+  @name_regex "^[a-zA-Z0-9_-]+$"
 
   def validate(manifests) do
     validate_schema(manifests)
 
-    components = MapSet.new(manifests, & &1["name"])
-    validate_unique_components_name(manifests, components)
-    validate_dependencies(manifests, components)
+    ids = MapSet.new(manifests, & &1["id"])
+    validate_unique_id(manifests, ids)
+    validate_components(manifests, ids)
 
     manifests
   end
 
   defp validate_schema(manifests) do
     Enum.each(manifests, fn manifest ->
-      validate_name(manifest)
-      validate_job(manifest)
+      validate_id(manifest)
+      validate_type(manifest)
     end)
   end
 
-  defp validate_name(manifest) do
-    if manifest["name"] == nil do
-      error_message = IO.ANSI.format([:red, "Missing name field in #{manifest["dir"]}"], true)
+  defp validate_id(%{"id" => id, "dir" => dir}) do
+    if id == nil do
+      error_message = IO.ANSI.format([:red, "Missing id field in #{dir}"], true)
       Utils.halt(error_message)
     end
 
-    unless is_binary(manifest["name"]) do
-      error_message = IO.ANSI.format([:red, "Bad name type in #{manifest["dir"]}"], true)
+    unless is_binary(id) do
+      error_message = IO.ANSI.format([:red, "Bad id type in #{dir}"], true)
       Utils.halt(error_message)
     end
 
-    unless manifest["name"] =~ ~r/#{@name_regex}/ do
+    unless id =~ ~r/#{@name_regex}/ do
       error_message =
         IO.ANSI.format(
-          [:red, "Invalid name #{inspect(manifest["name"])} in #{manifest["dir"]} (valid pattern is #{@name_regex})"],
+          [:red, "Invalid id #{inspect(id)} in #{dir} (valid pattern is #{@name_regex})"],
           true
         )
 
@@ -46,23 +46,32 @@ defmodule MBS.Manifest.Validator do
     end
   end
 
-  defp validate_job(manifest) do
-    if manifest["job"] == nil do
-      error_message = IO.ANSI.format([:red, "Missing job field in #{manifest["dir"]}"], true)
+  defp validate_type(%{"dir" => dir, "toolchain" => toolchain}) do
+    unless is_map(toolchain) do
+      error_message = IO.ANSI.format([:red, "Bad toolchain type in #{dir}"], true)
       Utils.halt(error_message)
     end
 
-    unless is_map(manifest["job"]) do
-      error_message = IO.ANSI.format([:red, "Bad job type in #{manifest["dir"]}"], true)
+    unless is_binary(toolchain["dockerfile"]) do
+      error_message = IO.ANSI.format([:red, "Bad dockerfile type in #{dir}"], true)
       Utils.halt(error_message)
     end
 
-    validate_list_of_strings(manifest, ["job", "command"])
-    validate_list_of_strings(manifest, ["job", "files"])
-    validate_list_of_strings(manifest, ["job", "targets"])
+    validate_list_of_strings(toolchain, ["files"])
+    validate_list_of_strings(toolchain, ["steps"])
+  end
 
-    if manifest["job"]["dependencies"] do
-      validate_list_of_strings(manifest, ["job", "dependencies"])
+  defp validate_type(%{"dir" => dir, "component" => component}) do
+    unless is_map(component) do
+      error_message = IO.ANSI.format([:red, "Bad component type in #{dir}"], true)
+      Utils.halt(error_message)
+    end
+
+    validate_list_of_strings(component, ["files"])
+    validate_list_of_strings(component, ["targets"])
+
+    if component["dependencies"] do
+      validate_list_of_strings(component, ["dependencies"])
     end
   end
 
@@ -80,31 +89,37 @@ defmodule MBS.Manifest.Validator do
     end
   end
 
-  defp validate_unique_components_name(manifests, components) do
-    if MapSet.size(components) != length(manifests) do
+  defp validate_unique_id(manifests, ids) do
+    if MapSet.size(ids) != length(manifests) do
       error_message =
         manifests
-        |> Enum.group_by(& &1["name"])
+        |> Enum.group_by(& &1["id"])
         |> Enum.filter(fn {_name, group} -> length(group) > 1 end)
-        |> Enum.map(fn {name, group} ->
-          [IO.ANSI.format([:red, "Duplicated name #{inspect(name)} in:\n"], true), Enum.map(group, &"- #{&1["dir"]}\n")]
+        |> Enum.map(fn {id, group} ->
+          [IO.ANSI.format([:red, "Duplicated id #{inspect(id)} in:\n"], true), Enum.map(group, &"- #{&1["dir"]}\n")]
         end)
 
       Utils.halt(error_message)
     end
   end
 
-  defp validate_dependencies(manifests, components) do
+  defp validate_components(manifests, ids) do
+    toolchains_ids =
+      manifests
+      |> Stream.filter(&(&1["toolchain"] != nil))
+      |> MapSet.new(& &1["id"])
+
     manifests
-    |> Stream.filter(&(&1["job"]["dependencies"] != nil))
-    |> Enum.each(fn manifest ->
-      unknown_dependencies = MapSet.difference(MapSet.new(manifest["job"]["dependencies"]), components)
+    |> Stream.filter(&(&1["component"] != nil))
+    |> Enum.each(fn %{"dir" => dir, "component" => component} ->
+      unknown_dependencies = MapSet.difference(MapSet.new(component["dependencies"] || []), ids)
 
-      if MapSet.size(unknown_dependencies) != 0 do
-        error_message =
-          IO.ANSI.format([:red, "Unknown dependencies #{inspect(unknown_dependencies)} in #{manifest["dir"]}"], true)
+      unless MapSet.size(unknown_dependencies) == 0 do
+        Utils.halt(IO.ANSI.format([:red, "Unknown dependencies #{inspect(unknown_dependencies)} in #{dir}"], true))
+      end
 
-        Utils.halt(error_message)
+      unless MapSet.member?(toolchains_ids, component["toolchain"]) do
+        Utils.halt(IO.ANSI.format([:red, "Unknown toolchain #{inspect(component["toolchain"])} in #{dir}"], true))
       end
     end)
   end

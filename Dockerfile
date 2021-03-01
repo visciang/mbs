@@ -13,10 +13,11 @@ RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
 FROM elixir:1.11.3-alpine AS slim
+RUN apk add --no-cache docker
 COPY --from=builder /mbs/mbs /usr/local/bin/
 ENTRYPOINT [ "/usr/local/bin/mbs" ]
 
-FROM elixir:1.11.3-alpine as full
-RUN apk add --no-cache graphviz
+FROM elixir:1.11.3-alpine AS full
+RUN apk add --no-cache docker graphviz
 COPY --from=builder /mbs/mbs /usr/local/bin/
 ENTRYPOINT [ "/usr/local/bin/mbs" ]

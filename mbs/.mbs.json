@@ -1,9 +1,7 @@
 {
-    "name": "mbs",
-    "job": {
-        "command": [
-            "$MBS_CWD/build.sh"
-        ],
+    "id": "mbs",
+    "component": {
+        "toolchain": "mbs-toolchain",
         "files": [
             "build.sh",
             ".formatter.exs",
