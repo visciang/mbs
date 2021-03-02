@@ -29,3 +29,4 @@ workflow-*.tar
 .mbs-cache
 */coveralls.json
 mbs/mbs
+mbs/test/mbs/sample
