@@ -14,7 +14,7 @@ defmodule MBS do
     workflow_status =
       args
       |> Args.parse()
-      |> Command.cmd(config, reporter)
+      |> Command.run(config, reporter)
       |> exit_status()
 
     Reporter.stop(reporter, workflow_status)
