@@ -14,49 +14,41 @@ defmodule MBS.Toolchain do
   end
 
   def exec(
-        %Manifest.Component{toolchain: toolchain} = component,
+        %Manifest.Component{dir: dir, toolchain: toolchain} = component,
         cache_directory,
         upstream_results,
         job_id,
         reporter
       ) do
-    env = env_vars(component, cache_directory, upstream_results)
-    {command, args} = cmd(component, cache_directory, env)
+    env = run_env_vars(component, cache_directory, upstream_results)
+    opts = run_opts(dir, cache_directory)
 
     Enum.reduce_while(toolchain.steps, nil, fn toolchain_step, _ ->
       reporter_id = "#{job_id}:#{toolchain_step}"
       start_time = Reporter.time()
 
-      try do
-        System.cmd(command, args ++ [toolchain_step], env: env, stderr_to_stdout: true)
-      rescue
-        error ->
-          Reporter.job_report(reporter, reporter_id, Reporter.Status.error(""), nil, Reporter.time() - start_time)
-          {:halt, {:error, "#{inspect(error)}"}}
-      else
-        {_, 0} ->
+      case Docker.image_run(toolchain.id, toolchain.checksum, opts, env, [toolchain_step]) do
+        :ok ->
           Reporter.job_report(reporter, reporter_id, Reporter.Status.ok(), nil, Reporter.time() - start_time)
           {:cont, :ok}
 
-        {cmd_result, cmd_exit_status} ->
+        {:error, {cmd_result, cmd_exit_status}} ->
           Reporter.job_report(reporter, reporter_id, Reporter.Status.error(""), nil, Reporter.time() - start_time)
-          {:halt, {:error, "Command error #{inspect(command)}: exit status #{cmd_exit_status}\n\n#{cmd_result}"}}
+          {:halt, {:error, "exec error: exit status #{cmd_exit_status}\n\n#{cmd_result}"}}
       end
     end)
   end
 
-  defp cmd(%Manifest.Component{dir: dir, toolchain: toolchain}, cache_directory, env) do
-    run = ["run", "--rm", "-t"]
+  defp run_opts(dir, cache_directory) do
+    opts = ["--rm", "-t"]
     work_dir = ["-w", "#{dir}"]
     dir_mount = ["-v", "#{dir}:#{dir}"]
     cache_mount = ["-v", "#{cache_directory}:/cache"]
-    img = ["#{toolchain.id}:#{toolchain.checksum}"]
-    env = Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
 
-    {"docker", run ++ work_dir ++ dir_mount ++ cache_mount ++ env ++ img}
+    opts ++ work_dir ++ dir_mount ++ cache_mount
   end
 
-  defp env_vars(
+  defp run_env_vars(
          %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
          cache_directory,
          upstream_results

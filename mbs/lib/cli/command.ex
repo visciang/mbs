@@ -124,8 +124,11 @@ defmodule MBS.CLI.Command do
 
       dependencies =
         case manifests_map[id] do
-          %Manifest.Component{toolchain: toolchain} -> [toolchain.id | manifests_map[id].dependencies]
-          %Manifest.Toolchain{} -> []
+          %Manifest.Component{toolchain: toolchain} ->
+            [toolchain.id | manifests_map[id].dependencies]
+
+          %Manifest.Toolchain{} ->
+            []
         end
 
       print_tree(dependencies, manifests_map, ["  " | indent])

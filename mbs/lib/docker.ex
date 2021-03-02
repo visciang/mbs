@@ -32,8 +32,24 @@ defmodule MBS.Docker do
     cmd_args = ["image", "pull", "#{repository}:#{tag}"]
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
-      {_, 0} -> :ok
-      {res, _} -> {:error, res}
+      {_, 0} ->
+        :ok
+
+      {res, _} ->
+        {:error, res}
+    end
+  end
+
+  def image_run(repository, tag, opts, env, command) do
+    env_opt = Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
+    cmd_args = ["run"] ++ opts ++ env_opt ++ ["#{repository}:#{tag}"] ++ command
+
+    case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true) do
+      {_, 0} ->
+        :ok
+
+      {res, exit_status} ->
+        {:error, {res, exit_status}}
     end
   end
 end
