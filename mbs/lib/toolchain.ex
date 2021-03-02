@@ -51,7 +51,7 @@ defmodule MBS.Toolchain do
     dir_mount = ["-v", "#{dir}:#{dir}"]
     cache_mount = ["-v", "#{cache_directory}:/cache"]
     img = ["#{toolchain.id}:#{toolchain.checksum}"]
-    env = Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}='#{env_value}'"] end)
+    env = Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
 
     {"docker", run ++ work_dir ++ dir_mount ++ cache_mount ++ env ++ img}
   end
@@ -75,6 +75,6 @@ defmodule MBS.Toolchain do
         {"MBS_DEPS_#{shell_dep_id}", deps_path}
       end)
 
-    [{"MBS_NAME", id}, {"MBS_CWD", dir} | env]
+    [{"MBS_ID", id}, {"MBS_CWD", dir} | env]
   end
 end

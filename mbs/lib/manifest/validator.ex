@@ -57,8 +57,8 @@ defmodule MBS.Manifest.Validator do
       Utils.halt(error_message)
     end
 
-    validate_list_of_strings(toolchain, ["files"])
-    validate_list_of_strings(toolchain, ["steps"])
+    validate_list_of_strings(toolchain, ["files"], dir)
+    validate_list_of_strings(toolchain, ["steps"], dir)
   end
 
   defp validate_type(%{"dir" => dir, "component" => component}) do
@@ -67,24 +67,24 @@ defmodule MBS.Manifest.Validator do
       Utils.halt(error_message)
     end
 
-    validate_list_of_strings(component, ["files"])
-    validate_list_of_strings(component, ["targets"])
+    validate_list_of_strings(component, ["files"], dir)
+    validate_list_of_strings(component, ["targets"], dir)
 
     if component["dependencies"] do
-      validate_list_of_strings(component, ["dependencies"])
+      validate_list_of_strings(component, ["dependencies"], dir)
     end
   end
 
-  defp validate_list_of_strings(manifest, path) do
+  defp validate_list_of_strings(manifest, path, manifest_dir) do
     elm = get_in(manifest, path)
 
     if elm == nil do
-      error_message = IO.ANSI.format([:red, "Missing #{inspect(path)} field in #{manifest["dir"]}"], true)
+      error_message = IO.ANSI.format([:red, "Missing #{inspect(path)} field in #{manifest_dir}"], true)
       Utils.halt(error_message)
     end
 
-    unless is_list(elm) and elm != [] and Enum.all?(elm, &is_binary(&1)) do
-      error_message = IO.ANSI.format([:red, "Bad #{inspect(path)} type in #{manifest["dir"]}"], true)
+    unless is_list(elm) and Enum.all?(elm, &is_binary(&1)) do
+      error_message = IO.ANSI.format([:red, "Bad #{inspect(path)} type in #{manifest_dir}"], true)
       Utils.halt(error_message)
     end
   end
