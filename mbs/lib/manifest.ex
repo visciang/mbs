@@ -74,7 +74,7 @@ defmodule MBS.Manifest do
 
     components =
       manifests
-      |> Stream.filter(&match?(%Component{}, &1))
+      |> Enum.filter(&match?(%Component{}, &1))
       |> Enum.map(&put_in(&1.toolchain, get_toolchain[&1.toolchain]))
 
     toolchains ++ components

@@ -12,12 +12,12 @@ defmodule MBS.CLI.Args do
 
   defmodule Tree do
     @moduledoc false
-    defstruct []
+    defstruct [:targets]
   end
 
   defmodule Ls do
     @moduledoc false
-    defstruct [:verbose]
+    defstruct [:verbose, :targets]
   end
 
   defmodule Graph do
@@ -27,7 +27,7 @@ defmodule MBS.CLI.Args do
 
   defmodule Run do
     @moduledoc false
-    defstruct []
+    defstruct [:targets]
   end
 
   defmodule Outdated do
@@ -39,12 +39,22 @@ defmodule MBS.CLI.Args do
     %Version{}
   end
 
-  def parse(["tree" | _args]) do
-    %Tree{}
+  def parse(["tree" | args]) do
+    {_options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    %Tree{targets: targets}
   end
 
   def parse(["ls" | args]) do
-    {options, _} =
+    defaults = [verbose: false]
+
+    {options, targets} =
       try do
         OptionParser.parse!(args, strict: [verbose: :boolean])
       rescue
@@ -52,16 +62,24 @@ defmodule MBS.CLI.Args do
           Utils.halt(e.message)
       end
 
-    options = Keyword.merge([verbose: false], options)
-    %Ls{verbose: options[:verbose]}
+    options = Keyword.merge(defaults, options)
+    %Ls{verbose: options[:verbose], targets: targets}
   end
 
   def parse(["graph", png_file]) do
     %Graph{png_file: png_file}
   end
 
-  def parse(["run" | _args]) do
-    %Run{}
+  def parse(["run" | args]) do
+    {_options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    %Run{targets: targets}
   end
 
   def parse(["outdated" | _args]) do

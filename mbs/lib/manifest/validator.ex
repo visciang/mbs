@@ -106,11 +106,11 @@ defmodule MBS.Manifest.Validator do
   defp validate_components(manifests, ids) do
     toolchains_ids =
       manifests
-      |> Stream.filter(&(&1["toolchain"] != nil))
+      |> Enum.filter(&(&1["toolchain"] != nil))
       |> MapSet.new(& &1["id"])
 
     manifests
-    |> Stream.filter(&(&1["component"] != nil))
+    |> Enum.filter(&(&1["component"] != nil))
     |> Enum.each(fn %{"dir" => dir, "component" => component} ->
       unknown_dependencies = MapSet.difference(MapSet.new(component["dependencies"] || []), ids)
 

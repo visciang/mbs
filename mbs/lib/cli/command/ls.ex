@@ -1,12 +1,14 @@
 defimpl MBS.CLI.Command, for: MBS.CLI.Args.Ls do
   alias MBS.CLI.Args
+  alias MBS.CLI.Utils
   alias MBS.Config
   alias MBS.Manifest
 
-  def run(%Args.Ls{verbose: verbose}, %Config.Data{}, _reporter) do
+  def run(%Args.Ls{verbose: verbose, targets: target_ids}, %Config.Data{}, _reporter) do
     IO.puts("")
 
     Manifest.find_all()
+    |> Enum.filter(&Utils.filter_manifest_by_id(&1.id, target_ids))
     |> Enum.sort_by(& &1.id)
     |> Enum.each(&print_ls(&1, verbose))
 

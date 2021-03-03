@@ -1,11 +1,13 @@
 defimpl MBS.CLI.Command, for: MBS.CLI.Args.Tree do
   alias MBS.CLI.Args
+  alias MBS.CLI.Utils
   alias MBS.Config
   alias MBS.Manifest
 
-  def run(%Args.Tree{}, %Config.Data{}, _reporter) do
+  def run(%Args.Tree{targets: target_ids}, %Config.Data{}, _reporter) do
     manifests_map =
       Manifest.find_all()
+      |> Enum.filter(&Utils.filter_manifest_by_id(&1.id, target_ids))
       |> Map.new(&{&1.id, &1})
 
     IO.puts("")
