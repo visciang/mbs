@@ -6,7 +6,8 @@
             "build.sh",
             ".formatter.exs",
             "mix.{exs,lock}",
-            "{lib,test}/**/*.{ex,exs}"
+            "{lib,test}/**/*.{ex,exs}",
+            "!test/mbs/sample/**/*"
         ],
         "targets": [
             "mbs"
