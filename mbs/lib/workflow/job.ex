@@ -84,6 +84,16 @@ defmodule MBS.Workflow.Job do
     end
   end
 
+  def job_fun_on_exit(job_id, job_exec_result, elapsed_time_ms, reporter) do
+    case job_exec_result do
+      :job_timeout ->
+        Reporter.job_report(reporter, job_id, Reporter.Status.timeout(), "", elapsed_time_ms * 1_000)
+
+      _ ->
+        :ok
+    end
+  end
+
   def outdated_fun(reporter, %Config.Data{} = _config, %Manifest.Toolchain{id: id, checksum: checksum}) do
     fn job_id, _upstream_results ->
       unless Job.Cache.hit_toolchain(id, checksum) do

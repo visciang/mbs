@@ -6,12 +6,12 @@ defmodule MBS.Config.Data do
     defstruct [:directory]
   end
 
-  defstruct [:parallelism, :cache]
+  defstruct [:parallelism, :cache, :timeout]
 end
 
 defmodule MBS.Config do
   @moduledoc """
-  Application config
+  Global config
   """
   require Logger
 
@@ -47,7 +47,8 @@ defmodule MBS.Config do
       parallelism: conf |> Map.get("parallelism", default_parallelism),
       cache: %Data.Cache{
         directory: conf |> Map.fetch!("cache") |> Map.fetch!("directory") |> Path.expand()
-      }
+      },
+      timeout: conf |> Map.get("timeout", :infinity)
     }
   end
 end

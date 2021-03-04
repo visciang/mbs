@@ -7,10 +7,21 @@ defmodule MBS.Workflow do
 
   require MBS.CLI.Reporter.Status
 
-  def workflow(manifests, %Config.Data{} = config, reporter, job_fun) do
+  def workflow(
+        manifests,
+        %Config.Data{timeout: global_timeout_sec} = config,
+        reporter,
+        job_fun,
+        job_on_exit \\ fn _, _, _ -> :ok end
+      ) do
     workflow =
-      Enum.reduce(manifests, Dask.new(), fn manifest, workflow ->
-        Dask.job(workflow, manifest.id, job_fun.(reporter, config, manifest))
+      Enum.reduce(manifests, Dask.new(), fn %{timeout: local_timeout_sec} = manifest, workflow ->
+        global_timeout_ms = if global_timeout_sec == :infinity, do: :infinity, else: global_timeout_sec * 1_000
+        local_timeout_ms = if local_timeout_sec == :infinity, do: :infinity, else: local_timeout_sec * 1_000
+
+        timeout_ms = min(global_timeout_ms, local_timeout_ms)
+
+        Dask.job(workflow, manifest.id, job_fun.(reporter, config, manifest), timeout_ms, job_on_exit)
       end)
 
     Enum.reduce(manifests, workflow, fn

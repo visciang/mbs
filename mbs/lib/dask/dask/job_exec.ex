@@ -6,14 +6,14 @@ defmodule Dask.JobExec do
   alias Dask.Limiter
   alias Dask.Utils
 
-  @type exec_result :: {:job_ok, Job.result()} | {:job_error, Job.result()} | :job_skipped | :job_timeout
-
-  @spec exec(Job.t(), pid(), MapSet.t(Job.id()), MapSet.t(pid()), Job.upstream_results()) :: exec_result()
+  @spec exec(Job.t(), pid(), MapSet.t(Job.id()), MapSet.t(pid()), Job.upstream_results()) :: Job.job_exec_result()
   def exec(%Job{} = job, limiter, upstream_job_id_set, downstream_job_pid_set, upstream_jobs_status) do
     if MapSet.size(upstream_job_id_set) == 0 do
       Logger.debug("START #{inspect(job.id)}  upstream_jobs_status: #{inspect(upstream_jobs_status)}")
 
       {job_status, elapsed_time} = timed(fn -> exec_job_fun(job, limiter, upstream_jobs_status) end, job.timeout)
+
+      job.on_exit.(job.id, job_status, elapsed_time)
 
       Enum.each(downstream_job_pid_set, &send(&1, {job.id, job_status}))
 

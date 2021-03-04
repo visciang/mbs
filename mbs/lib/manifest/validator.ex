@@ -20,6 +20,7 @@ defmodule MBS.Manifest.Validator do
   defp validate_schema(manifests) do
     Enum.each(manifests, fn manifest ->
       validate_id(manifest)
+      validate_timeout(manifest)
       validate_type(manifest)
     end)
   end
@@ -45,6 +46,15 @@ defmodule MBS.Manifest.Validator do
       Utils.halt(error_message)
     end
   end
+
+  defp validate_timeout(%{"timeout" => timeout, "dir" => dir}) do
+    unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
+      error_message = IO.ANSI.format([:red, "Invalid timeout field in #{dir}"], true)
+      Utils.halt(error_message)
+    end
+  end
+
+  defp validate_timeout(_), do: :ok
 
   defp validate_type(%{"dir" => dir, "toolchain" => toolchain}) do
     unless is_map(toolchain) do

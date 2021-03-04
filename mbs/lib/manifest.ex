@@ -1,13 +1,13 @@
 defmodule MBS.Manifest.Component do
   @moduledoc false
 
-  defstruct [:id, :dir, :toolchain, :files, :targets, :dependencies]
+  defstruct [:id, :dir, :timeout, :toolchain, :files, :targets, :dependencies]
 end
 
 defmodule MBS.Manifest.Toolchain do
   @moduledoc false
 
-  defstruct [:id, :dir, :checksum, :dockerfile, :files, :steps]
+  defstruct [:id, :dir, :timeout, :checksum, :dockerfile, :files, :steps]
 end
 
 defmodule MBS.Manifest do
@@ -25,17 +25,24 @@ defmodule MBS.Manifest do
     |> Path.wildcard(match_dot: true)
     |> Enum.map(fn manifest_path ->
       Jason.decode!(File.read!(manifest_path))
-      |> Map.put("dir", Path.dirname(Path.expand(manifest_path)))
+      |> add_defaults(manifest_path)
     end)
     |> Validator.validate()
     |> Enum.map(&to_struct(&1))
     |> add_toolchain_data()
   end
 
-  defp to_struct(%{"id" => id, "dir" => dir, "component" => component}) do
+  defp add_defaults(manifest, manifest_path) do
+    manifest
+    |> Map.put("dir", Path.dirname(Path.expand(manifest_path)))
+    |> Map.put_new("timeout", :infinity)
+  end
+
+  defp to_struct(%{"id" => id, "dir" => dir, "timeout" => timeout, "component" => component}) do
     %Component{
       id: id,
       dir: dir,
+      timeout: timeout,
       toolchain: component["toolchain"],
       files: files(dir, component["files"]),
       targets: targets(dir, component["targets"]),
@@ -43,12 +50,13 @@ defmodule MBS.Manifest do
     }
   end
 
-  defp to_struct(%{"id" => id, "dir" => dir, "toolchain" => toolchain}) do
+  defp to_struct(%{"id" => id, "dir" => dir, "timeout" => timeout, "toolchain" => toolchain}) do
     files_ = files(dir, [toolchain["dockerfile"], toolchain["files"]])
 
     %Toolchain{
       id: id,
       dir: dir,
+      timeout: timeout,
       checksum: Checksum.files_checksum(files_),
       dockerfile: Path.join(dir, toolchain["dockerfile"]),
       files: files_,

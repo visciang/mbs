@@ -5,10 +5,14 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Run do
   alias MBS.{Manifest, Utils, Workflow}
 
   def run(%Args.Run{targets: target_ids}, %Config.Data{} = config, reporter) do
+    job_on_exit = fn job_id, job_exec_result, elapsed ->
+      Workflow.Job.job_fun_on_exit(job_id, job_exec_result, elapsed, reporter)
+    end
+
     dask =
       Manifest.find_all()
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
-      |> Workflow.workflow(config, reporter, &Workflow.Job.job_fun/3)
+      |> Workflow.workflow(config, reporter, &Workflow.Job.job_fun/3, job_on_exit)
 
     dask =
       try do
