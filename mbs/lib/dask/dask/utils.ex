@@ -37,14 +37,14 @@ defmodule Dask.Utils do
   # coveralls-ignore-start
 
   @doc """
-  Convert a workflow dot graph to png.
+  Convert a workflow dot graph to SVG.
   It uses the `dot` program, so it should be installed and available.
   """
-  @spec dot_to_png(iodata(), Path.t()) :: :ok
-  def dot_to_png(dot, out_file) do
+  @spec dot_to_svg(iodata(), Path.t()) :: :ok
+  def dot_to_svg(dot, out_file) do
     dot_tmp_file = "#{Path.rootname(out_file)}.dot"
     File.write!(dot_tmp_file, dot)
-    {_, 0} = System.cmd("dot", ["-Tpng", dot_tmp_file], into: File.stream!(out_file))
+    {_, 0} = System.cmd("dot", ["-Tsvg", dot_tmp_file], into: File.stream!(out_file))
     File.rm!(dot_tmp_file)
 
     :ok

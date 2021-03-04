@@ -22,7 +22,7 @@ defmodule MBS.CLI.Args do
 
   defmodule Graph do
     @moduledoc false
-    defstruct [:png_file]
+    defstruct [:targets, :output_svg_file]
   end
 
   defmodule Run do
@@ -66,8 +66,19 @@ defmodule MBS.CLI.Args do
     %Ls{verbose: options[:verbose], targets: targets}
   end
 
-  def parse(["graph", png_file]) do
-    %Graph{png_file: png_file}
+  def parse(["graph" | args]) do
+    defaults = [output_svg_file: "graph.svg"]
+
+    {options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [output_svg_file: :string])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    options = Keyword.merge(defaults, options)
+    %Graph{targets: targets, output_svg_file: options[:output_svg_file]}
   end
 
   def parse(["run" | args]) do
