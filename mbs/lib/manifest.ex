@@ -51,7 +51,7 @@ defmodule MBS.Manifest do
   end
 
   defp to_struct(%{"id" => id, "dir" => dir, "timeout" => timeout, "toolchain" => toolchain}) do
-    files_ = files(dir, [toolchain["dockerfile"], toolchain["files"]])
+    files_ = files(dir, [toolchain["dockerfile"] | toolchain["files"]])
 
     %Toolchain{
       id: id,
@@ -65,9 +65,22 @@ defmodule MBS.Manifest do
   end
 
   defp files(dir, file_globs) do
-    [@manifest_filename | file_globs]
-    |> Enum.flat_map(&Path.wildcard(Path.join(dir, &1), match_dot: true))
-    |> Enum.uniq()
+    files_include_match =
+      [@manifest_filename | file_globs]
+      |> Stream.reject(&String.starts_with?(&1, "!"))
+      |> Stream.flat_map(&Path.wildcard(Path.join(dir, &1), match_dot: true))
+      |> MapSet.new()
+
+    files_exclude_match =
+      file_globs
+      |> Stream.filter(&String.starts_with?(&1, "!"))
+      |> Stream.map(&String.slice(&1, 1..-1))
+      |> Stream.flat_map(&Path.wildcard(Path.join(dir, &1), match_dot: true))
+      |> MapSet.new()
+
+    files_match = MapSet.difference(files_include_match, files_exclude_match)
+
+    MapSet.to_list(files_match)
   end
 
   defp targets(dir, targets) do
