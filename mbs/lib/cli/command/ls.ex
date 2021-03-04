@@ -26,7 +26,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Ls do
     IO.puts("  targets:")
     Enum.each(component.targets, &IO.puts("    - #{&1}"))
     IO.puts("  files:")
-    Enum.each(component.files, &IO.puts("    - #{&1}"))
+    component.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
 
     if component.dependencies != [] do
       IO.puts("  dependencies:")
@@ -47,7 +47,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Ls do
     IO.puts("  steps:")
     Enum.each(toolchain.steps, &IO.puts("    - #{&1}"))
     IO.puts("  files:")
-    Enum.each(toolchain.files, &IO.puts("    - #{&1}"))
+    toolchain.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
 
     IO.puts("")
   end
