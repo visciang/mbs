@@ -65,15 +65,17 @@ defmodule MBS.Manifest do
   end
 
   defp files(dir, file_globs) do
+    file_globs = [@manifest_filename | file_globs]
+
+    {file_exclude_glob, file_include_glob} = Enum.split_with(file_globs, &String.starts_with?(&1, "!"))
+
     files_include_match =
-      [@manifest_filename | file_globs]
-      |> Stream.reject(&String.starts_with?(&1, "!"))
+      file_include_glob
       |> Stream.flat_map(&Path.wildcard(Path.join(dir, &1), match_dot: true))
       |> MapSet.new()
 
     files_exclude_match =
-      file_globs
-      |> Stream.filter(&String.starts_with?(&1, "!"))
+      file_exclude_glob
       |> Stream.map(&String.slice(&1, 1..-1))
       |> Stream.flat_map(&Path.wildcard(Path.join(dir, &1), match_dot: true))
       |> MapSet.new()
