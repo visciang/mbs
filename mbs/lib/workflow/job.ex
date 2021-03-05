@@ -50,13 +50,19 @@ defmodule MBS.Workflow.Job do
   def job_fun(
         reporter,
         %Config.Data{} = config,
-        %Manifest.Component{id: id, files: files, dependencies: dependencies, targets: targets} = component,
+        %Manifest.Component{
+          id: id,
+          files: files,
+          dependencies: dependencies,
+          targets: targets,
+          toolchain: toolchain
+        } = component,
         logs_enabled
       ) do
     fn job_id, upstream_results ->
       start_time = Reporter.time()
 
-      upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
+      upstream_results = Job.Utils.filter_upstream_results(upstream_results, [toolchain.id | dependencies])
       checksum = Job.Utils.checksum(files, upstream_results)
 
       {report_status, report_desc} =
@@ -107,12 +113,13 @@ defmodule MBS.Workflow.Job do
 
   def outdated_fun(reporter, %Config.Data{} = config, %Manifest.Component{
         id: id,
+        toolchain: toolchain,
         files: files,
         dependencies: dependencies,
         targets: targets
       }) do
     fn job_id, upstream_results ->
-      upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
+      upstream_results = Job.Utils.filter_upstream_results(upstream_results, [toolchain.id | dependencies])
       checksum = Job.Utils.checksum(files, upstream_results)
 
       unless Job.Cache.hit_targets(config.cache.directory, id, checksum, targets) do

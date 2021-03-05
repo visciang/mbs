@@ -80,7 +80,12 @@ mbs_manifest = ~s(
 
 File.write!(".mbs.json", mbs_manifest)
 
-script = "cat *.txt > ./${MBS_ID}.target"
+script = ~s(
+set -e
+echo "CATTER BUILD ..."
+cat *.txt > ./${MBS_ID}.target
+echo "BUILT ${MBS_ID}.target"
+)
 File.write!("build.sh", script)
 
 dockerfile = ~s(
