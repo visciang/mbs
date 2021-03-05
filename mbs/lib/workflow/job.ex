@@ -18,13 +18,13 @@ defmodule MBS.Workflow.Job do
 
   require Reporter.Status
 
-  def job_fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain) do
+  def job_fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain, logs_enabled) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_toolchain(id, checksum),
-             :ok <- Toolchain.build(toolchain),
+             :ok <- Toolchain.build(toolchain, reporter, logs_enabled),
              :ok <- Job.Cache.put_toolchain(id, checksum) do
           {Reporter.Status.ok(), checksum}
         else
@@ -50,7 +50,8 @@ defmodule MBS.Workflow.Job do
   def job_fun(
         reporter,
         %Config.Data{} = config,
-        %Manifest.Component{id: id, files: files, dependencies: dependencies, targets: targets} = component
+        %Manifest.Component{id: id, files: files, dependencies: dependencies, targets: targets} = component,
+        logs_enabled
       ) do
     fn job_id, upstream_results ->
       start_time = Reporter.time()
@@ -60,7 +61,7 @@ defmodule MBS.Workflow.Job do
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_targets(config.cache.directory, id, checksum, targets),
-             :ok <- Toolchain.exec(component, config.cache.directory, upstream_results, job_id, reporter),
+             :ok <- Toolchain.exec(component, config.cache.directory, upstream_results, job_id, reporter, logs_enabled),
              :ok <- Job.Utils.assert_targets(targets),
              :ok <- Job.Cache.put_targets(config.cache.directory, id, checksum, targets) do
           {Reporter.Status.ok(), checksum}

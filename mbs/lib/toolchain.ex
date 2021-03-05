@@ -9,8 +9,8 @@ defmodule MBS.Toolchain do
 
   require Reporter.Status
 
-  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}) do
-    Docker.image_build(id, checksum, dir, dockerfile)
+  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}, reporter, logs_enabled) do
+    Docker.image_build(id, checksum, dir, dockerfile, reporter, "#{id}:build", logs_enabled)
   end
 
   def exec(
@@ -18,7 +18,8 @@ defmodule MBS.Toolchain do
         cache_directory,
         upstream_results,
         job_id,
-        reporter
+        reporter,
+        logs_enabled
       ) do
     env = run_env_vars(component, cache_directory, upstream_results)
     opts = run_opts(dir, cache_directory)
@@ -27,7 +28,16 @@ defmodule MBS.Toolchain do
       reporter_id = "#{job_id}:#{toolchain_step}"
       start_time = Reporter.time()
 
-      case Docker.image_run(toolchain.id, toolchain.checksum, opts, env, [toolchain_step]) do
+      case Docker.image_run(
+             toolchain.id,
+             toolchain.checksum,
+             opts,
+             env,
+             [toolchain_step],
+             reporter,
+             reporter_id,
+             logs_enabled
+           ) do
         :ok ->
           Reporter.job_report(reporter, reporter_id, Reporter.Status.ok(), nil, Reporter.time() - start_time)
           {:cont, :ok}

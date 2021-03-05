@@ -1,6 +1,7 @@
 defmodule MBS.Docker do
   @moduledoc false
 
+  alias MBS.CLI.Reporter
   alias MBS.Utils
 
   def image_exists(repository, tag) do
@@ -19,10 +20,11 @@ defmodule MBS.Docker do
     end
   end
 
-  def image_build(repository, tag, dir, dockerfile) do
+  def image_build(repository, tag, dir, dockerfile, reporter, job_id, logs_enabled) do
     cmd_args = ["image", "build", "--rm", "-t", "#{repository}:#{tag}", "-f", dockerfile, "."]
+    cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
 
-    case System.cmd("docker", cmd_args, cd: dir, stderr_to_stdout: true) do
+    case System.cmd("docker", cmd_args, cd: dir, stderr_to_stdout: true, into: cmd_into) do
       {_, 0} -> :ok
       {res, _} -> {:error, res}
     end
@@ -40,11 +42,12 @@ defmodule MBS.Docker do
     end
   end
 
-  def image_run(repository, tag, opts, env, command) do
+  def image_run(repository, tag, opts, env, command, reporter, job_id, logs_enabled) do
     env_opt = Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
     cmd_args = ["run"] ++ opts ++ env_opt ++ ["#{repository}:#{tag}"] ++ command
+    cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
 
-    case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true) do
+    case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
       {_, 0} ->
         :ok
 

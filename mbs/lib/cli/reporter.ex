@@ -1,25 +1,3 @@
-defmodule MBS.CLI.Reporter.Status do
-  @moduledoc """
-  Reporter job status
-  """
-
-  defmacro ok, do: :ok
-  defmacro uptodate, do: :uptodate
-  defmacro outdated, do: :outdated
-  defmacro timeout, do: :timeout
-
-  defmacro error(reason) do
-    quote do
-      {:error, unquote(reason)}
-    end
-  end
-end
-
-defmodule MBS.CLI.Reporter.Report do
-  @moduledoc false
-  defstruct [:job_id, :status, :description, :elapsed]
-end
-
 defmodule MBS.CLI.Reporter do
   @moduledoc """
   CLI information reporter
@@ -31,6 +9,8 @@ defmodule MBS.CLI.Reporter do
 
   alias MBS.CLI.Reporter.{Report, Status}
   require MBS.CLI.Reporter.Status
+
+  defstruct [:reporter, :job_id]
 
   defmodule State do
     @moduledoc false
@@ -54,10 +34,6 @@ defmodule MBS.CLI.Reporter do
     System.monotonic_time(@time_unit)
   end
 
-  defp delta_time_string(elapsed) do
-    Dask.Utils.seconds_to_compound_duration(elapsed * @time_unit_scale)
-  end
-
   @impl true
   def init(start_time: start_time) do
     {:ok, %State{start_time: start_time}}
@@ -65,14 +41,7 @@ defmodule MBS.CLI.Reporter do
 
   @impl true
   def handle_cast(%Report{job_id: job_id, status: status, description: description, elapsed: elapsed}, %State{} = state) do
-    {status_icon, status_info} =
-      case status do
-        Status.ok() -> {IO.ANSI.format([:green, "✔"], true), nil}
-        Status.error(reason) -> {IO.ANSI.format([:red, "✘"], true), reason}
-        Status.uptodate() -> {"✔", nil}
-        Status.outdated() -> {IO.ANSI.format([:yellow, "!"], true), nil}
-        Status.timeout() -> {"⏰", nil}
-      end
+    {status_icon, status_info} = status_icon_info(status)
 
     duration = if elapsed != nil, do: " (#{delta_time_string(elapsed)})", else: ""
     description = if description != nil, do: "~ #{description}", else: ""
@@ -105,5 +74,20 @@ defmodule MBS.CLI.Reporter do
     IO.puts("\n#{log_message} (#{duration})")
 
     {:stop, :normal, :ok, state}
+  end
+
+  defp delta_time_string(elapsed) do
+    Dask.Utils.seconds_to_compound_duration(elapsed * @time_unit_scale)
+  end
+
+  defp status_icon_info(status) do
+    case status do
+      Status.ok() -> {IO.ANSI.format([:green, "✔"], true), nil}
+      Status.error(reason) -> {IO.ANSI.format([:red, "✘"], true), reason}
+      Status.uptodate() -> {"✔", nil}
+      Status.outdated() -> {IO.ANSI.format([:yellow, "!"], true), nil}
+      Status.timeout() -> {"⏰", nil}
+      Status.log() -> {".", nil}
+    end
   end
 end

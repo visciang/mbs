@@ -27,7 +27,7 @@ defmodule MBS.CLI.Args do
 
   defmodule Run do
     @moduledoc false
-    defstruct [:targets]
+    defstruct [:targets, :logs]
   end
 
   defmodule Outdated do
@@ -133,20 +133,21 @@ defmodule MBS.CLI.Args do
   defp parse("run", args) do
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean])
+        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
       end
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs run --help | [TARGETS...]")
+      IO.puts("\nUsage:  mbs run --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nRun a target(s) build (default: all targets)")
-
+      IO.puts("\nOptions:")
+      IO.puts("  --logs    Stream jobs log to the console")
       Utils.halt("", 0)
     end
 
-    %Run{targets: targets}
+    %Run{targets: targets, logs: options[:logs]}
   end
 
   defp parse("outdated", args) do

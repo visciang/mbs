@@ -2,7 +2,7 @@
 
 ## Bootstrap / Build
 
-Requirements: Docker
+Requirements: `docker`
 
 The `ci.sh` script builds two docker images (`mbs:slim`, `mbs:full`).
 These images can be used to run `mbs` on any system with docker support.
