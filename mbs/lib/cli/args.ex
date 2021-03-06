@@ -30,6 +30,11 @@ defmodule MBS.CLI.Args do
     defstruct [:targets, :logs]
   end
 
+  defmodule Release do
+    @moduledoc false
+    defstruct [:targets, :tag, :output_dir]
+  end
+
   defmodule Outdated do
     @moduledoc false
     defstruct [:dry]
@@ -46,6 +51,7 @@ defmodule MBS.CLI.Args do
     IO.puts("  ls          List available targets")
     IO.puts("  graph       Generate dependency graph")
     IO.puts("  outdated    Show outdated targets")
+    IO.puts("  release     Make a release")
     IO.puts("  run         Run a target build")
     IO.puts("  tree        Display a dependecy tree")
     IO.puts("  version     Show the mbs version")
@@ -148,6 +154,36 @@ defmodule MBS.CLI.Args do
     end
 
     %Run{targets: targets, logs: options[:logs]}
+  end
+
+  defp parse("release", args) do
+    {options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [help: :boolean, tag: :string, output_dir: :string])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    if options[:help] do
+      IO.puts("\nUsage:  mbs release --help | [OPTIONS] [TARGETS...]")
+      IO.puts("\nMake a release (default: all targets)")
+      IO.puts("\nOptions:")
+      IO.puts("  --tag           release tag identifier")
+      IO.puts("  --output-dir    output directory (default: '.mbs-releases/<tag>/')")
+      Utils.halt("", 0)
+    end
+
+    unless options[:tag] do
+      Utils.halt("Missing release --tag")
+    end
+
+    defaults = [output_dir: ".mbs-releases/#{options[:tag]}"]
+    options = Keyword.merge(defaults, options)
+
+    File.mkdir_p!(options[:output_dir])
+
+    %Release{targets: targets, tag: options[:tag], output_dir: options[:output_dir]}
   end
 
   defp parse("outdated", args) do

@@ -75,7 +75,7 @@ defmodule MBS.Toolchain do
           |> String.replace(":", "_")
           |> String.replace("-", "_")
 
-        deps_path = Cache.path(cache_directory, dep_id, dep_checksum)
+        deps_path = Cache.path(cache_directory, dep_id, dep_checksum, "")
         {"MBS_DEPS_#{shell_dep_id}", deps_path}
       end)
 

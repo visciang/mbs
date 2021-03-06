@@ -26,7 +26,8 @@ workflow-*.tar
 /tmp
 
 .plts/
-.mbs-cache
+.mbs-cache/
+.mbs-releases/
 */coveralls.json
 mbs/mbs
-mbs/test/mbs/sample
+mbs/test/mbs/sample/
