@@ -2,11 +2,15 @@
 
 ## Introduction
 
-A **Meta Build System** to organizate / build / deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
+A **Meta Build System** to organizate / build / release/ deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
 Docker **containerization** technology is used both to run `mbs` and to define the your standardized toolchains to build your software components.
 
-With MBS you can easly define the toolchains to build the different type of software components in you mono-repo and express the **dependency graph** among them to consistently build only what's really changed (**checksum** based) and **cache** the results. This will give you highly **parallelized** builds for free that you can consistenly run on your dev machine like your CI runner, without any need of specific software installed but only docker.
+With MBS you can easly define the toolchains to build the different type of software components in you mono-repo and express the **dependency graph** among them, to consistently build only what's really changed (**checksum** based) and **cache** the results. This will give you highly **parallelized** and fast builds for free that you can consistenly run on your dev machine (exactly like your CI runner) without any need of specific software installed but only docker and your mono-repo.
+
+The system scales well, but:
+... vertical build scalability (maybe evaluate orizontal scalability later on, later, later)
+... the git repo should fit in the dev machine
 
 ## Development philosofy
 
@@ -19,7 +23,7 @@ Correct, sensible defaults, "small" codebase (very small deps surface).
 ### Motivation
 - Soon or later most medium size organization reach the point where they have to standardize / normalize the CI/CD workflow across product, teams etc.
 - a way to work consistently in a non-silos base organization
-- an making the Dev (and Ops) life easier / deterministic
+- making the Dev (and Ops) life easier / deterministic
 - toolchains as part of the deps graph
 
 ### Use case
@@ -43,6 +47,12 @@ A word about building `mbs` in `mbs`
 ## Development reference
 
 ## CLI interface
+
+### command
+
+### debug
+
+LOG_LEVEL="debug"
 
 ### Global configuration
 `.mbs-config.json`
