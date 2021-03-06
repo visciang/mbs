@@ -4,6 +4,8 @@ defmodule MBS.Docker do
   alias MBS.CLI.Reporter
   alias MBS.Utils
 
+  @cmd_arg_dind ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
+
   def image_id(repository, tag) do
     cmd_args = ["image", "ls", "-q", "#{repository}:#{tag}"]
 
@@ -47,9 +49,7 @@ defmodule MBS.Docker do
   end
 
   def image_run(repository, tag, opts, env, command, reporter, job_id, logs_enabled) do
-    env_opt = Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
-    cmd_arg_dind = ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
-    cmd_args = ["run"] ++ opts ++ cmd_arg_dind ++ env_opt ++ ["#{repository}:#{tag}"] ++ command
+    cmd_args = ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"] ++ command
     cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
 
     case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
@@ -59,5 +59,14 @@ defmodule MBS.Docker do
       {res, exit_status} ->
         {:error, {res, exit_status}}
     end
+  end
+
+  def image_run_cmd(repository, tag, opts, env) do
+    (["docker", "run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"])
+    |> Enum.join(" ")
+  end
+
+  defp docker_env(env) do
+    Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
   end
 end

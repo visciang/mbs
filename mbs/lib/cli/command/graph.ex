@@ -1,8 +1,6 @@
 defimpl MBS.CLI.Command, for: MBS.CLI.Args.Graph do
   alias MBS.CLI.Args
-  alias MBS.CLI
-  alias MBS.Config
-  alias MBS.{Manifest, Workflow}
+  alias MBS.{CLI, Config, Manifest, Workflow}
 
   def run(%Args.Graph{targets: target_ids, output_svg_file: output_svg_file}, %Config.Data{} = config, reporter) do
     if dot_command_installed?() do

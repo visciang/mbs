@@ -1,8 +1,6 @@
 defimpl MBS.CLI.Command, for: MBS.CLI.Args.Ls do
-  alias MBS.CLI.Args
-  alias MBS.CLI.Utils
-  alias MBS.Config
-  alias MBS.Manifest
+  alias MBS.CLI.{Args, Utils}
+  alias MBS.{Config, Manifest}
 
   def run(%Args.Ls{verbose: verbose, targets: target_ids}, %Config.Data{}, _reporter) do
     IO.puts("")

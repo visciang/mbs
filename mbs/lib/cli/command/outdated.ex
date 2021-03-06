@@ -1,7 +1,6 @@
 defimpl MBS.CLI.Command, for: MBS.CLI.Args.Outdated do
   alias MBS.CLI.Args
-  alias MBS.Config
-  alias MBS.{Manifest, Utils, Workflow}
+  alias MBS.{Config, Manifest, Utils, Workflow}
 
   def run(%Args.Outdated{}, %Config.Data{} = config, reporter) do
     dask =

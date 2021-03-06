@@ -157,6 +157,37 @@ defmodule MBS.Workflow.Job do
     end
   end
 
+  def shell_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _shell_target) do
+    fn _job_id, _upstream_results ->
+      %Job.JobFunResult{checksum: checksum, targets: []}
+    end
+  end
+
+  def shell_fun(
+        _reporter,
+        %Config.Data{cache: %{directory: cache_directory}},
+        %Manifest.Component{
+          id: id,
+          files: files,
+          dependencies: dependencies,
+          targets: targets,
+          toolchain: toolchain
+        } = component,
+        shell_target
+      ) do
+    fn _job_id, upstream_results ->
+      upstream_results = Job.Utils.filter_upstream_results(upstream_results, [toolchain.id | dependencies])
+      checksum = Job.Utils.checksum(files, upstream_results)
+
+      if id == shell_target do
+        Toolchain.shell_cmd(component, checksum, cache_directory, upstream_results)
+        |> IO.puts()
+      end
+
+      %Job.JobFunResult{checksum: checksum, targets: targets}
+    end
+  end
+
   def outdated_fun(reporter, %Config.Data{} = _config, %Manifest.Toolchain{id: id, checksum: checksum}) do
     fn job_id, _upstream_results ->
       unless Job.Cache.hit_toolchain(id, checksum) do

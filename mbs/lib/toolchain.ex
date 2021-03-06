@@ -13,6 +13,18 @@ defmodule MBS.Toolchain do
     Docker.image_build(id, checksum, dir, dockerfile, reporter, "#{id}:build", logs_enabled)
   end
 
+  def shell_cmd(
+        %Manifest.Component{dir: dir, toolchain: toolchain} = component,
+        checksum,
+        cache_directory,
+        upstream_results
+      ) do
+    env = run_env_vars(component, checksum, cache_directory, upstream_results)
+    opts = run_opts(dir, cache_directory) ++ ["--entrypoint", "sh", "--interactive"]
+
+    Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
+  end
+
   def exec(
         %Manifest.Component{dir: dir, toolchain: toolchain} = component,
         checksum,

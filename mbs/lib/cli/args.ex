@@ -37,7 +37,12 @@ defmodule MBS.CLI.Args do
 
   defmodule Outdated do
     @moduledoc false
-    defstruct [:dry]
+    defstruct []
+  end
+
+  defmodule Shell do
+    @moduledoc false
+    defstruct [:target, :docker_cmd]
   end
 
   def parse([]) do
@@ -53,6 +58,7 @@ defmodule MBS.CLI.Args do
     IO.puts("  outdated    Show outdated targets")
     IO.puts("  release     Make a release")
     IO.puts("  run         Run a target build")
+    IO.puts("  shell       Interactive toolchain shell")
     IO.puts("  tree        Display a dependecy tree")
     IO.puts("  version     Show the mbs version")
     IO.puts("\nRun 'mbs COMMAND --help' for more information on a command.")
@@ -203,6 +209,33 @@ defmodule MBS.CLI.Args do
     end
 
     %Outdated{}
+  end
+
+  defp parse("shell", args) do
+    {options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [help: :boolean, docker_cmd: :boolean])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    if options[:help] do
+      IO.puts("\nUsage:  mbs shell --help | TARGET")
+      IO.puts("\nInteractive toolchain shell")
+      Utils.halt("", 0)
+    end
+
+    target =
+      case targets do
+        [target] ->
+          target
+
+        _ ->
+          Utils.halt("Expected exactly one shell target")
+      end
+
+    %Shell{target: target, docker_cmd: options[:docker_cmd]}
   end
 
   defp parse(cmd, _args) do

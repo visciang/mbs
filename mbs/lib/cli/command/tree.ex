@@ -1,8 +1,6 @@
 defimpl MBS.CLI.Command, for: MBS.CLI.Args.Tree do
-  alias MBS.CLI
   alias MBS.CLI.Args
-  alias MBS.Config
-  alias MBS.Manifest
+  alias MBS.{CLI, Config, Manifest}
 
   def run(%Args.Tree{targets: target_ids}, %Config.Data{}, _reporter) do
     manifests_map =

@@ -15,7 +15,7 @@ defmodule MBS.CLI.Reporter do
   defmodule State do
     @moduledoc false
 
-    defstruct [:start_time]
+    defstruct [:start_time, :muted]
   end
 
   def start_link do
@@ -24,6 +24,10 @@ defmodule MBS.CLI.Reporter do
 
   def stop(pid, workflow_status) do
     GenServer.call(pid, {:stop, workflow_status})
+  end
+
+  def mute(pid) do
+    GenServer.call(pid, :mute)
   end
 
   def job_report(pid, job_id, status, description, elapsed) do
@@ -36,7 +40,7 @@ defmodule MBS.CLI.Reporter do
 
   @impl true
   def init(start_time: start_time) do
-    {:ok, %State{start_time: start_time}}
+    {:ok, %State{start_time: start_time, muted: false}}
   end
 
   @impl true
@@ -46,16 +50,22 @@ defmodule MBS.CLI.Reporter do
     duration = if elapsed != nil, do: " (#{delta_time_string(elapsed)})", else: ""
     description = if description != nil, do: "~ #{description}", else: ""
 
-    IO.puts(
+    puts(
       IO.ANSI.format(
         [status_icon, " - ", :bright, job_id, :normal, "  ", duration, " ", description],
         true
-      )
+      ),
+      state
     )
 
     if status_info, do: IO.puts("  - #{status_info}")
 
     {:noreply, state}
+  end
+
+  @impl true
+  def handle_call(:mute, _from, %State{} = state) do
+    {:reply, :ok, put_in(state.muted, true)}
   end
 
   @impl true
@@ -71,7 +81,7 @@ defmodule MBS.CLI.Reporter do
 
     duration = delta_time_string(end_time - state.start_time)
 
-    IO.puts("\n#{log_message} (#{duration})")
+    puts("\n#{log_message} (#{duration})", state)
 
     {:stop, :normal, :ok, state}
   end
@@ -88,6 +98,12 @@ defmodule MBS.CLI.Reporter do
       Status.outdated() -> {IO.ANSI.format([:yellow, "!"], true), nil}
       Status.timeout() -> {"⏰", nil}
       Status.log() -> {".", nil}
+    end
+  end
+
+  defp puts(message, %State{muted: muted}) do
+    unless muted do
+      IO.puts(message)
     end
   end
 end
