@@ -24,11 +24,7 @@ defmodule MBS.Workflow.Job.Cache do
     if hit_toolchain(id, checksum) do
       :cached
     else
-      if Docker.image_pull(id, checksum) == :ok do
-        :cached
-      else
-        :cache_miss
-      end
+      :cache_miss
     end
   end
 
@@ -39,7 +35,7 @@ defmodule MBS.Workflow.Job.Cache do
           Cache.get(cache_directory, id, checksum, Path.basename(target)) == :ok
 
         %Target{type: "docker", target: target} ->
-          Docker.image_pull(target, checksum) == :ok
+          Docker.image_exists(target, checksum)
       end)
 
     if found_all_targets do
