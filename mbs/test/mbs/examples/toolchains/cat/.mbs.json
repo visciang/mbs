@@ -1,0 +1,13 @@
+
+  {
+    "id": "cat-toolchain",
+    "toolchain": {
+      "dockerfile": "Dockerfile",
+      "files": [
+          "build.sh"
+      ],
+      "steps": [
+        "build"
+      ]
+    }
+  }

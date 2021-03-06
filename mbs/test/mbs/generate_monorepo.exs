@@ -80,13 +80,14 @@ mbs_manifest = ~s(
 
 File.write!(".mbs.json", mbs_manifest)
 
-script = ~s(
+script = ~s(#!/bin/sh
 set -e
 echo "CATTER BUILD ..."
 cat *.txt > ./${MBS_ID}.target
 echo "BUILT ${MBS_ID}.target"
 )
 File.write!("build.sh", script)
+File.chmod!("build.sh", 0o400 + 0o100)
 
 dockerfile = ~s(
   FROM alpine:3.12.4

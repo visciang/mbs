@@ -15,13 +15,14 @@ defmodule MBS.Toolchain do
 
   def exec(
         %Manifest.Component{dir: dir, toolchain: toolchain} = component,
+        checksum,
         cache_directory,
         upstream_results,
         job_id,
         reporter,
         logs_enabled
       ) do
-    env = run_env_vars(component, cache_directory, upstream_results)
+    env = run_env_vars(component, checksum, cache_directory, upstream_results)
     opts = run_opts(dir, cache_directory)
 
     Enum.reduce_while(toolchain.steps, nil, fn toolchain_step, _ ->
@@ -60,6 +61,7 @@ defmodule MBS.Toolchain do
 
   defp run_env_vars(
          %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
+         checksum,
          cache_directory,
          upstream_results
        ) do
@@ -77,6 +79,6 @@ defmodule MBS.Toolchain do
         {"MBS_DEPS_#{shell_dep_id}", deps_path}
       end)
 
-    [{"MBS_ID", id}, {"MBS_CWD", dir} | env]
+    [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
   end
 end

@@ -4,6 +4,8 @@ defmodule MBS.Workflow.Job.Utils do
   """
 
   alias MBS.Checksum
+  alias MBS.Docker
+  alias MBS.Manifest.Target
   alias MBS.Workflow.Job.JobFunResult
 
   def checksum(files, upstream_results) do
@@ -27,10 +29,17 @@ defmodule MBS.Workflow.Job.Utils do
     |> Map.new()
   end
 
-  def assert_targets([]), do: :ok
+  def assert_targets([], _checksum), do: :ok
 
-  def assert_targets(targets) do
-    missing_targets = Enum.filter(targets, &(not File.exists?(&1)))
+  def assert_targets(targets, checksum) do
+    missing_targets =
+      Enum.filter(targets, fn
+        %Target{type: "file", target: target} ->
+          not File.exists?(target)
+
+        %Target{type: "docker", target: target} ->
+          not Docker.image_exists(target, checksum)
+      end)
 
     if length(missing_targets) != 0 do
       {:error, "Missing targets #{inspect(missing_targets)}"}

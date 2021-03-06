@@ -10,13 +10,19 @@ defmodule MBS.Manifest.Toolchain do
   defstruct [:id, :dir, :timeout, :checksum, :dockerfile, :files, :steps]
 end
 
+defmodule MBS.Manifest.Target do
+  @moduledoc false
+
+  defstruct [:type, :target]
+end
+
 defmodule MBS.Manifest do
   @moduledoc """
   .mbs.json manifest
   """
 
   alias MBS.Checksum
-  alias MBS.Manifest.{Component, Toolchain, Validator}
+  alias MBS.Manifest.{Component, Target, Toolchain, Validator}
 
   @manifest_filename ".mbs.json"
 
@@ -66,7 +72,6 @@ defmodule MBS.Manifest do
 
   defp files(dir, file_globs) do
     file_globs = [@manifest_filename | file_globs]
-
     {file_exclude_glob, file_include_glob} = Enum.split_with(file_globs, &String.starts_with?(&1, "!"))
 
     files_include_match =
@@ -87,7 +92,16 @@ defmodule MBS.Manifest do
 
   defp targets(dir, targets) do
     targets
-    |> Enum.map(&Path.join(dir, &1))
+    |> Enum.map(fn
+      "docker://" <> target ->
+        %Target{type: "docker", target: target}
+
+      "file://" <> target ->
+        %Target{type: "file", target: Path.join(dir, target)}
+
+      target ->
+        %Target{type: "file", target: Path.join(dir, target)}
+    end)
     |> Enum.uniq()
   end
 

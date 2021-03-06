@@ -67,8 +67,17 @@ defmodule MBS.Workflow.Job do
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_targets(config.cache.directory, id, checksum, targets),
-             :ok <- Toolchain.exec(component, config.cache.directory, upstream_results, job_id, reporter, logs_enabled),
-             :ok <- Job.Utils.assert_targets(targets),
+             :ok <-
+               Toolchain.exec(
+                 component,
+                 checksum,
+                 config.cache.directory,
+                 upstream_results,
+                 job_id,
+                 reporter,
+                 logs_enabled
+               ),
+             :ok <- Job.Utils.assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(config.cache.directory, id, checksum, targets) do
           {Reporter.Status.ok(), checksum}
         else

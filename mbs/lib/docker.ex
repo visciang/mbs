@@ -44,7 +44,8 @@ defmodule MBS.Docker do
 
   def image_run(repository, tag, opts, env, command, reporter, job_id, logs_enabled) do
     env_opt = Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
-    cmd_args = ["run"] ++ opts ++ env_opt ++ ["#{repository}:#{tag}"] ++ command
+    cmd_arg_dind = ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
+    cmd_args = ["run"] ++ opts ++ cmd_arg_dind ++ env_opt ++ ["#{repository}:#{tag}"] ++ command
     cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
 
     case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do

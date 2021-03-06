@@ -24,7 +24,15 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Ls do
     IO.puts("  toolchain:")
     IO.puts("    #{component.toolchain.id}")
     IO.puts("  targets:")
-    Enum.each(component.targets, &IO.puts("    - #{&1}"))
+
+    Enum.each(component.targets, fn
+      %Manifest.Target{type: "file", target: target} ->
+        IO.puts("    - #{target}")
+
+      %Manifest.Target{type: "docker", target: target} ->
+        IO.puts("    - docker://#{target}")
+    end)
+
     IO.puts("  files:")
     component.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
 

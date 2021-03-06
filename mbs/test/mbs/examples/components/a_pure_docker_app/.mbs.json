@@ -1,0 +1,16 @@
+
+    {
+      "id": "a_pure_docker_app",
+      "component": {
+        "toolchain": "docker-toolchain",
+        "files": [
+            "hello.sh",
+            "Dockerfile"
+        ],
+        "targets": [
+            "docker://a_pure_docker_app"
+        ],
+        "dependencies": []
+      }
+    }
+  
