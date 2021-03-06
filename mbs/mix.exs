@@ -18,7 +18,8 @@ defmodule MBS.MixProject do
         "coveralls.html": :test,
         docs: :dev
       ],
-      test_coverage: [tool: ExCoveralls]
+      test_coverage: [tool: ExCoveralls],
+      aliases: aliases()
     ]
   end
 
@@ -43,4 +44,10 @@ defmodule MBS.MixProject do
       plt_file: {:no_warn, ".plts/dialyzer.plt"}
     ]
   end
+
+  def aliases do
+    [dialyzer: [&mkdir_plts/1, "dialyzer"]]
+  end
+
+  defp mkdir_plts(_), do: File.mkdir_p!(".plts")
 end

@@ -77,6 +77,15 @@ defmodule MBS.Manifest.Validator do
       Utils.halt(error_message)
     end
 
+    unless is_binary(component["toolchain"]) do
+      error_message = IO.ANSI.format([:red, "Bad toolchain type in #{dir}"], true)
+      Utils.halt(error_message)
+    end
+
+    if component["toolchain_opts"] != nil do
+      validate_list_of_strings(component, ["toolchain_opts"], dir)
+    end
+
     validate_list_of_strings(component, ["files"], dir)
     validate_list_of_strings(component, ["targets"], dir)
 

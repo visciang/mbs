@@ -26,7 +26,7 @@ defmodule MBS.Toolchain do
   end
 
   def exec(
-        %Manifest.Component{dir: dir, toolchain: toolchain} = component,
+        %Manifest.Component{dir: dir, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
         checksum,
         cache_directory,
         upstream_results,
@@ -46,7 +46,7 @@ defmodule MBS.Toolchain do
              toolchain.checksum,
              opts,
              env,
-             [toolchain_step],
+             [toolchain_step | toolchain_opts],
              reporter,
              reporter_id,
              logs_enabled

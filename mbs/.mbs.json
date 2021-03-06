@@ -2,6 +2,7 @@
     "id": "mbs",
     "component": {
         "toolchain": "mbs-toolchain",
+        "toolchain_opts": ["--type", "escript", "--credo", "--dialyzer"],
         "files": [
             "build.sh",
             ".formatter.exs",

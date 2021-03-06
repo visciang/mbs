@@ -1,7 +1,7 @@
 defmodule MBS.Manifest.Component do
   @moduledoc false
 
-  defstruct [:id, :dir, :timeout, :toolchain, :files, :targets, :dependencies]
+  defstruct [:id, :dir, :timeout, :toolchain, :toolchain_opts, :files, :targets, :dependencies]
 end
 
 defmodule MBS.Manifest.Toolchain do
@@ -50,6 +50,7 @@ defmodule MBS.Manifest do
       dir: dir,
       timeout: timeout,
       toolchain: component["toolchain"],
+      toolchain_opts: component["toolchain_opts"] || [],
       files: files(dir, component["files"]),
       targets: targets(dir, component["targets"]),
       dependencies: component["dependencies"] || []

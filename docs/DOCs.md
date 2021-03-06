@@ -66,12 +66,39 @@ LOG_LEVEL="debug"
         // where to store the file artifacts cache
         "directory": ".mbs-cache"
     },
-    // timeout: [optional] components build global timeout (default: infinity)
+    // timeout: [optional] components build global timeout sec (default: infinity)
     "timeout": 3600
 }
 ```
 
 ### Toolchain manifest
+
+```json
+{
+    // toolchain identifier
+    "id": "toolchain-abc",
+    "toolchain": {
+        // toolchain dockerfile
+        "dockerfile": "Dockerfile",
+        // build "input" files (glob expression allowed)
+        // these are the files "watched" for changes
+        // define this list very carefully
+        "files": [
+            "build.sh"
+        ],
+        // toolchains steps
+        // the toolchain will be executed calling the toolchain docker image with
+        // the following steps as command, sequentially
+        "steps": [
+            "deps",
+            "compile",
+            "lint",
+            "test",
+            "build"
+        ]
+    }
+}
+```
 
 ### Component manifest
 
@@ -79,10 +106,14 @@ LOG_LEVEL="debug"
 
 {
     // component identifier
-    "id": "component",
+    "id": "component-xyz",
+    // timeout: [optional] components build timeout sec (default: global | :infinity)
+    "timeout": 3600,
     "component": {
         // toolchain used to build the component
-        "toolchain": "toolchain",
+        "toolchain": "toolchain-abc",
+        // toolchain run options (passed to every toolchain "step" commands)
+        "toolchain_opts": ["--type", "escript", "--credo"],
         // build "input" files (glob expression allowed)
         // these are the files "watched" for changes
         // define this list very carefully
