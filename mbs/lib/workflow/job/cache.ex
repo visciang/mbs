@@ -10,10 +10,10 @@ defmodule MBS.Workflow.Job.Cache do
     Docker.image_exists(id, checksum)
   end
 
-  def hit_targets(cache_directory, id, checksum, targets) do
+  def hit_targets(cache_dir, id, checksum, targets) do
     Enum.all?(targets, fn
       %Target{type: "file", target: target} ->
-        Cache.hit(cache_directory, id, checksum, target)
+        Cache.hit(cache_dir, id, checksum, target)
 
       %Target{type: "docker", target: target} ->
         Docker.image_exists(target, checksum)
@@ -28,11 +28,11 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  def get_targets(cache_directory, id, checksum, targets) do
+  def get_targets(cache_dir, id, checksum, targets) do
     found_all_targets =
       Enum.all?(targets, fn
         %Target{type: "file", target: target} ->
-          Cache.get(cache_directory, id, checksum, target) == :ok
+          Cache.get(cache_dir, id, checksum, target) == :ok
 
         %Target{type: "docker", target: target} ->
           Docker.image_exists(target, checksum)
@@ -45,10 +45,10 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  def put_targets(cache_directory, id, checksum, targets) do
+  def put_targets(cache_dir, id, checksum, targets) do
     Enum.each(targets, fn
       %Target{type: "file", target: target} ->
-        Cache.put(cache_directory, id, checksum, target)
+        Cache.put(cache_dir, id, checksum, target)
 
       %Target{type: "docker", target: _target} ->
         :ok
@@ -61,13 +61,13 @@ defmodule MBS.Workflow.Job.Cache do
     :ok
   end
 
-  def copy_targets(cache_directory, id, checksum, targets, output_dir) do
+  def copy_targets(cache_dir, id, checksum, targets, output_dir) do
     File.mkdir_p!(output_dir)
 
     Enum.reduce_while(targets, :ok, fn
       %Target{type: "file", target: target}, _ ->
-        if Cache.hit(cache_directory, id, checksum, target) do
-          cache_target_path = Cache.path(cache_directory, id, checksum, target)
+        if Cache.hit(cache_dir, id, checksum, target) do
+          cache_target_path = Cache.path(cache_dir, id, checksum, target)
           release_target_path = Path.join(output_dir, Path.basename(target))
 
           File.cp!(cache_target_path, release_target_path)

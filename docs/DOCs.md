@@ -64,7 +64,7 @@ LOG_LEVEL="debug"
     // cache
     "cache": {
         // where to store the file artifacts cache
-        "directory": ".mbs-cache"
+        "dir": ".mbs-cache"
     },
     // timeout: [optional] components build global timeout sec (default: infinity)
     "timeout": 3600

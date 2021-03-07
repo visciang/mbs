@@ -15,4 +15,4 @@ alias mbs="\
 
 mbs version
 mbs ls --verbose
-mbs run
+mbs run --logs

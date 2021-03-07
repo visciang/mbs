@@ -3,8 +3,8 @@ defmodule MBS.Cache do
   Artifact Cache
   """
 
-  def put(cache_directory, name, checksum, target) do
-    dest_dir = Path.join([cache_directory, name, checksum])
+  def put(cache_dir, name, checksum, target) do
+    dest_dir = Path.join([cache_dir, name, checksum])
     dest_target = Path.join([dest_dir, Path.basename(target)])
     File.mkdir_p!(dest_dir)
     File.cp!(target, dest_target)
@@ -12,8 +12,8 @@ defmodule MBS.Cache do
     :ok
   end
 
-  def get(cache_directory, name, checksum, target) do
-    target_path = path(cache_directory, name, checksum, target)
+  def get(cache_dir, name, checksum, target) do
+    target_path = path(cache_dir, name, checksum, target)
 
     if File.exists?(target_path) do
       :ok
@@ -22,12 +22,12 @@ defmodule MBS.Cache do
     end
   end
 
-  def hit(cache_directory, name, checksum, target) do
-    target_path = path(cache_directory, name, checksum, target)
+  def hit(cache_dir, name, checksum, target) do
+    target_path = path(cache_dir, name, checksum, target)
     File.exists?(target_path)
   end
 
-  def path(cache_directory, name, checksum, target) do
-    Path.join([cache_directory, name, checksum, Path.basename(target)])
+  def path(cache_dir, name, checksum, target) do
+    Path.join([cache_dir, name, checksum, Path.basename(target)])
   end
 end

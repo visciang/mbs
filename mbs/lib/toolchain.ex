@@ -14,30 +14,30 @@ defmodule MBS.Toolchain do
   end
 
   def shell_cmd(
-        %Manifest.Component{dir: work_directory, toolchain: toolchain} = component,
+        %Manifest.Component{dir: work_dir, toolchain: toolchain} = component,
         checksum,
-        root_directory,
-        cache_directory,
+        root_dir,
+        cache_dir,
         upstream_results
       ) do
-    env = run_env_vars(component, checksum, cache_directory, upstream_results)
-    opts = run_opts(root_directory, work_directory) ++ ["--entrypoint", "sh", "--interactive"]
+    env = run_env_vars(component, checksum, cache_dir, upstream_results)
+    opts = run_opts(root_dir, work_dir) ++ ["--entrypoint", "sh", "--interactive"]
 
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
   end
 
   def exec(
-        %Manifest.Component{dir: work_directory, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
+        %Manifest.Component{dir: work_dir, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
         checksum,
-        root_directory,
-        cache_directory,
+        root_dir,
+        cache_dir,
         upstream_results,
         job_id,
         reporter,
         logs_enabled
       ) do
-    env = run_env_vars(component, checksum, cache_directory, upstream_results)
-    opts = run_opts(root_directory, work_directory)
+    env = run_env_vars(component, checksum, cache_dir, upstream_results)
+    opts = run_opts(root_dir, work_dir)
 
     Enum.reduce_while(toolchain.steps, nil, fn toolchain_step, _ ->
       reporter_id = "#{job_id}:#{toolchain_step}"
@@ -75,7 +75,7 @@ defmodule MBS.Toolchain do
   defp run_env_vars(
          %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
          checksum,
-         cache_directory,
+         cache_dir,
          upstream_results
        ) do
     env =
@@ -88,7 +88,7 @@ defmodule MBS.Toolchain do
           |> String.replace(":", "_")
           |> String.replace("-", "_")
 
-        deps_path = Cache.path(cache_directory, dep_id, dep_checksum, "")
+        deps_path = Cache.path(cache_dir, dep_id, dep_checksum, "")
         {"MBS_DEPS_#{shell_dep_id}", deps_path}
       end)
 
