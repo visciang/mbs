@@ -15,10 +15,14 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Tree do
   end
 
   defp print_tree(names, manifests_map, indent) do
+    names_length = length(names)
+
     names
     |> Enum.sort()
-    |> Enum.each(fn id ->
-      IO.puts(IO.ANSI.format([indent, :bright, id], true))
+    |> Enum.with_index(1)
+    |> Enum.each(fn {id, idx} ->
+      guide = if idx == names_length, do: "└── ", else: "├── "
+      IO.puts(IO.ANSI.format([indent, guide, :bright, id], true))
 
       dependencies =
         case manifests_map[id] do
@@ -29,7 +33,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Tree do
             []
         end
 
-      print_tree(dependencies, manifests_map, ["  " | indent])
+      guide = if idx == names_length, do: "    ", else: "│   "
+      print_tree(dependencies, manifests_map, [indent | guide])
     end)
   end
 end
