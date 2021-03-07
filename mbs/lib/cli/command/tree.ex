@@ -9,7 +9,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Tree do
       |> Map.new(&{&1.id, &1})
 
     IO.puts("")
-    print_tree(Map.keys(manifests_map), manifests_map, "")
+    print_tree(target_ids, manifests_map, "")
 
     :ok
   end
