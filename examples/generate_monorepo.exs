@@ -1,4 +1,4 @@
-out_dir = "sample"
+out_dir = "generated_monorepo"
 n_components = 100
 n_files_per_component = 10
 n_dep_per_component = 2

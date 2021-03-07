@@ -30,4 +30,4 @@ workflow-*.tar
 .mbs-releases/
 */coveralls.json
 mbs/mbs
-mbs/test/mbs/sample/
+examples/generated_monorepo
