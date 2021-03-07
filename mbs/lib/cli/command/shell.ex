@@ -3,24 +3,16 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Shell do
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
   def run(%Args.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config, reporter) do
-    CLI.Command.run(%Args.Run{targets: [target]}, config, reporter)
+    manifests = Manifest.find_all()
+    target_direct_dependencies = target_component_direct_dependencies(manifests, target)
+
+    CLI.Command.run(%Args.Run{targets: [target_direct_dependencies]}, config, reporter)
   end
 
   def run(%Args.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, reporter) do
     Reporter.mute(reporter)
 
     manifests = Manifest.find_all()
-
-    case Enum.find(manifests, &(&1.id == target)) do
-      %Manifest.Component{} ->
-        :ok
-
-      %Manifest.Toolchain{} ->
-        Utils.halt("Bad target, the target should by a component con a toolchain")
-
-      nil ->
-        Utils.halt("Unknown target")
-    end
 
     dask =
       manifests
@@ -41,5 +33,18 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Shell do
       end
 
     Dask.await(dask)
+  end
+
+  defp target_component_direct_dependencies(manifests, id) do
+    case Enum.find(manifests, &(&1.id == id)) do
+      %Manifest.Component{} = component ->
+        [component.toolchain | component.dependencies]
+
+      %Manifest.Toolchain{} ->
+        Utils.halt("Bad target, the target should by a component con a toolchain")
+
+      nil ->
+        Utils.halt("Unknown target")
+    end
   end
 end
