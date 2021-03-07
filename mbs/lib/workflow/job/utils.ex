@@ -9,10 +9,7 @@ defmodule MBS.Workflow.Job.Utils do
   alias MBS.Workflow.Job.JobFunResult
 
   def checksum(files, upstream_results) do
-    files_checksum =
-      files
-      |> Enum.sort()
-      |> Checksum.files_checksum()
+    files_checksum = Checksum.files_checksum(files)
 
     dependencies_checksums =
       upstream_results
@@ -21,7 +18,7 @@ defmodule MBS.Workflow.Job.Utils do
 
     [files_checksum | dependencies_checksums]
     |> Enum.join()
-    |> Checksum.checksum()
+    |> Checksum.checksum("")
   end
 
   def filter_upstream_results(upstream_results, job_dependencies) do
