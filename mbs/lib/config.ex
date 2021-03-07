@@ -6,7 +6,7 @@ defmodule MBS.Config.Data do
     defstruct [:directory]
   end
 
-  defstruct [:parallelism, :cache, :timeout]
+  defstruct [:root_directory, :parallelism, :cache, :timeout]
 end
 
 defmodule MBS.Config do
@@ -33,7 +33,8 @@ defmodule MBS.Config do
   defp parse(conf_data) do
     case Jason.decode(conf_data) do
       {:ok, conf} ->
-        to_struct(conf)
+        conf = to_struct(conf)
+        put_in(conf.root_directory, mbs_root_directory())
 
       {:error, reason} ->
         Utils.halt("Error parsing configuration file #{@config_file}\n  #{Jason.DecodeError.message(reason)}")
@@ -50,5 +51,15 @@ defmodule MBS.Config do
       },
       timeout: conf |> Map.get("timeout", :infinity)
     }
+  end
+
+  defp mbs_root_directory do
+    case System.get_env("MBS_ROOT") do
+      nil ->
+        Utils.halt("Missing MBS_ROOT environment variable")
+
+      root_directory ->
+        root_directory
+    end
   end
 end

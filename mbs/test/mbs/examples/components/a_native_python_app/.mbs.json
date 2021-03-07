@@ -1,0 +1,19 @@
+
+    {
+      "id": "a_native_python_app",
+      "component": {
+        "toolchain": "python-toolchain",
+        "toolchain_opts": ["--type", "zipapp"],
+        "files": [
+            "a_native_python_app/__main__.py",
+            "requirements.txt"
+        ],
+        "targets": [
+            "a_native_python_app.pyz"
+        ],
+        "dependencies": [
+          "a_python_library"
+        ]
+      }
+    }
+  

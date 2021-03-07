@@ -49,7 +49,7 @@ defmodule MBS.Workflow.Job do
 
   def run_fun(
         reporter,
-        %Config.Data{cache: %{directory: cache_directory}},
+        %Config.Data{cache: %{directory: cache_directory}, root_directory: root_directory},
         %Manifest.Component{
           id: id,
           files: files,
@@ -71,6 +71,7 @@ defmodule MBS.Workflow.Job do
                Toolchain.exec(
                  component,
                  checksum,
+                 root_directory,
                  cache_directory,
                  upstream_results,
                  job_id,
@@ -165,7 +166,7 @@ defmodule MBS.Workflow.Job do
 
   def shell_fun(
         _reporter,
-        %Config.Data{cache: %{directory: cache_directory}},
+        %Config.Data{cache: %{directory: cache_directory}, root_directory: root_directory},
         %Manifest.Component{
           id: id,
           files: files,
@@ -180,7 +181,7 @@ defmodule MBS.Workflow.Job do
       checksum = Job.Utils.checksum(files, upstream_results)
 
       if id == shell_target do
-        Toolchain.shell_cmd(component, checksum, cache_directory, upstream_results)
+        Toolchain.shell_cmd(component, checksum, root_directory, cache_directory, upstream_results)
         |> IO.puts()
       end
 

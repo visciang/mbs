@@ -14,20 +14,22 @@ defmodule MBS.Toolchain do
   end
 
   def shell_cmd(
-        %Manifest.Component{dir: dir, toolchain: toolchain} = component,
+        %Manifest.Component{dir: work_directory, toolchain: toolchain} = component,
         checksum,
+        root_directory,
         cache_directory,
         upstream_results
       ) do
     env = run_env_vars(component, checksum, cache_directory, upstream_results)
-    opts = run_opts(dir, cache_directory) ++ ["--entrypoint", "sh", "--interactive"]
+    opts = run_opts(root_directory, work_directory) ++ ["--entrypoint", "sh", "--interactive"]
 
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
   end
 
   def exec(
-        %Manifest.Component{dir: dir, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
+        %Manifest.Component{dir: work_directory, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
         checksum,
+        root_directory,
         cache_directory,
         upstream_results,
         job_id,
@@ -35,7 +37,7 @@ defmodule MBS.Toolchain do
         logs_enabled
       ) do
     env = run_env_vars(component, checksum, cache_directory, upstream_results)
-    opts = run_opts(dir, cache_directory)
+    opts = run_opts(root_directory, work_directory)
 
     Enum.reduce_while(toolchain.steps, nil, fn toolchain_step, _ ->
       reporter_id = "#{job_id}:#{toolchain_step}"
@@ -62,13 +64,12 @@ defmodule MBS.Toolchain do
     end)
   end
 
-  defp run_opts(dir, cache_directory) do
+  defp run_opts(root_dir, work_dir) do
     opts = ["--rm", "-t"]
-    work_dir = ["-w", "#{dir}"]
-    dir_mount = ["-v", "#{dir}:#{dir}"]
-    cache_mount = ["-v", "#{cache_directory}:/cache"]
+    work_dir = ["-w", "#{work_dir}"]
+    dir_mount = ["-v", "#{root_dir}:#{root_dir}"]
 
-    opts ++ work_dir ++ dir_mount ++ cache_mount
+    opts ++ work_dir ++ dir_mount
   end
 
   defp run_env_vars(
