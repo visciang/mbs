@@ -72,7 +72,7 @@ LOG_LEVEL="debug"
 ### Global configuration
 `.mbs-config.json`
 
-```json
+```js
 {
     // parallelism: [optional] run parallelism (default: available cores)
     "parallelism": 16,
@@ -88,7 +88,7 @@ LOG_LEVEL="debug"
 
 ### Toolchain manifest
 
-```json
+```js
 {
     // toolchain identifier
     "id": "toolchain-abc",
@@ -117,7 +117,7 @@ LOG_LEVEL="debug"
 
 ### Component manifest
 
-```json
+```js
 
 {
     // component identifier
