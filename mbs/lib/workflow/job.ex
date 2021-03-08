@@ -52,6 +52,7 @@ defmodule MBS.Workflow.Job do
         %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
         %Manifest.Component{
           id: id,
+          dir: component_dir,
           files: files,
           dependencies: dependencies,
           targets: targets,
@@ -63,7 +64,7 @@ defmodule MBS.Workflow.Job do
       start_time = Reporter.time()
 
       upstream_results = Job.Utils.filter_upstream_results(upstream_results, [toolchain.id | dependencies])
-      checksum = Job.Utils.checksum(files, upstream_results)
+      checksum = Job.Utils.checksum(files, component_dir, upstream_results)
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_targets(cache_dir, id, checksum, targets),
@@ -122,6 +123,7 @@ defmodule MBS.Workflow.Job do
         %Config.Data{cache: %{dir: cache_dir}},
         %Manifest.Component{
           id: id,
+          dir: component_dir,
           files: files,
           dependencies: dependencies,
           targets: targets,
@@ -133,7 +135,7 @@ defmodule MBS.Workflow.Job do
       start_time = Reporter.time()
 
       upstream_results = Job.Utils.filter_upstream_results(upstream_results, [toolchain.id | dependencies])
-      checksum = Job.Utils.checksum(files, upstream_results)
+      checksum = Job.Utils.checksum(files, component_dir, upstream_results)
 
       output_dir = Path.join(output_dir, id)
 
@@ -169,6 +171,7 @@ defmodule MBS.Workflow.Job do
         %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
         %Manifest.Component{
           id: id,
+          dir: component_dir,
           files: files,
           dependencies: dependencies,
           targets: targets,
@@ -178,7 +181,7 @@ defmodule MBS.Workflow.Job do
       ) do
     fn _job_id, upstream_results ->
       upstream_results = Job.Utils.filter_upstream_results(upstream_results, [toolchain.id | dependencies])
-      checksum = Job.Utils.checksum(files, upstream_results)
+      checksum = Job.Utils.checksum(files, component_dir, upstream_results)
 
       if id == shell_target do
         Toolchain.shell_cmd(component, checksum, root_dir, cache_dir, upstream_results)
@@ -201,6 +204,7 @@ defmodule MBS.Workflow.Job do
 
   def outdated_fun(reporter, %Config.Data{} = config, %Manifest.Component{
         id: id,
+        dir: component_dir,
         toolchain: toolchain,
         files: files,
         dependencies: dependencies,
@@ -208,7 +212,7 @@ defmodule MBS.Workflow.Job do
       }) do
     fn job_id, upstream_results ->
       upstream_results = Job.Utils.filter_upstream_results(upstream_results, [toolchain.id | dependencies])
-      checksum = Job.Utils.checksum(files, upstream_results)
+      checksum = Job.Utils.checksum(files, component_dir, upstream_results)
 
       unless Job.Cache.hit_targets(config.cache.dir, id, checksum, targets) do
         Reporter.job_report(reporter, job_id, Reporter.Status.outdated(), checksum, nil)

@@ -8,8 +8,8 @@ defmodule MBS.Workflow.Job.Utils do
   alias MBS.Manifest.Target
   alias MBS.Workflow.Job.JobFunResult
 
-  def checksum(files, upstream_results) do
-    files_checksum = Checksum.files_checksum(files)
+  def checksum(files, component_dir, upstream_results) do
+    files_checksum = Checksum.files_checksum(files, component_dir)
 
     dependencies_checksums =
       upstream_results

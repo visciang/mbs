@@ -64,7 +64,7 @@ defmodule MBS.Manifest do
       id: id,
       dir: dir,
       timeout: timeout,
-      checksum: Checksum.files_checksum(files_),
+      checksum: Checksum.files_checksum(files_, dir),
       dockerfile: Path.join(dir, toolchain["dockerfile"]),
       files: files_,
       steps: toolchain["steps"]
