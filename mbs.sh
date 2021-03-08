@@ -11,6 +11,6 @@ alias mbs="\
     -v $ABS_BASEDIR:$ABS_BASEDIR \
     -w $ABS_BASEDIR \
     -e MBS_ROOT=$ABS_BASEDIR \
-    mbs:slim"
+    mbs:full"
 
 mbs $@
