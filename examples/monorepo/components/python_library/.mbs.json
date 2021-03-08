@@ -1,15 +1,15 @@
 {
-    "id": "a_python_library",
+    "id": "python_library",
     "component": {
         "toolchain": "python-toolchain",
         "toolchain_opts": ["--type", "wheel"],
         "files": [
-            "a_python_library/**/*.py",
+            "python_library/**/*.py",
             "pyproject.toml",
             "setup.cfg"
         ],
         "targets": [
-            "dist/a_python_library-0.0.0-py3-none-any.whl"
+            "dist/python_library-0.0.0-py3-none-any.whl"
         ]
     }
 }

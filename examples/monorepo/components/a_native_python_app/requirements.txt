@@ -1,1 +1,0 @@
-${MBS_DEPS_A_PYTHON_LIBRARY}/a_python_library-0.0.0-py3-none-any.whl
