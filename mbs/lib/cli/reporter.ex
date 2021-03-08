@@ -50,6 +50,13 @@ defmodule MBS.CLI.Reporter do
     duration = if elapsed != nil, do: " (#{delta_time_string(elapsed)})", else: ""
     description = if description != nil, do: "~ #{description}", else: ""
 
+    job_id =
+      if status == Status.log() do
+        IO.ANSI.format([:yellow, job_id], true)
+      else
+        job_id
+      end
+
     puts(
       IO.ANSI.format(
         [status_icon, " - ", :bright, job_id, :normal, "  ", duration, " ", description],

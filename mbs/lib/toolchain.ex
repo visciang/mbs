@@ -37,6 +37,7 @@ defmodule MBS.Toolchain do
         logs_enabled
       ) do
     env = run_env_vars(component, checksum, cache_dir, upstream_results)
+    toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
     opts = run_opts(root_dir, work_dir)
 
     Enum.reduce_while(toolchain.steps, nil, fn toolchain_step, _ ->
@@ -93,5 +94,13 @@ defmodule MBS.Toolchain do
       end)
 
     [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
+  end
+
+  defp toolchain_opts_env_subs(toolchain_opts, env) do
+    Enum.map(toolchain_opts, fn toolchain_opt ->
+      Enum.reduce(env, toolchain_opt, fn {env_name, env_value}, toolchain_opt ->
+        String.replace(toolchain_opt, "${#{env_name}}", env_value)
+      end)
+    end)
   end
 end

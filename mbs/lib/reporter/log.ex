@@ -12,11 +12,7 @@ defimpl Collectable, for: MBS.CLI.Reporter.Log do
       _, {:cont, log_message} ->
         log_message
         |> String.split(~r/\R/)
-        |> Enum.each(fn log_line ->
-          report_id = IO.ANSI.format([:yellow, job_id], true)
-          report_status = Reporter.Status.log()
-          Reporter.job_report(reporter, report_id, report_status, log_line, nil)
-        end)
+        |> Enum.each(&Reporter.job_report(reporter, job_id, Reporter.Status.log(), &1, nil))
 
         original
 

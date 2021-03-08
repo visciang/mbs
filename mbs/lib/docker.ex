@@ -3,6 +3,7 @@ defmodule MBS.Docker do
 
   alias MBS.CLI.Reporter
   alias MBS.Utils
+  require MBS.CLI.Reporter.Status
 
   @cmd_arg_dind ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
 
@@ -30,6 +31,10 @@ defmodule MBS.Docker do
     cmd_args = ["image", "build", "--rm", "-t", "#{repository}:#{tag}", "-f", dockerfile, "."]
     cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
 
+    if logs_enabled do
+      Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
+    end
+
     case System.cmd("docker", cmd_args, cd: dir, stderr_to_stdout: true, into: cmd_into) do
       {_, 0} -> :ok
       {res, _} -> {:error, res}
@@ -51,6 +56,10 @@ defmodule MBS.Docker do
   def image_run(repository, tag, opts, env, command, reporter, job_id, logs_enabled) do
     cmd_args = ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"] ++ command
     cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
+
+    if logs_enabled do
+      Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
+    end
 
     case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
       {_, 0} ->
