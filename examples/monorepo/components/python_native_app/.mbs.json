@@ -1,7 +1,6 @@
-
-    {
-      "id": "python_native_app",
-      "component": {
+{
+    "id": "python_native_app",
+    "component": {
         "toolchain": "python-toolchain",
         "toolchain_opts": ["--type", "zipapp"],
         "files": [
@@ -12,8 +11,7 @@
             "python_native_app.pyz"
         ],
         "dependencies": [
-          "python_library"
+            "python_library"
         ]
-      }
     }
-  
+}

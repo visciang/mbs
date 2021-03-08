@@ -21,6 +21,14 @@ args()
         --type)
             shift;
             TYPE=$1
+
+            case $TYPE in
+                wheel|zipapp)
+                    ;;
+                *)
+                    echo "Unknown build type: $TYPE"
+                    exit 1
+            esac
             ;;
         --)
             shift
@@ -43,10 +51,6 @@ case $1 in
                 pip install -r requirements.txt --upgrade --target ./$MBS_ID/
                 rm -rf ./$MBS_ID/*.dist-info
                 python -m zipapp $MBS_ID -p "/usr/bin/env python"
-                ;;
-            *)
-                echo "Unknown build type: $TYPE"
-                exit 1
                 ;;
         esac
         ;;
