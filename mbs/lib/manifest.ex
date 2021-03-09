@@ -21,7 +21,7 @@ defmodule MBS.Manifest do
   .mbs.json manifest
   """
 
-  alias MBS.Checksum
+  alias MBS.{Checksum, Utils}
   alias MBS.Manifest.{Component, Target, Toolchain, Validator}
 
   @manifest_filename ".mbs.json"
@@ -30,12 +30,25 @@ defmodule MBS.Manifest do
     "**/#{@manifest_filename}"
     |> Path.wildcard(match_dot: true)
     |> Enum.map(fn manifest_path ->
-      Jason.decode!(File.read!(manifest_path))
+      decode(manifest_path)
       |> add_defaults(manifest_path)
     end)
     |> Validator.validate()
     |> Enum.map(&to_struct(&1))
     |> add_toolchain_data()
+  end
+
+  defp decode(manifest_path) do
+    manifest_path
+    |> File.read!()
+    |> Jason.decode()
+    |> case do
+      {:ok, conf} ->
+        conf
+
+      {:error, reason} ->
+        Utils.halt("Error parsing #{manifest_path}\n  #{Jason.DecodeError.message(reason)}")
+    end
   end
 
   defp add_defaults(manifest, manifest_path) do
