@@ -17,7 +17,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
     manifests = Manifest.find_all()
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)
 
-    CLI.Command.run(%Command.Run{targets: [target_direct_dependencies]}, config, reporter)
+    CLI.Command.run(%Command.Run{targets: target_direct_dependencies}, config, reporter)
   end
 
   def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, reporter) do
@@ -49,7 +49,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   defp target_component_direct_dependencies(manifests, id) do
     case Enum.find(manifests, &(&1.id == id)) do
       %Manifest.Component{} = component ->
-        [component.toolchain | component.dependencies]
+        [component.toolchain.id | component.dependencies]
 
       %Manifest.Toolchain{} ->
         Utils.halt("Bad target, the target should by a component con a toolchain")
