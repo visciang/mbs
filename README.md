@@ -8,68 +8,64 @@ Docker **containerization** technology is used both to run `mbs` and to define y
 
 With MBS you can easly define the toolchains to build the different type of software components in you mono-repo and express the **dependency graph** among them, to consistently build only what's really changed (**checksum** based) and **cache** the results. This will give you highly **parallelized** and fast builds for free that you can consistenly run on your dev machine (exactly like your CI runner) without any need of specific software installed but only docker and your mono-repo.
 
+The user expire we aim to is to give you a (meta) build system that let you properly work in a mono-repo that you feels/develop like a modular monolith, but is built and deployed like a ~~micro~~ service oriented solution.
+
+TODO explain that:
 The system scales well, but:
 ... vertical build scalability (maybe evaluate orizontal scalability later on, later, later)
 ... the git repo should fit in the dev machine
 
-## Development
-
-Development should aim to correctness, simplicity, sensible defaults and "small" codebase (with very few dependencies).
-
-### Bootstrap / Build
-
-Requirements: `docker`
-
-The `ci.sh` script builds two docker images (`mbs:slim`, `mbs:full`).
-These images can be used to run `mbs` on any system with docker support.
-
-A convenient alias can be defined to use `mbs` as a native CLI application.
-
-```bash
-alias mbs="docker run --init --rm -ti -v /var/run/docker.sock:/var/run/docker.sock -v $PWD:$PWD -w $PWD -e MBS_ROOT=$PWD mbs:full"
-```
-
-or better use a wrap script like the `mbs.sh` one in this reposository.
-
 ### Terminology
-- Toolchain: defines your "build" recipes, standardized and parametrizable.
-- Component: a sofware component, a piece of software with well defined functionalities and boundaries that can be build to a target artifact.
+- **Toolchain**: defines your "build" recipes, standardized and parameterizable.
+- **Component**: a sofware component, a piece of software with well defined functionalities and boundaries that can be build to a target artifact (via a toolchain).
+
+In other words we can think about *toolchains* as "functions" that turns *components* into artifacts. If you think about it, also *toolchains* are components, in fact there's a special "bootstrapping" *toolchain*, docker, that is able to turn a *toolchain component* into a toolchain (artifact).
+MBS in a "high order function" that you feed with your mono-repo (a set of components and toolchain components) and gives you back the artifacts of your components built with your toolchain built with docker...
+
+Later on, we will see how `mbs` "builds" `mbs`, as an example of these concepts.
 
 ### Motivation
-- Soon or later most medium size organization reach the point where they have to standardize / normalize the CI/CD workflow across product, teams etc.
-- a way to work consistently in a non-silos base organization
-- making the Dev (and Ops) life easier / deterministic
-- toolchains as part of the deps graph
+
+Soon or later most medium size organization reach the point where they have to **standardize / normalize the CI/CD workflow** across products, teams etc.
+
+Someone goes to the "million multi-repository jungle", while others to the single mono-repo. It's a matter of trade offs, considering the projects organization, teams, products, silos, people locations / offices, etc.
+In general, no matter if you go for a single mono-repo or few projects oriented mono-repo, you need the glue (a standardized one) to keep things sorted and managable, to make the dev (and ops) life easier / deterministic.
 
 ### Use case
-- monorepo
-- feets well with domain oriented design
-- feels like a modular monolith, build and deploy like a ~~micro~~ service oriented solution
-- a warn on correctly design dependencies
+
+As explained above, `mbs` is mostly targeted at mono-repository, and if you landed here I think you know what I'm talking about (more info at [awesome-monorepo](https://github.com/korfuri/awesome-monorepo)).
+
+It naturally feets well with domain / component oriented design.
+
+Remeber that, like every tool, `mbs` / mono-repos / etc. are you patterns and guidelines, not a silver buller, and should not be misused otherwise you will shoot that silver bullet in your feet. So is essential to correclty design modules / components, their boundaries / what (business) logic we put into then and the dependecy we introduce beetween them.
 
 ### A bit of history
 
-Extra reference to monorepo or other similar tools/solutions
-
-- cmake / ninja / doit / baur / please / hearthly / gitlab / "pipelines"
+TODO:
+extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / baur / please / hearthly / gitlab / "pipelines in general"
 
 ## Getting Started
 
-A quick tour based on the example/
+TODO: a quick tour based on the example/
 
-A word about building `mbs` in `mbs`
+TODO: A word about building `mbs` in `mbs`
 
 ## Development reference
 
 ## CLI interface
 
-### command
+The information below are available via `mbs --help` or `mbs <COMMAND> --help`.
 
-### debug
+### Commands
 
-LOG_LEVEL="debug"
+TODO: list of commands
+
+### Debug
+
+To turn on debug logs you can pass the `LOG_LEVEL` environment variable to `mbs`. For example: `LOG_LEVEL="debug"`
 
 ### Global configuration
+
 `.mbs-config.json`
 
 ```js
@@ -78,7 +74,7 @@ LOG_LEVEL="debug"
     "parallelism": 16,
     // cache
     "cache": {
-        // where to store the file artifacts cache
+        // where to store the file artifacts cache (relative path to the repository root)
         "dir": ".mbs-cache"
     },
     // timeout: [optional] components build global timeout sec (default: infinity)
@@ -146,3 +142,28 @@ LOG_LEVEL="debug"
     }
 }
 ```
+
+## Development
+
+Development should aim to correctness, simplicity, sensible defaults and "small" codebase (with very few dependencies).
+
+### Bootstrap / Build
+
+Requirements: `docker`
+
+The `ci.sh` script builds two docker images (`mbs:slim`, `mbs:full`).
+These images can be used to run `mbs` on any system with docker support.
+
+A convenient alias can be defined to use `mbs` as a native CLI application. Pay attention to the $PWD in the alias, it will use the cwd from within you issue the `mbs` aliased command. So it won't work if don't issue it from the repo root directory.
+
+```bash
+alias mbs="\
+    docker run --init --rm -ti \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        -v $PWD:$PWD -w $PWD \
+        -e MBS_ROOT=$PWD \
+        mbs:full
+"
+```
+
+So better to use a wrapper script like [mbs.sh](./mbs.sh) in this reposository, the script should be include and committed in your repository. The script can also be "sourced": `source mbs.sh`.
