@@ -1,5 +1,8 @@
 #!/bin/fish
 
+set LOG_LEVEL info
+set LOG_COLOR true
+
 set BASEDIR (dirname "$0")
 set ABS_BASEDIR (realpath $BASEDIR)
 

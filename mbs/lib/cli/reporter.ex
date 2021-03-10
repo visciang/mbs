@@ -69,18 +69,12 @@ defmodule MBS.CLI.Reporter do
 
     job_id =
       if status == Status.log() do
-        IO.ANSI.format([:yellow, job_id], true)
+        IO.ANSI.format([:yellow, job_id])
       else
         job_id
       end
 
-    puts(
-      IO.ANSI.format(
-        [status_icon, " - ", :bright, job_id, :normal, "  ", duration, " ", description],
-        true
-      ),
-      state
-    )
+    puts(IO.ANSI.format([status_icon, " - ", :bright, job_id, :normal, "  ", duration, " ", description]), state)
 
     if status_info, do: IO.puts("  - #{status_info}")
 
@@ -98,9 +92,9 @@ defmodule MBS.CLI.Reporter do
 
     log_message =
       case reason do
-        :ok -> IO.ANSI.format([:green, "Successfully completed"], true)
-        :error -> IO.ANSI.format([:red, "Failed"], true)
-        :timeout -> IO.ANSI.format([:red, "Timeout"], true)
+        :ok -> IO.ANSI.format([:green, "Successfully completed"])
+        :error -> IO.ANSI.format([:red, "Failed"])
+        :timeout -> IO.ANSI.format([:red, "Timeout"])
       end
 
     duration = delta_time_string(end_time - state.start_time)
@@ -116,10 +110,10 @@ defmodule MBS.CLI.Reporter do
 
   defp status_icon_info(status) do
     case status do
-      Status.ok() -> {IO.ANSI.format([:green, "✔"], true), nil}
-      Status.error(reason) -> {IO.ANSI.format([:red, "✘"], true), reason}
+      Status.ok() -> {IO.ANSI.format([:green, "✔"]), nil}
+      Status.error(reason) -> {IO.ANSI.format([:red, "✘"]), reason}
       Status.uptodate() -> {"✔", nil}
-      Status.outdated() -> {IO.ANSI.format([:yellow, "!"], true), nil}
+      Status.outdated() -> {IO.ANSI.format([:yellow, "!"]), nil}
       Status.timeout() -> {"⏰", nil}
       Status.log() -> {".", nil}
     end

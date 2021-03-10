@@ -28,21 +28,17 @@ defmodule MBS.Manifest.Validator do
 
   defp validate_id(%{"id" => id, "dir" => dir}) do
     if id == nil do
-      error_message = IO.ANSI.format([:red, "Missing id field in #{dir}"], true)
+      error_message = IO.ANSI.format([:red, "Missing id field in #{dir}"])
       Utils.halt(error_message)
     end
 
     unless is_binary(id) do
-      error_message = IO.ANSI.format([:red, "Bad id type in #{dir}"], true)
+      error_message = IO.ANSI.format([:red, "Bad id type in #{dir}"])
       Utils.halt(error_message)
     end
 
     unless id =~ ~r/#{@name_regex}/ do
-      error_message =
-        IO.ANSI.format(
-          [:red, "Invalid id #{inspect(id)} in #{dir} (valid pattern is #{@name_regex})"],
-          true
-        )
+      error_message = IO.ANSI.format([:red, "Invalid id #{inspect(id)} in #{dir} (valid pattern is #{@name_regex})"])
 
       Utils.halt(error_message)
     end
@@ -50,7 +46,7 @@ defmodule MBS.Manifest.Validator do
 
   defp validate_timeout(%{"timeout" => timeout, "dir" => dir}) do
     unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
-      error_message = IO.ANSI.format([:red, "Invalid timeout field in #{dir}"], true)
+      error_message = IO.ANSI.format([:red, "Invalid timeout field in #{dir}"])
       Utils.halt(error_message)
     end
   end
@@ -59,12 +55,12 @@ defmodule MBS.Manifest.Validator do
 
   defp validate_type(%{"dir" => dir, "toolchain" => toolchain}) do
     unless is_map(toolchain) do
-      error_message = IO.ANSI.format([:red, "Bad toolchain type in #{dir}"], true)
+      error_message = IO.ANSI.format([:red, "Bad toolchain type in #{dir}"])
       Utils.halt(error_message)
     end
 
     unless is_binary(toolchain["dockerfile"]) do
-      error_message = IO.ANSI.format([:red, "Bad dockerfile type in #{dir}"], true)
+      error_message = IO.ANSI.format([:red, "Bad dockerfile type in #{dir}"])
       Utils.halt(error_message)
     end
 
@@ -74,12 +70,12 @@ defmodule MBS.Manifest.Validator do
 
   defp validate_type(%{"dir" => dir, "component" => component}) do
     unless is_map(component) do
-      error_message = IO.ANSI.format([:red, "Bad component type in #{dir}"], true)
+      error_message = IO.ANSI.format([:red, "Bad component type in #{dir}"])
       Utils.halt(error_message)
     end
 
     unless is_binary(component["toolchain"]) do
-      error_message = IO.ANSI.format([:red, "Bad toolchain type in #{dir}"], true)
+      error_message = IO.ANSI.format([:red, "Bad toolchain type in #{dir}"])
       Utils.halt(error_message)
     end
 
@@ -99,12 +95,12 @@ defmodule MBS.Manifest.Validator do
     elm = get_in(manifest, path)
 
     if elm == nil do
-      error_message = IO.ANSI.format([:red, "Missing #{inspect(path)} field in #{manifest_dir}"], true)
+      error_message = IO.ANSI.format([:red, "Missing #{inspect(path)} field in #{manifest_dir}"])
       Utils.halt(error_message)
     end
 
     unless is_list(elm) and Enum.all?(elm, &is_binary(&1)) do
-      error_message = IO.ANSI.format([:red, "Bad #{inspect(path)} type in #{manifest_dir}"], true)
+      error_message = IO.ANSI.format([:red, "Bad #{inspect(path)} type in #{manifest_dir}"])
       Utils.halt(error_message)
     end
   end
@@ -116,7 +112,7 @@ defmodule MBS.Manifest.Validator do
         |> Enum.group_by(& &1["id"])
         |> Enum.filter(fn {_name, group} -> length(group) > 1 end)
         |> Enum.map(fn {id, group} ->
-          [IO.ANSI.format([:red, "Duplicated id #{inspect(id)} in:\n"], true), Enum.map(group, &"- #{&1["dir"]}\n")]
+          [IO.ANSI.format([:red, "Duplicated id #{inspect(id)} in:\n"]), Enum.map(group, &"- #{&1["dir"]}\n")]
         end)
 
       Utils.halt(error_message)
@@ -135,11 +131,11 @@ defmodule MBS.Manifest.Validator do
       unknown_dependencies = MapSet.difference(MapSet.new(component["dependencies"] || []), ids)
 
       unless MapSet.size(unknown_dependencies) == 0 do
-        Utils.halt(IO.ANSI.format([:red, "Unknown dependencies #{inspect(unknown_dependencies)} in #{dir}"], true))
+        Utils.halt(IO.ANSI.format([:red, "Unknown dependencies #{inspect(unknown_dependencies)} in #{dir}"]))
       end
 
       unless MapSet.member?(toolchains_ids, component["toolchain"]) do
-        Utils.halt(IO.ANSI.format([:red, "Unknown toolchain #{inspect(component["toolchain"])} in #{dir}"], true))
+        Utils.halt(IO.ANSI.format([:red, "Unknown toolchain #{inspect(component["toolchain"])} in #{dir}"]))
       end
     end)
   end

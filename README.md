@@ -64,6 +64,13 @@ TODO: list of commands
 
 To turn on debug logs you can pass the `LOG_LEVEL` environment variable to `mbs`. For example: `LOG_LEVEL="debug"`
 
+### Environment variables configuration
+
+Environment variable that you can pass to `mbs`:
+
+- `LOG_LEVEL`: set log level. For exmaple `LOG_LEVEL="debug` to turn on debug logs.
+- `LOG_COLOR`: enable/disable color. For example `LOG_LEVEL="true"`, `LOG_LEVEL="false"`.
+
 ### Global configuration
 
 `.mbs-config.json`

@@ -32,7 +32,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
     |> Enum.with_index(1)
     |> Enum.each(fn {id, idx} ->
       guide = if idx == names_length, do: "└── ", else: "├── "
-      IO.puts(IO.ANSI.format([indent, guide, :bright, id], true))
+      IO.puts(IO.ANSI.format([indent, guide, :bright, id]))
 
       dependencies =
         case manifests_map[id] do

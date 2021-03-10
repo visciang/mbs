@@ -2,6 +2,9 @@
 
 set -e
 
+LOG_LEVEL=info
+LOG_COLOR=true
+
 BASEDIR=$(dirname "$0")
 ABS_BASEDIR=$(realpath $BASEDIR)
 

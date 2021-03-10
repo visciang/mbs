@@ -3,6 +3,7 @@ defmodule MBS do
   Multi Build System
   """
 
+  alias MBS.Config
   alias MBS.Utils
   alias MBS.CLI.{Args, Command, Reporter}
 
@@ -10,7 +11,7 @@ defmodule MBS do
   def main(args) do
     {:ok, reporter} = Reporter.start_link()
 
-    config = MBS.Config.load()
+    config = Config.load()
 
     workflow_status =
       args

@@ -25,7 +25,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   end
 
   defp print_ls(%Manifest.Component{} = component, true) do
-    IO.puts(IO.ANSI.format([:bright, "#{component.id}", :normal, ":"], true))
+    IO.puts(IO.ANSI.format([:bright, "#{component.id}", :normal, ":"]))
     IO.puts("  dir:")
     IO.puts("    #{component.dir}")
     IO.puts("  timeout:")
@@ -54,7 +54,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   end
 
   defp print_ls(%Manifest.Toolchain{} = toolchain, true) do
-    IO.puts(IO.ANSI.format([:bright, "#{toolchain.id}", :normal, ":"], true))
+    IO.puts(IO.ANSI.format([:bright, "#{toolchain.id}", :normal, ":"]))
     IO.puts("  dir:")
     IO.puts("    #{toolchain.dir}")
     IO.puts("  timeout:")
@@ -70,6 +70,6 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   end
 
   defp print_ls(manifest, false) do
-    IO.puts(IO.ANSI.format([:bright, manifest.id], true))
+    IO.puts(IO.ANSI.format([:bright, manifest.id]))
   end
 end

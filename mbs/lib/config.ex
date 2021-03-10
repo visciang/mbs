@@ -98,25 +98,25 @@ defmodule MBS.Config do
     conf
   end
 
-  def validate_root_dir(root_dir) do
+  defp validate_root_dir(root_dir) do
     unless is_binary(root_dir) and File.exists?(root_dir) do
       Utils.halt("Bad root_dir in #{@config_file}")
     end
   end
 
-  def validate_parallelism(parallelism) do
+  defp validate_parallelism(parallelism) do
     unless is_integer(parallelism) and parallelism > 0 do
       Utils.halt("Bad parallelism in #{@config_file}")
     end
   end
 
-  def validate_cache(cache) do
+  defp validate_cache(cache) do
     unless is_binary(cache["dir"]) and Path.type(cache["dir"]) == :relative do
       Utils.halt("Bad cache dir in #{@config_file}. Should be a relative path (in the repo root)")
     end
   end
 
-  def validate_timeout(timeout) do
+  defp validate_timeout(timeout) do
     unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
       Utils.halt("Bad timeout in #{@config_file}")
     end
