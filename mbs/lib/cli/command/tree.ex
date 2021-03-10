@@ -1,8 +1,18 @@
-defimpl MBS.CLI.Command, for: MBS.CLI.Args.Tree do
-  alias MBS.CLI.Args
+defmodule MBS.CLI.Command.Tree do
+  @moduledoc false
+  defstruct [:targets]
+
+  @type t :: %__MODULE__{
+          targets: [String.t()]
+        }
+end
+
+defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
+  alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest}
 
-  def run(%Args.Tree{targets: target_ids}, %Config.Data{}, _reporter) do
+  @spec run(CLI.Command.Tree.t(), Config.Data.t(), Reporter.t()) :: :ok
+  def run(%Command.Tree{targets: target_ids}, %Config.Data{}, _reporter) do
     manifests_map =
       Manifest.find_all()
       |> CLI.Utils.transitive_dependencies_closure(target_ids)

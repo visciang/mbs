@@ -3,48 +3,20 @@ defmodule MBS.CLI.Args do
   Cli arguments
   """
 
+  alias MBS.CLI.Command
   alias MBS.Utils
 
-  defmodule Version do
-    @moduledoc false
-    defstruct []
-  end
+  @type t ::
+          %Command.Graph{}
+          | %Command.Ls{}
+          | %Command.Outdated{}
+          | %Command.Release{}
+          | %Command.Run{}
+          | %Command.Shell{}
+          | %Command.Tree{}
+          | %Command.Version{}
 
-  defmodule Tree do
-    @moduledoc false
-    defstruct [:targets]
-  end
-
-  defmodule Ls do
-    @moduledoc false
-    defstruct [:verbose, :targets]
-  end
-
-  defmodule Graph do
-    @moduledoc false
-    defstruct [:targets, :output_svg_file]
-  end
-
-  defmodule Run do
-    @moduledoc false
-    defstruct [:targets, :logs]
-  end
-
-  defmodule Release do
-    @moduledoc false
-    defstruct [:targets, :tag, :output_dir]
-  end
-
-  defmodule Outdated do
-    @moduledoc false
-    defstruct []
-  end
-
-  defmodule Shell do
-    @moduledoc false
-    defstruct [:target, :docker_cmd]
-  end
-
+  @spec parse([String.t()]) :: t()
   def parse([]) do
     parse(["--help"])
   end
@@ -71,7 +43,7 @@ defmodule MBS.CLI.Args do
   end
 
   defp parse("version", _args) do
-    %Version{}
+    %Command.Version{}
   end
 
   defp parse("tree", args) do
@@ -90,7 +62,7 @@ defmodule MBS.CLI.Args do
       Utils.halt("", 0)
     end
 
-    %Tree{targets: targets}
+    %Command.Tree{targets: targets}
   end
 
   defp parse("ls", args) do
@@ -114,7 +86,7 @@ defmodule MBS.CLI.Args do
     end
 
     options = Keyword.merge(defaults, options)
-    %Ls{verbose: options[:verbose], targets: targets}
+    %Command.Ls{verbose: options[:verbose], targets: targets}
   end
 
   defp parse("graph", args) do
@@ -139,7 +111,7 @@ defmodule MBS.CLI.Args do
     end
 
     options = Keyword.merge(defaults, options)
-    %Graph{targets: targets, output_svg_file: options[:output_svg_file]}
+    %Command.Graph{targets: targets, output_svg_file: options[:output_svg_file]}
   end
 
   defp parse("run", args) do
@@ -159,7 +131,7 @@ defmodule MBS.CLI.Args do
       Utils.halt("", 0)
     end
 
-    %Run{targets: targets, logs: options[:logs]}
+    %Command.Run{targets: targets, logs: options[:logs]}
   end
 
   defp parse("release", args) do
@@ -189,7 +161,7 @@ defmodule MBS.CLI.Args do
 
     File.mkdir_p!(options[:output_dir])
 
-    %Release{targets: targets, tag: options[:tag], output_dir: options[:output_dir]}
+    %Command.Release{targets: targets, tag: options[:tag], output_dir: options[:output_dir]}
   end
 
   defp parse("outdated", args) do
@@ -208,7 +180,7 @@ defmodule MBS.CLI.Args do
       Utils.halt("", 0)
     end
 
-    %Outdated{}
+    %Command.Outdated{}
   end
 
   defp parse("shell", args) do
@@ -235,7 +207,7 @@ defmodule MBS.CLI.Args do
           Utils.halt("Expected exactly one shell target")
       end
 
-    %Shell{target: target, docker_cmd: options[:docker_cmd]}
+    %Command.Shell{target: target, docker_cmd: options[:docker_cmd]}
   end
 
   defp parse(cmd, _args) do

@@ -6,6 +6,7 @@ defmodule MBS do
   alias MBS.Utils
   alias MBS.CLI.{Args, Command, Reporter}
 
+  @spec main([String.t()]) :: :ok
   def main(args) do
     {:ok, reporter} = Reporter.start_link()
 
@@ -18,6 +19,8 @@ defmodule MBS do
       |> exit_status()
 
     Reporter.stop(reporter, workflow_status)
+
+    :ok
   end
 
   defp exit_status(workflow_status) do

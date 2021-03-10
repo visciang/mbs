@@ -3,6 +3,8 @@ defmodule MBS.CLI.Reporter.Status do
   Reporter job status
   """
 
+  @type t :: :ok | :uptodate | :outdated | :timeout | :log | {:error, term()}
+
   defmacro ok, do: :ok
   defmacro uptodate, do: :uptodate
   defmacro outdated, do: :outdated

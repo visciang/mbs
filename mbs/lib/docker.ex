@@ -7,6 +7,7 @@ defmodule MBS.Docker do
 
   @cmd_arg_dind ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
 
+  @spec image_id(String.t(), String.t()) :: nil | String.t()
   def image_id(repository, tag) do
     cmd_args = ["image", "ls", "-q", "#{repository}:#{tag}"]
 
@@ -23,10 +24,13 @@ defmodule MBS.Docker do
     end
   end
 
+  @spec image_exists(String.t(), String.t()) :: boolean()
   def image_exists(repository, tag) do
     image_id(repository, tag) != nil
   end
 
+  @spec image_build(String.t(), String.t(), Path.t(), String.t(), Reporter.t(), String.t(), boolean) ::
+          :ok | {:error, term()}
   def image_build(repository, tag, dir, dockerfile, reporter, job_id, logs_enabled) do
     cmd_args = ["image", "build", "--rm", "-t", "#{repository}:#{tag}", "-f", dockerfile, "."]
     cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
@@ -41,6 +45,7 @@ defmodule MBS.Docker do
     end
   end
 
+  @spec image_pull(String.t(), String.t()) :: :ok | {:error, term()}
   def image_pull(repository, tag) do
     cmd_args = ["image", "pull", "#{repository}:#{tag}"]
 
@@ -53,6 +58,16 @@ defmodule MBS.Docker do
     end
   end
 
+  @spec image_run(
+          String.t(),
+          String.t(),
+          [String.t()],
+          [{String.t(), String.t()}],
+          [String.t()],
+          Reporter.t(),
+          String.t(),
+          boolean()
+        ) :: :ok | {:error, {term(), pos_integer()}}
   def image_run(repository, tag, opts, env, command, reporter, job_id, logs_enabled) do
     cmd_args = ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"] ++ command
     cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
@@ -70,6 +85,7 @@ defmodule MBS.Docker do
     end
   end
 
+  @spec image_run_cmd(String.t(), String.t(), [String.t()], [{String.t(), String.t()}]) :: String.t()
   def image_run_cmd(repository, tag, opts, env) do
     (["docker", "run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"])
     |> Enum.join(" ")

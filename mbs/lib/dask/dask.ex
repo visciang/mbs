@@ -11,8 +11,10 @@ defmodule Dask do
   alias Dask.Job
   alias Dask.Limiter
 
-  @type t :: %M{jobs: %{Job.id() => Job.t()}}
   defstruct [:jobs]
+  @type t :: %M{jobs: %{Job.id() => Job.t()}}
+
+  @type await_result :: :ok | :error | :timeout
 
   def start_job_id, do: :__start_job__
   def end_job_id, do: :__end_job__
@@ -60,7 +62,7 @@ defmodule Dask do
     exec_async_workflow(graph, end_job, max_concurrency)
   end
 
-  @spec await(Exec.t(), timeout()) :: :ok | :error | :timeout
+  @spec await(Exec.t(), timeout()) :: await_result()
   def await(%Exec{graph: graph, task: workflow_task}, timeout \\ :infinity) do
     res =
       case Task.yield(workflow_task, timeout) || Task.shutdown(workflow_task) do

@@ -1,8 +1,19 @@
-defimpl MBS.CLI.Command, for: MBS.CLI.Args.Run do
-  alias MBS.CLI.Args
+defmodule MBS.CLI.Command.Run do
+  @moduledoc false
+  defstruct [:targets, :logs]
+
+  @type t :: %__MODULE__{
+          targets: [String.t()],
+          logs: boolean()
+        }
+end
+
+defimpl MBS.CLI.Command, for: MBS.CLI.Command.Run do
+  alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
-  def run(%Args.Run{targets: target_ids, logs: logs_enabled}, %Config.Data{} = config, reporter) do
+  @spec run(Command.Run.t(), Config.Data.t(), Reporter.t()) :: Dask.await_result()
+  def run(%Command.Run{targets: target_ids, logs: logs_enabled}, %Config.Data{} = config, reporter) do
     dask =
       Manifest.find_all()
       |> CLI.Utils.transitive_dependencies_closure(target_ids)

@@ -1,15 +1,26 @@
-defimpl MBS.CLI.Command, for: MBS.CLI.Args.Shell do
-  alias MBS.CLI.{Args, Reporter}
+defmodule MBS.CLI.Command.Shell do
+  @moduledoc false
+  defstruct [:target, :docker_cmd]
+
+  @type t :: %__MODULE__{
+          target: String.t(),
+          docker_cmd: nil | String.t()
+        }
+end
+
+defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
+  alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
-  def run(%Args.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config, reporter) do
+  @spec run(Command.Shell.t(), Config.Data.t(), Reporter.t()) :: Dask.await_result()
+  def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config, reporter) do
     manifests = Manifest.find_all()
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)
 
-    CLI.Command.run(%Args.Run{targets: [target_direct_dependencies]}, config, reporter)
+    CLI.Command.run(%Command.Run{targets: [target_direct_dependencies]}, config, reporter)
   end
 
-  def run(%Args.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, reporter) do
+  def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, reporter) do
     Reporter.mute(reporter)
 
     manifests = Manifest.find_all()

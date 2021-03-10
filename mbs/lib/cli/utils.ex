@@ -3,9 +3,11 @@ defmodule MBS.CLI.Utils do
 
   alias MBS.Manifest
 
+  @spec filter_manifest_by_id(String.t(), [String.t()]) :: boolean()
   def filter_manifest_by_id(_id, []), do: true
   def filter_manifest_by_id(id, target_ids), do: id in target_ids
 
+  @spec transitive_dependencies_closure([Manifest.t()], [String.t()]) :: [Manifest.t()]
   def transitive_dependencies_closure(manifests, []), do: manifests
 
   def transitive_dependencies_closure(manifests, target_ids) do

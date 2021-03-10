@@ -2,18 +2,44 @@ defmodule MBS.Manifest.Component do
   @moduledoc false
 
   defstruct [:id, :dir, :timeout, :toolchain, :toolchain_opts, :files, :targets, :dependencies]
+
+  @type t :: %__MODULE__{
+          id: String.t(),
+          dir: Path.t(),
+          timeout: timeout(),
+          toolchain: MBS.Manifest.Toolchain.t(),
+          toolchain_opts: [String.t()],
+          files: nonempty_list(String.t()),
+          targets: nonempty_list(String.t()),
+          dependencies: [String.t()]
+        }
 end
 
 defmodule MBS.Manifest.Toolchain do
   @moduledoc false
 
   defstruct [:id, :dir, :timeout, :checksum, :dockerfile, :files, :steps]
+
+  @type t :: %__MODULE__{
+          id: String.t(),
+          dir: Path.t(),
+          timeout: timeout(),
+          checksum: String.t(),
+          dockerfile: String.t(),
+          files: nonempty_list(String.t()),
+          steps: nonempty_list(String.t())
+        }
 end
 
 defmodule MBS.Manifest.Target do
   @moduledoc false
 
   defstruct [:type, :target]
+
+  @type t :: %__MODULE__{
+          type: :docker | :file,
+          target: String.t()
+        }
 end
 
 defmodule MBS.Manifest do
@@ -24,8 +50,11 @@ defmodule MBS.Manifest do
   alias MBS.{Checksum, Utils}
   alias MBS.Manifest.{Component, Target, Toolchain, Validator}
 
+  @type t :: Component.t() | Toolchain.t()
+
   @manifest_filename ".mbs.json"
 
+  @spec find_all :: [t()]
   def find_all do
     "**/#{@manifest_filename}"
     |> Path.wildcard(match_dot: true)
@@ -108,13 +137,13 @@ defmodule MBS.Manifest do
     targets
     |> Enum.map(fn
       "docker://" <> target ->
-        %Target{type: "docker", target: target}
+        %Target{type: :docker, target: target}
 
       "file://" <> target ->
-        %Target{type: "file", target: Path.join(dir, target)}
+        %Target{type: :file, target: Path.join(dir, target)}
 
       target ->
-        %Target{type: "file", target: Path.join(dir, target)}
+        %Target{type: :file, target: Path.join(dir, target)}
     end)
     |> Enum.uniq()
   end

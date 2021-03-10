@@ -1,8 +1,16 @@
-defimpl MBS.CLI.Command, for: MBS.CLI.Args.Outdated do
-  alias MBS.CLI.Args
+defmodule MBS.CLI.Command.Outdated do
+  @moduledoc false
+  defstruct []
+
+  @type t :: %__MODULE__{}
+end
+
+defimpl MBS.CLI.Command, for: MBS.CLI.Command.Outdated do
+  alias MBS.CLI.{Command, Reporter}
   alias MBS.{Config, Manifest, Utils, Workflow}
 
-  def run(%Args.Outdated{}, %Config.Data{} = config, reporter) do
+  @spec run(Command.Outdated.t(), Config.Data.t(), Reporter.t()) :: Dask.await_result()
+  def run(%Command.Outdated{}, %Config.Data{} = config, reporter) do
     dask =
       Manifest.find_all()
       |> Workflow.workflow(config, reporter, &Workflow.Job.outdated_fun/3)

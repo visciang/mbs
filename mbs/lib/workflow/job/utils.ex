@@ -8,6 +8,7 @@ defmodule MBS.Workflow.Job.Utils do
   alias MBS.Manifest.Target
   alias MBS.Workflow.Job.JobFunResult
 
+  @spec checksum([Path.t()], Path.t(), Dask.Job.upstream_results()) :: String.t()
   def checksum(files, component_dir, upstream_results) do
     files_checksum = Checksum.files_checksum(files, component_dir)
 
@@ -21,20 +22,22 @@ defmodule MBS.Workflow.Job.Utils do
     |> Checksum.checksum("")
   end
 
+  @spec filter_upstream_results(Dask.Job.upstream_results(), [String.t()]) :: Dask.Job.upstream_results()
   def filter_upstream_results(upstream_results, job_dependencies) do
     Enum.filter(upstream_results, fn {dependency_name, _} -> dependency_name in job_dependencies end)
     |> Map.new()
   end
 
+  @spec assert_targets([String.t()], String.t()) :: :ok | {:error, String.t()}
   def assert_targets([], _checksum), do: :ok
 
   def assert_targets(targets, checksum) do
     missing_targets =
       Enum.filter(targets, fn
-        %Target{type: "file", target: target} ->
+        %Target{type: :file, target: target} ->
           not File.exists?(target)
 
-        %Target{type: "docker", target: target} ->
+        %Target{type: :docker, target: target} ->
           not Docker.image_exists(target, checksum)
       end)
 

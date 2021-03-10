@@ -4,6 +4,11 @@ defmodule MBS.Workflow.Job.JobFunResult do
   """
 
   defstruct [:checksum, :targets]
+
+  @type t :: %__MODULE__{
+          checksum: String.t(),
+          targets: [String.t()]
+        }
 end
 
 defmodule MBS.Workflow.Job do
@@ -18,6 +23,8 @@ defmodule MBS.Workflow.Job do
 
   require Reporter.Status
 
+  @spec run_fun(Reporter.t(), Config.Data.t(), Manifest.t(), boolean()) ::
+          (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
   def run_fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain, logs_enabled) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
@@ -102,6 +109,7 @@ defmodule MBS.Workflow.Job do
     end
   end
 
+  @spec run_fun_on_exit(String.t(), Dask.Job.job_exec_result(), non_neg_integer(), Reporter.t()) :: :ok
   def run_fun_on_exit(job_id, job_exec_result, elapsed_time_ms, reporter) do
     case job_exec_result do
       :job_timeout ->
@@ -112,6 +120,8 @@ defmodule MBS.Workflow.Job do
     end
   end
 
+  @spec release_fun(Reporter.t(), Config.Data.t(), Manifest.t(), Path.t()) ::
+          (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
   def release_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _output_dir) do
     fn _job_id, _upstream_results ->
       %Job.JobFunResult{checksum: checksum, targets: []}
@@ -160,6 +170,8 @@ defmodule MBS.Workflow.Job do
     end
   end
 
+  @spec shell_fun(Reporter.t(), Config.Data.t(), Manifest.t(), Path.t()) ::
+          (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
   def shell_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _shell_target) do
     fn _job_id, _upstream_results ->
       %Job.JobFunResult{checksum: checksum, targets: []}
@@ -192,6 +204,8 @@ defmodule MBS.Workflow.Job do
     end
   end
 
+  @spec outdated_fun(Reporter.t(), Config.Data.t(), Manifest.t()) ::
+          (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
   def outdated_fun(reporter, %Config.Data{} = _config, %Manifest.Toolchain{id: id, checksum: checksum}) do
     fn job_id, _upstream_results ->
       unless Job.Cache.hit_toolchain(id, checksum) do

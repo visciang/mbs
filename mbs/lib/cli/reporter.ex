@@ -2,38 +2,55 @@ defmodule MBS.CLI.Reporter do
   @moduledoc """
   CLI information reporter
   """
-  @time_unit :millisecond
-  @time_unit_scale 0.001
 
   use GenServer
 
   alias MBS.CLI.Reporter.{Report, Status}
   require MBS.CLI.Reporter.Status
 
-  defstruct [:reporter, :job_id]
+  @type t() :: GenServer.server()
+
+  @time_unit :millisecond
+  @time_unit_scale 0.001
 
   defmodule State do
     @moduledoc false
 
     defstruct [:start_time, :muted]
+
+    @type t :: %__MODULE__{
+            start_time: integer(),
+            muted: boolean()
+          }
   end
 
+  @spec start_link :: {:ok, t()}
   def start_link do
-    GenServer.start_link(__MODULE__, start_time: time())
+    {:ok, pid} = GenServer.start_link(__MODULE__, start_time: time())
+    {:ok, pid}
   end
 
+  @spec stop(t(), Status.t()) :: :ok
   def stop(pid, workflow_status) do
     GenServer.call(pid, {:stop, workflow_status})
   end
 
+  @spec mute(t()) :: :ok
   def mute(pid) do
-    GenServer.call(pid, :mute)
+    GenServer.call(pid, {:mute, true})
   end
 
+  @spec unmute(t()) :: :ok
+  def unmute(pid) do
+    GenServer.call(pid, {:mute, false})
+  end
+
+  @spec job_report(t(), String.t(), Status.t(), nil | String.t(), nil | non_neg_integer()) :: :ok
   def job_report(pid, job_id, status, description, elapsed) do
     GenServer.cast(pid, %Report{job_id: job_id, status: status, description: description, elapsed: elapsed})
   end
 
+  @spec time :: integer()
   def time do
     System.monotonic_time(@time_unit)
   end
@@ -71,8 +88,8 @@ defmodule MBS.CLI.Reporter do
   end
 
   @impl true
-  def handle_call(:mute, _from, %State{} = state) do
-    {:reply, :ok, put_in(state.muted, true)}
+  def handle_call({:mute, state}, _from, %State{} = state) do
+    {:reply, :ok, put_in(state.muted, state)}
   end
 
   @impl true

@@ -1,8 +1,19 @@
-defimpl MBS.CLI.Command, for: MBS.CLI.Args.Ls do
-  alias MBS.CLI.{Args, Utils}
+defmodule MBS.CLI.Command.Ls do
+  @moduledoc false
+  defstruct [:verbose, :targets]
+
+  @type t :: %__MODULE__{
+          verbose: boolean(),
+          targets: [String.t()]
+        }
+end
+
+defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
+  alias MBS.CLI.{Command, Reporter, Utils}
   alias MBS.{Config, Manifest}
 
-  def run(%Args.Ls{verbose: verbose, targets: target_ids}, %Config.Data{}, _reporter) do
+  @spec run(Command.Ls.t(), Config.Data.t(), Reporter.t()) :: :ok
+  def run(%Command.Ls{verbose: verbose, targets: target_ids}, %Config.Data{}, _reporter) do
     IO.puts("")
 
     Manifest.find_all()
@@ -24,10 +35,10 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Args.Ls do
     IO.puts("  targets:")
 
     Enum.each(component.targets, fn
-      %Manifest.Target{type: "file", target: target} ->
+      %Manifest.Target{type: :file, target: target} ->
         IO.puts("    - #{target}")
 
-      %Manifest.Target{type: "docker", target: target} ->
+      %Manifest.Target{type: :docker, target: target} ->
         IO.puts("    - docker://#{target}")
     end)
 

@@ -1,8 +1,20 @@
-defimpl MBS.CLI.Command, for: MBS.CLI.Args.Release do
-  alias MBS.CLI.Args
+defmodule MBS.CLI.Command.Release do
+  @moduledoc false
+  defstruct [:targets, :tag, :output_dir]
+
+  @type t :: %__MODULE__{
+          targets: [String.t()],
+          tag: String.t(),
+          output_dir: Path.t()
+        }
+end
+
+defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
+  alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
-  def run(%Args.Release{targets: target_ids, output_dir: output_dir}, %Config.Data{} = config, reporter) do
+  @spec run(Command.Release.t(), Config.Data.t(), Reporter.t()) :: Dask.await_result()
+  def run(%Command.Release{targets: target_ids, output_dir: output_dir}, %Config.Data{} = config, reporter) do
     dask =
       Manifest.find_all()
       |> CLI.Utils.transitive_dependencies_closure(target_ids)

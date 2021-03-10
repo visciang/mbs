@@ -4,9 +4,20 @@ defmodule MBS.Config.Data do
   defmodule Cache do
     @moduledoc false
     defstruct [:dir]
+
+    @type t :: %__MODULE__{
+            dir: Path.t()
+          }
   end
 
   defstruct [:root_dir, :parallelism, :cache, :timeout]
+
+  @type t :: %__MODULE__{
+          root_dir: Path.t(),
+          parallelism: non_neg_integer(),
+          cache: %Cache{},
+          timeout: timeout()
+        }
 end
 
 defmodule MBS.Config do
@@ -20,6 +31,7 @@ defmodule MBS.Config do
 
   @config_file ".mbs-config.json"
 
+  @spec load :: Data.t()
   def load do
     @config_file
     |> File.read()

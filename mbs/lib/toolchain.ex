@@ -9,10 +9,12 @@ defmodule MBS.Toolchain do
 
   require Reporter.Status
 
+  @spec build(Manifest.Toolchain.t(), Reporter.t(), boolean()) :: :ok | {:error, term()}
   def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}, reporter, logs_enabled) do
     Docker.image_build(id, checksum, dir, dockerfile, reporter, "#{id}:build", logs_enabled)
   end
 
+  @spec shell_cmd(Manifest.Component.t(), String.t(), Path.t(), Path.t(), Dask.Job.upstream_results()) :: String.t()
   def shell_cmd(
         %Manifest.Component{dir: work_dir, toolchain: toolchain} = component,
         checksum,
@@ -26,6 +28,16 @@ defmodule MBS.Toolchain do
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
   end
 
+  @spec exec(
+          Manifest.Component.t(),
+          String.t(),
+          Path.t(),
+          Path.t(),
+          Dask.Job.upstream_results(),
+          String.t(),
+          Reporter.t(),
+          boolean()
+        ) :: :ok | {:error, term()}
   def exec(
         %Manifest.Component{dir: work_dir, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
         checksum,

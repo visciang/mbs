@@ -3,6 +3,7 @@ defmodule MBS.Checksum do
   Checksums functions
   """
 
+  @spec files_checksum([Path.t()], Path.t()) :: String.t()
   def files_checksum(files, relative_to_dir) do
     files
     |> Enum.sort()
@@ -10,6 +11,7 @@ defmodule MBS.Checksum do
     |> checksum("")
   end
 
+  @spec checksum(String.t() | Enumerable.t(), Path.t()) :: binary
   def checksum(data, filename) when is_binary(data) do
     :crypto.hash(:sha256, [filename, data])
     |> Base.encode32(padding: false)

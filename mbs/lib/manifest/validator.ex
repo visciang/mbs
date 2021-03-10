@@ -7,6 +7,7 @@ defmodule MBS.Manifest.Validator do
 
   @name_regex "^[a-zA-Z0-9_-]+$"
 
+  @spec validate([MBS.Manifest.t()]) :: [MBS.Manifest.t()]
   def validate(manifests) do
     validate_schema(manifests)
 

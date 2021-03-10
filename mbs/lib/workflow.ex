@@ -3,10 +3,18 @@ defmodule MBS.Workflow do
   Workflow DAG builder
   """
 
+  alias MBS.CLI.Reporter
   alias MBS.{Config, Manifest, Utils}
 
   require MBS.CLI.Reporter.Status
 
+  @spec workflow(
+          [Manifest.t()],
+          Config.Data.t(),
+          Reporter.t(),
+          (Reporter.t(), Config.Data.t(), Manifest.t() -> Dask.Job.fun()),
+          Dask.Job.on_exit()
+        ) :: Dask.t()
   def workflow(
         manifests,
         %Config.Data{timeout: global_timeout_sec} = config,
