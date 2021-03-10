@@ -2,31 +2,43 @@ defmodule MBS.Docker do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.Utils
   require MBS.CLI.Reporter.Status
 
   @cmd_arg_dind ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
 
-  @spec image_id(String.t(), String.t()) :: nil | String.t()
+  @spec image_id(String.t(), String.t()) :: {:ok, nil | String.t()} | {:error, term()}
   def image_id(repository, tag) do
     cmd_args = ["image", "ls", "-q", "#{repository}:#{tag}"]
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
       {"", 0} ->
-        nil
+        {:ok, nil}
 
       {res, 0} ->
-        String.trim(res)
+        {:ok, String.trim(res)}
 
       {res, _} ->
-        error_message = IO.ANSI.format([:red, "docker cmd #{inspect(cmd_args)} failed\n#{res}"], true)
-        Utils.halt(error_message)
+        {:error, res}
     end
   end
 
   @spec image_exists(String.t(), String.t()) :: boolean()
   def image_exists(repository, tag) do
     image_id(repository, tag) != nil
+  end
+
+  @spec image_save(String.t(), String.t(), Path.t()) :: :ok | {:error, term()}
+  def image_save(repository, tag, out_dir) do
+    cmd_args = ["image", "save", "#{repository}:#{tag}"]
+    image_file_path = Path.join(out_dir, "#{repository}.tar.gz")
+
+    case System.cmd("docker", cmd_args, stderr_to_stdout: true, into: File.stream!(image_file_path, [:compressed])) do
+      {_, 0} ->
+        :ok
+
+      {res, _} ->
+        {:error, res}
+    end
   end
 
   @spec image_build(String.t(), String.t(), Path.t(), String.t(), Reporter.t(), String.t(), boolean) ::
@@ -40,8 +52,11 @@ defmodule MBS.Docker do
     end
 
     case System.cmd("docker", cmd_args, cd: dir, stderr_to_stdout: true, into: cmd_into) do
-      {_, 0} -> :ok
-      {res, _} -> {:error, res}
+      {_, 0} ->
+        :ok
+
+      {res, _} ->
+        {:error, res}
     end
   end
 

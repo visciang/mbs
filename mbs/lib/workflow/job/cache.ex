@@ -85,13 +85,17 @@ defmodule MBS.Workflow.Job.Cache do
         end
 
       %Target{type: :docker, target: target}, _ ->
-        if Docker.image_exists(target, checksum) do
-          docker_manifest = %{repository: target, tag: checksum, image_id: Docker.image_id(target, checksum)}
-          File.write!(Path.join(output_dir, "#{target}.json"), Jason.encode!(docker_manifest))
-
+        with {:ok, image_id} when is_binary(image_id) <- Docker.image_id(target, checksum),
+             docker_manifest = %{repository: target, tag: checksum, image_id: image_id},
+             File.write!(Path.join(output_dir, "#{target}.json"), Jason.encode!(docker_manifest)),
+             :ok <- Docker.image_save(target, checksum, output_dir) do
           {:cont, :ok}
         else
-          {:halt, {:error, "Missing target docker image #{target}:#{checksum}. Have you run a build?"}}
+          {:ok, nil} ->
+            {:halt, {:error, "Missing target docker image #{target}:#{checksum}. Have you run a build?"}}
+
+          {:error, reason} ->
+            {:halt, {:error, reason}}
         end
     end)
   end
