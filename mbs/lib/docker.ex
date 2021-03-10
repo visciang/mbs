@@ -24,7 +24,13 @@ defmodule MBS.Docker do
 
   @spec image_exists(String.t(), String.t()) :: boolean()
   def image_exists(repository, tag) do
-    image_id(repository, tag) != nil
+    case image_id(repository, tag) do
+      {:ok, id} when is_binary(id) ->
+        true
+
+      _ ->
+        false
+    end
   end
 
   @spec image_save(String.t(), String.t(), Path.t()) :: :ok | {:error, term()}
