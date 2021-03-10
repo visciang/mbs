@@ -1,0 +1,46 @@
+execution:
+- docker-compose  support
+- podman / docker executor choice ?
+- System.cmd replacement (occhio agli zombi), ma serve se stacchiamo toolchain exec con docker?
+  --init anche su toolchain "docker run"?
+
+manifest:
+- .mbs-config.json sezione file_profiles
+- lookup .mbs-config.json from the current directory up (come asdf)
+- currently we apply a recursive glob discover of manifests, introduce a components manifest to explicitly list them (usefull also to add/remove a component from the run)
+- Config option use .gitignore to filter job.files
+
+misc
+- docker build --rm and intermediate container ... (docker rmi $(docker images -f "dangling=true" -q))
+- git://... dependencies
+
+cli
+- cache command (purge | size | info ... ?)
+- Job logs on files option?
+
+sandboxing:
+- Sandboxing execution (every buld should se only its file (the input one) and dependencies artifact)
+  no FS sharing with the host => no build tmp files left around, only the targets file should be extract and copied in the cache
+
+support / doc
+- Documentation
+- more examples
+  - C
+  - Golang
+  - Elixir
+  - Rust
+  - V
+- https://opencollective.com/
+
+cache:
+- custom containter cache dir?
+- possibility to cache a toolchain step (for example to cache deps)
+
+plugins
+  - remote cache (docker / files) => push only if --push flag provided
+  - HTTP
+  - AWS
+  - DOCKER
+
+DEV:
+- functional tests
