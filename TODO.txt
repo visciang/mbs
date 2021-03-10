@@ -26,6 +26,12 @@ support / doc
 - Documentation
 - more examples
   - Golang
+
+    go mod init go_native_binary
+    go build
+    ./go_native_binary
+
+
   - Elixir
   - Rust
   - V
