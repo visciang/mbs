@@ -1,9 +1,7 @@
-#!/bin/sh
+#!/bin/fish
 
-set -e
-
-BASEDIR=$(dirname "$0")
-ABS_BASEDIR=$(realpath $BASEDIR)
+set BASEDIR (dirname "$0")
+set ABS_BASEDIR (realpath $BASEDIR)
 
 alias mbs="\
     docker run --init --rm -ti \
@@ -13,6 +11,6 @@ alias mbs="\
     -e MBS_ROOT=$ABS_BASEDIR \
     mbs:full"
 
-if [ "$#" -ne 0 ]; then
-    mbs $@
-fi
+if [ (count $argv) != 0 ]
+    mbs $argv
+end
