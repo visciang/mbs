@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A **Meta Build System** to organizate / build / release/ deploy a large ~~micro~~ service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
+A **Meta Build System** to organizate / build / release / deploy a large ~~micro~~ service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
 Docker **containerization** technology is used both to run `mbs` and to define your own standardized toolchains to build your software components.
 
