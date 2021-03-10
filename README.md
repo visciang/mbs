@@ -46,7 +46,7 @@ extra reference to monorepo or other similar tools/solutions: cmake / ninja / do
 
 ## Getting Started
 
-To start playing with some toy examples, first build `mbs` (run `./ci.sh`, only requirement is docker) and then `source mbsh.sh` or `source mbs.fish` and play with mbs! For example run `mbs --help` and `mbs ls`, it will list also some examples included in the repository under `examples/monorepo/`.
+To start playing with some toy examples, first build `mbs` (run `./ci.sh`, only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`! For example run `mbs --help` and `mbs ls`, it will list also some examples included in the repository under `examples/monorepo/`.
 
 TODO: a quick tour based on the example/
 TODO: A word about building `mbs` in `mbs`
