@@ -1,0 +1,16 @@
+{
+    "id": "c-native-binary",
+    "component": {
+        "toolchain": "cmake-toolchain",
+        "files": [
+            "CMakeLists.txt",
+            "main.c"
+        ],
+        "targets": [
+            "build/c_native_binary"
+        ],
+        "dependencies": [
+            "c-shared-library"
+        ]
+    }
+}

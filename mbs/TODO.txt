@@ -25,7 +25,6 @@ sandboxing:
 support / doc
 - Documentation
 - more examples
-  - C
   - Golang
   - Elixir
   - Rust

@@ -1,0 +1,14 @@
+{
+    "id": "c-shared-library",
+    "component": {
+        "toolchain": "cmake-toolchain",
+        "files": [
+            "CMakeLists.txt",
+            "lib.{c,h}"
+        ],
+        "targets": [
+            "lib.h",
+            "build/lib_c_shared_library.so"
+        ]
+    }
+}
