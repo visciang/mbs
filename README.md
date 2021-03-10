@@ -26,7 +26,7 @@ Later on, we will see how `mbs` "builds" `mbs`, as an example of these concepts.
 
 ### Motivation
 
-Soon or later most medium size organization reach the point where they have to **standardize / normalize the CI/CD workflow** across products, teams etc.
+Soon or later most medium sized organization reach the point where they have to **standardize / normalize the CI/CD workflow** across products, teams etc.
 
 Someone goes to the "million multi-repository jungle" and internal artifact hell versioning / compatibility matrix, while others opt to a single mono-repo or few of them. It's a matter of trade offs, considering the projects organization, teams, products, silos, people locations / offices, etc.
 In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need the glue (a standardized one) to keep things sorted and managable, to make the dev (and ops) life easier / deterministic.
@@ -37,7 +37,7 @@ As explained above, `mbs` is mostly targeted at mono-repository, and if you land
 
 It naturally feets well with domain / component oriented design.
 
-Remeber that, like every tool, `mbs` / mono-repos / etc. are you patterns and guidelines, not a silver buller, and should not be misused otherwise you will shoot that silver bullet in your feet. So is essential to correclty design modules / components, their boundaries / what (business) logic we put into them and the dependecies we introduce beetween them.
+Remeber that, like every tool, `mbs` / mono-repos / etc. are just patterns and guidelines, not a silver buller, and should not be misused otherwise you will shoot that silver bullet in your feet. So is essential to correclty design modules / components, their boundaries / what (business) logic we put into them and the dependecies we introduce beetween them.
 
 ### A bit of history
 
