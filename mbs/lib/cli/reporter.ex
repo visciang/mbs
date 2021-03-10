@@ -82,8 +82,8 @@ defmodule MBS.CLI.Reporter do
   end
 
   @impl true
-  def handle_call({:mute, state}, _from, %State{} = state) do
-    {:reply, :ok, put_in(state.muted, state)}
+  def handle_call({:mute, status}, _from, %State{} = state) do
+    {:reply, :ok, put_in(state.muted, status)}
   end
 
   @impl true
