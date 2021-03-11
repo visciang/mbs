@@ -1,13 +1,12 @@
-
-  {
+{
     "id": "cmake-toolchain",
     "toolchain": {
-      "dockerfile": "Dockerfile",
-      "files": [
-          "build.sh"
-      ],
-      "steps": [
-        "build"
-      ]
+        "dockerfile": "Dockerfile",
+        "files": [
+            "build.sh"
+        ],
+        "steps": [
+            "build"
+        ]
     }
-  }
+}

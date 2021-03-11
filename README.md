@@ -51,7 +51,6 @@ To start playing with some toy examples, first build `mbs` (run `./ci.sh`, only 
 TODO: a quick tour based on the example/
 TODO: A word about building `mbs` in `mbs`
 
-## Development reference
 
 ## CLI interface
 
@@ -156,7 +155,78 @@ Environment variable that you can pass to `mbs`:
 }
 ```
 
-## Development
+## Toolchains development
+
+Every mbs toolchains is defined by a docker image (ref manifest field: `dockefile`) and package all the specific tooling for a particular job. A toolchain encode the recipe for building targets out of components in discrete steps (ref manifest field: `steps`).
+
+### Interface
+
+The toolchain interface is very simple and CLI oriented.
+
+Let's say we have a component:
+
+```js
+{
+    "id": "make_coffee",
+    "component": {
+        "toolchain": "cmake-toolchain",
+        "toolchain_opts": ["--param1", "a", "--switch2"],
+        "files": [
+            "CMakeLists.txt",
+            "main.c"
+        ],
+        "targets": [
+            "build/make_coffee"
+        ]
+    }
+}
+```
+
+that is build with the cmake toolchain:
+
+```js
+{
+    "id": "cmake-toolchain",
+    "toolchain": {
+        "dockerfile": "Dockerfile",
+        "files": [
+            "build.sh"
+        ],
+        "steps": [
+            "build",
+            "lint",
+            "test",
+            ...
+        ]
+    }
+}
+```
+
+When we `mbs run make_coffee`, `mbs` will apply the toolchain recipe to build the component (after building any upstream dependency, toolchain included, if needed).
+
+By abstraction, if we think the toolchain as an "executable binary", the build process will be:
+
+```sh
+cd monorepo/components/make_coffee
+cmake-toolchain "build" --param1 a --switch 2
+cmake-toolchain "lint" --param1 a --switch 2
+cmake-toolchain "test" --param1 a --switch 2
+...
+
+```
+
+And at the end it expect to find the component target `build/make_coffee`.
+
+### Environment variables
+
+A set of predefined environment variables are available in the toolchain run context:
+
+- `MBS_ID`: the component identifier (ref .mbs.json `id` field)
+- `MBS_CWD`: component current working directory
+- `MBS_CHECKSUM`: component checksum
+- `MBS_DEPS_<deps_name_normalized>`: one for every deps, the path to the directory where we can find the dependency targets. For example, give a dependency named `my-lib` we will have `MBS_DEPS_MY_LIB`.
+
+## MBS Development
 
 Development should aim to correctness, simplicity, sensible defaults and "small" codebase (with very few dependencies).
 
