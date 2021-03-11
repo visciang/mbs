@@ -53,7 +53,7 @@ defmodule MBS.Docker do
     cmd_args = ["image", "build", "--rm", "-t", "#{repository}:#{tag}", "-f", dockerfile, "."]
     cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
 
-    if logs_enabled do
+    if Logger.level() == :debug do
       Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
     end
 
@@ -93,7 +93,7 @@ defmodule MBS.Docker do
     cmd_args = ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"] ++ command
     cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
 
-    if logs_enabled do
+    if Logger.level() == :debug do
       Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
     end
 
