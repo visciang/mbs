@@ -4,7 +4,7 @@
         "toolchain": "go-toolchain",
         "toolchain_opts": ["--type", "lib"],
         "files": [
-            "lib.go",
+            "*.go",
             "go.mod"
         ],
         "targets": [
