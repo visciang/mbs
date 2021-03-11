@@ -1,0 +1,14 @@
+{
+    "id": "golib",
+    "component": {
+        "toolchain": "go-toolchain",
+        "toolchain_opts": ["--type", "lib"],
+        "files": [
+            "lib.go",
+            "go.mod"
+        ],
+        "targets": [
+            "golib.tgz"
+        ]
+    }
+}

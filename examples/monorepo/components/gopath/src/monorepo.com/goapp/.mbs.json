@@ -1,0 +1,17 @@
+{
+    "id": "goapp",
+    "component": {
+        "toolchain": "go-toolchain",
+        "toolchain_opts": ["--type", "app"],
+        "files": [
+            "main.go",
+            "go.mod"
+        ],
+        "targets": [
+            "goapp"
+        ],
+        "dependencies": [
+            "golib"
+        ]
+    }
+}
