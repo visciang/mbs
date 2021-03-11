@@ -25,9 +25,15 @@ mbs-*.tar
 # Temporary files for e.g. tests
 /tmp
 
-.plts/
 .mbs-cache/
 .mbs-releases/
-*/coveralls.json
+
+**/.elixir_ls
+**/.plts/
+coveralls.json
+
 mbs/mbs
+
+**/gopath/bin
+**/gopath/pkg
 examples/generated_monorepo
