@@ -26,6 +26,8 @@ support / doc
 - Documentation
 - more examples
   X Golang
+  - NodeJS / Deno
+  - Ruby
   - Elixir
   - Rust
   - V
