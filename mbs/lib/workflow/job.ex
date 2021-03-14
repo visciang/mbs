@@ -10,8 +10,9 @@ defmodule MBS.Workflow.Job do
 
   require Reporter.Status
 
-  @spec run_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), boolean()) ::
-          (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
+  @type job_fun :: (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
+
+  @spec run_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), boolean()) :: job_fun()
   def run_fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain, logs_enabled) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
@@ -43,7 +44,7 @@ defmodule MBS.Workflow.Job do
 
   def run_fun(
         reporter,
-        %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
+        %Config.Data{cache: %{dir: cache_dir}} = config,
         %Manifest.Component{
           id: id,
           dir: component_dir,
@@ -62,17 +63,7 @@ defmodule MBS.Workflow.Job do
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_targets(cache_dir, id, checksum, targets),
-             :ok <-
-               Toolchain.exec(
-                 component,
-                 checksum,
-                 root_dir,
-                 cache_dir,
-                 upstream_results,
-                 job_id,
-                 reporter,
-                 logs_enabled
-               ),
+             :ok <- Toolchain.exec(component, checksum, config, upstream_results, job_id, reporter, logs_enabled),
              :ok <- Job.Utils.assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(cache_dir, id, checksum, targets) do
           {Reporter.Status.ok(), checksum}
@@ -107,8 +98,7 @@ defmodule MBS.Workflow.Job do
     end
   end
 
-  @spec release_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), Path.t()) ::
-          (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
+  @spec release_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), Path.t()) :: job_fun()
   def release_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _output_dir) do
     fn _job_id, _upstream_results ->
       %Job.JobFunResult{checksum: checksum, targets: []}
@@ -157,8 +147,7 @@ defmodule MBS.Workflow.Job do
     end
   end
 
-  @spec shell_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), String.t()) ::
-          (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
+  @spec shell_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), String.t()) :: job_fun()
   def shell_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _shell_target) do
     fn _job_id, _upstream_results ->
       %Job.JobFunResult{checksum: checksum, targets: []}
@@ -167,7 +156,7 @@ defmodule MBS.Workflow.Job do
 
   def shell_fun(
         _reporter,
-        %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
+        %Config.Data{} = config,
         %Manifest.Component{
           id: id,
           dir: component_dir,
@@ -183,7 +172,7 @@ defmodule MBS.Workflow.Job do
       checksum = Job.Utils.checksum(files, component_dir, upstream_results)
 
       if id == shell_target do
-        Toolchain.shell_cmd(component, checksum, root_dir, cache_dir, upstream_results)
+        Toolchain.shell_cmd(component, checksum, config, upstream_results)
         |> IO.puts()
       end
 
@@ -191,8 +180,7 @@ defmodule MBS.Workflow.Job do
     end
   end
 
-  @spec outdated_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) ::
-          (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
+  @spec outdated_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) :: job_fun()
   def outdated_fun(reporter, %Config.Data{} = _config, %Manifest.Toolchain{id: id, checksum: checksum}) do
     fn job_id, _upstream_results ->
       unless Job.Cache.hit_toolchain(id, checksum) do

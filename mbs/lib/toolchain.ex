@@ -3,7 +3,7 @@ defmodule MBS.Toolchain do
   Toolchain functions
   """
 
-  alias MBS.{Cache, Docker, Manifest}
+  alias MBS.{Cache, Config, Docker, Manifest}
   alias MBS.CLI.Reporter
   alias MBS.Workflow.Job.JobFunResult
 
@@ -14,12 +14,11 @@ defmodule MBS.Toolchain do
     Docker.image_build(id, checksum, dir, dockerfile, reporter, "#{id}:build", logs_enabled)
   end
 
-  @spec shell_cmd(Manifest.Component.t(), String.t(), Path.t(), Path.t(), Dask.Job.upstream_results()) :: String.t()
+  @spec shell_cmd(Manifest.Component.t(), String.t(), Config.Data.t(), Dask.Job.upstream_results()) :: String.t()
   def shell_cmd(
         %Manifest.Component{dir: work_dir, toolchain: toolchain} = component,
         checksum,
-        root_dir,
-        cache_dir,
+        %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
         upstream_results
       ) do
     env = run_env_vars(component, checksum, cache_dir, upstream_results)
@@ -31,8 +30,7 @@ defmodule MBS.Toolchain do
   @spec exec(
           Manifest.Component.t(),
           String.t(),
-          Path.t(),
-          Path.t(),
+          Config.Data.t(),
           Dask.Job.upstream_results(),
           String.t(),
           Reporter.t(),
@@ -41,8 +39,7 @@ defmodule MBS.Toolchain do
   def exec(
         %Manifest.Component{dir: work_dir, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
         checksum,
-        root_dir,
-        cache_dir,
+        %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
         upstream_results,
         job_id,
         reporter,
