@@ -2,6 +2,7 @@ defmodule MBS.CLI.Utils do
   @moduledoc false
 
   alias MBS.Manifest
+  alias MBS.Workflow.Job
 
   @spec filter_manifest_by_id(String.t(), [String.t()]) :: boolean()
   def filter_manifest_by_id(_id, []), do: true
@@ -24,8 +25,10 @@ defmodule MBS.CLI.Utils do
       visited_manifests
     else
       case target_manifest do
-        %Manifest.Component{dependencies: dependencies, toolchain: %Manifest.Toolchain{id: toolchain_id}} ->
-          Enum.reduce([toolchain_id | dependencies], visited_manifests, fn
+        %Manifest.Component{} = component ->
+          dependencies = Job.Utils.component_dependencies(component)
+
+          Enum.reduce(dependencies, visited_manifests, fn
             dependency_id, visited_manifests ->
               dependency_manifest = Map.fetch!(manifests_map, dependency_id)
               visited_manifests = MapSet.put(visited_manifests, target_manifest)

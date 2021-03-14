@@ -5,7 +5,7 @@ defmodule MBS.Workflow.Job.Utils do
 
   alias MBS.Checksum
   alias MBS.Docker
-  alias MBS.Manifest.Target
+  alias MBS.Manifest.{Component, Target, Toolchain, Type}
   alias MBS.Workflow.Job.JobFunResult
 
   @spec checksum([Path.t()], Path.t(), Dask.Job.upstream_results()) :: String.t()
@@ -46,5 +46,14 @@ defmodule MBS.Workflow.Job.Utils do
     else
       :ok
     end
+  end
+
+  @spec component_dependencies(Type.t()) :: [String.t()]
+  def component_dependencies(%Component{toolchain: %Toolchain{id: toolchain_id}, dependencies: dependencies}) do
+    [toolchain_id | dependencies]
+  end
+
+  def component_dependencies(%Toolchain{}) do
+    []
   end
 end

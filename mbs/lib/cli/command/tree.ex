@@ -10,6 +10,7 @@ end
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
   alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest}
+  alias MBS.Workflow.Job
 
   @spec run(CLI.Command.Tree.t(), Config.Data.t(), Reporter.t()) :: :ok
   def run(%Command.Tree{targets: target_ids}, %Config.Data{}, _reporter) do
@@ -34,16 +35,9 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
       guide = if idx == names_length, do: "└── ", else: "├── "
       IO.puts(IO.ANSI.format([indent, guide, :bright, id]))
 
-      dependencies =
-        case manifests_map[id] do
-          %Manifest.Component{toolchain: toolchain} ->
-            [toolchain.id | manifests_map[id].dependencies]
-
-          %Manifest.Toolchain{} ->
-            []
-        end
-
+      dependencies = Job.Utils.component_dependencies(manifests_map[id])
       guide = if idx == names_length, do: "    ", else: "│   "
+
       print_tree(dependencies, manifests_map, [indent | guide])
     end)
   end
