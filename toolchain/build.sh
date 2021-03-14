@@ -71,6 +71,14 @@ case $1 in
     lint)
         mix format --check-formatted
 
+        CYCLES=$(mix xref graph --format=cycles)
+
+        if [ "$CYCLES" != "No cycles found" ]; then
+            echo "Found module dependency cycle:"
+            echo "$CYCLES"
+            exit 1
+        fi
+
         if [ $CREDO == 1 ]; then
             mix credo $CREDO_OPTS
         fi

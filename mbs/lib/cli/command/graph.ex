@@ -28,7 +28,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
   end
 
   defp dot_command_installed? do
-    System.cmd("dot", ["-V"])
+    System.cmd("dot", ["-V"], stderr_to_stdout: true)
     true
   rescue
     ErlangError ->

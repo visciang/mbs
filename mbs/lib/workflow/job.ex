@@ -1,16 +1,3 @@
-defmodule MBS.Workflow.Job.JobFunResult do
-  @moduledoc """
-  Job function result data
-  """
-
-  defstruct [:checksum, :targets]
-
-  @type t :: %__MODULE__{
-          checksum: String.t(),
-          targets: [String.t()]
-        }
-end
-
 defmodule MBS.Workflow.Job do
   @moduledoc """
   Workflow job logic
@@ -23,7 +10,7 @@ defmodule MBS.Workflow.Job do
 
   require Reporter.Status
 
-  @spec run_fun(Reporter.t(), Config.Data.t(), Manifest.t(), boolean()) ::
+  @spec run_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), boolean()) ::
           (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
   def run_fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain, logs_enabled) do
     fn job_id, _upstream_results ->
@@ -120,7 +107,7 @@ defmodule MBS.Workflow.Job do
     end
   end
 
-  @spec release_fun(Reporter.t(), Config.Data.t(), Manifest.t(), Path.t()) ::
+  @spec release_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), Path.t()) ::
           (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
   def release_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _output_dir) do
     fn _job_id, _upstream_results ->
@@ -170,7 +157,7 @@ defmodule MBS.Workflow.Job do
     end
   end
 
-  @spec shell_fun(Reporter.t(), Config.Data.t(), Manifest.t(), Path.t()) ::
+  @spec shell_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), String.t()) ::
           (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
   def shell_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _shell_target) do
     fn _job_id, _upstream_results ->
@@ -204,7 +191,7 @@ defmodule MBS.Workflow.Job do
     end
   end
 
-  @spec outdated_fun(Reporter.t(), Config.Data.t(), Manifest.t()) ::
+  @spec outdated_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) ::
           (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
   def outdated_fun(reporter, %Config.Data{} = _config, %Manifest.Toolchain{id: id, checksum: checksum}) do
     fn job_id, _upstream_results ->

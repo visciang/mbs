@@ -34,13 +34,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     IO.puts("    #{component.toolchain.id}")
     IO.puts("  targets:")
 
-    Enum.each(component.targets, fn
-      %Manifest.Target{type: :file, target: target} ->
-        IO.puts("    - #{target}")
-
-      %Manifest.Target{type: :docker, target: target} ->
-        IO.puts("    - docker://#{target}")
-    end)
+    Enum.each(component.targets, &IO.puts("    - #{target_to_str(&1)}"))
 
     IO.puts("  files:")
     component.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
@@ -70,6 +64,25 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   end
 
   defp print_ls(manifest, false) do
-    IO.puts(IO.ANSI.format([:bright, manifest.id]))
+    extras =
+      case manifest do
+        %Manifest.Toolchain{} ->
+          "toolchain"
+
+        %Manifest.Component{} ->
+          "component"
+      end
+
+    IO.puts(IO.ANSI.format([:bright, manifest.id, :normal, "  (", extras, ")"]))
+  end
+
+  defp target_to_str(target) do
+    case target do
+      %Manifest.Target{type: :file, target: target} ->
+        target
+
+      %Manifest.Target{type: :docker, target: target} ->
+        "docker://#{target}"
+    end
   end
 end

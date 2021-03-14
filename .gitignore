@@ -37,3 +37,4 @@ mbs/mbs
 **/gopath/bin
 **/gopath/pkg
 examples/generated_monorepo
+*.svg

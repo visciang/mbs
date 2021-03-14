@@ -7,7 +7,7 @@ defmodule MBS.Manifest.Validator do
 
   @name_regex "^[a-zA-Z0-9_-]+$"
 
-  @spec validate([MBS.Manifest.t()]) :: [MBS.Manifest.t()]
+  @spec validate([MBS.Manifest.Type.t()]) :: [MBS.Manifest.Type.t()]
   def validate(manifests) do
     validate_schema(manifests)
 
@@ -28,26 +28,26 @@ defmodule MBS.Manifest.Validator do
 
   defp validate_id(%{"id" => id, "dir" => dir}) do
     if id == nil do
-      error_message = IO.ANSI.format([:red, "Missing id field in #{dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Missing id field")
+      Utils.halt(message)
     end
 
     unless is_binary(id) do
-      error_message = IO.ANSI.format([:red, "Bad id type in #{dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Bad id type")
+      Utils.halt(message)
     end
 
     unless id =~ ~r/#{@name_regex}/ do
-      error_message = IO.ANSI.format([:red, "Invalid id #{inspect(id)} in #{dir} (valid pattern is #{@name_regex})"])
+      message = error_message(dir, "Invalid id #{inspect(id)} (valid pattern is #{@name_regex})")
 
-      Utils.halt(error_message)
+      Utils.halt(message)
     end
   end
 
   defp validate_timeout(%{"timeout" => timeout, "dir" => dir}) do
     unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
-      error_message = IO.ANSI.format([:red, "Invalid timeout field in #{dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Invalid timeout field")
+      Utils.halt(message)
     end
   end
 
@@ -55,13 +55,13 @@ defmodule MBS.Manifest.Validator do
 
   defp validate_type(%{"dir" => dir, "toolchain" => toolchain}) do
     unless is_map(toolchain) do
-      error_message = IO.ANSI.format([:red, "Bad toolchain type in #{dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Bad toolchain type")
+      Utils.halt(message)
     end
 
     unless is_binary(toolchain["dockerfile"]) do
-      error_message = IO.ANSI.format([:red, "Bad dockerfile type in #{dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Bad dockerfile type")
+      Utils.halt(message)
     end
 
     validate_list_of_strings(toolchain, ["files"], dir)
@@ -70,13 +70,13 @@ defmodule MBS.Manifest.Validator do
 
   defp validate_type(%{"dir" => dir, "component" => component}) do
     unless is_map(component) do
-      error_message = IO.ANSI.format([:red, "Bad component type in #{dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Bad component type")
+      Utils.halt(message)
     end
 
     unless is_binary(component["toolchain"]) do
-      error_message = IO.ANSI.format([:red, "Bad toolchain type in #{dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Bad toolchain type")
+      Utils.halt(message)
     end
 
     if component["toolchain_opts"] != nil do
@@ -91,23 +91,23 @@ defmodule MBS.Manifest.Validator do
     end
   end
 
-  defp validate_list_of_strings(manifest, path, manifest_dir) do
+  defp validate_list_of_strings(manifest, path, dir) do
     elm = get_in(manifest, path)
 
     if elm == nil do
-      error_message = IO.ANSI.format([:red, "Missing #{inspect(path)} field in #{manifest_dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Missing #{inspect(path)} field")
+      Utils.halt(message)
     end
 
     unless is_list(elm) and Enum.all?(elm, &is_binary(&1)) do
-      error_message = IO.ANSI.format([:red, "Bad #{inspect(path)} type in #{manifest_dir}"])
-      Utils.halt(error_message)
+      message = error_message(dir, "Bad #{inspect(path)} type")
+      Utils.halt(message)
     end
   end
 
   defp validate_unique_id(manifests, ids) do
     if MapSet.size(ids) != length(manifests) do
-      error_message =
+      message =
         manifests
         |> Enum.group_by(& &1["id"])
         |> Enum.filter(fn {_name, group} -> length(group) > 1 end)
@@ -115,7 +115,7 @@ defmodule MBS.Manifest.Validator do
           [IO.ANSI.format([:red, "Duplicated id #{inspect(id)} in:\n"]), Enum.map(group, &"- #{&1["dir"]}\n")]
         end)
 
-      Utils.halt(error_message)
+      Utils.halt(message)
     end
   end
 
@@ -131,12 +131,18 @@ defmodule MBS.Manifest.Validator do
       unknown_dependencies = MapSet.difference(MapSet.new(component["dependencies"] || []), ids)
 
       unless MapSet.size(unknown_dependencies) == 0 do
-        Utils.halt(IO.ANSI.format([:red, "Unknown dependencies #{inspect(unknown_dependencies)} in #{dir}"]))
+        message = error_message(dir, "Unknown dependencies #{inspect(unknown_dependencies)}")
+        Utils.halt(message)
       end
 
       unless MapSet.member?(toolchains_ids, component["toolchain"]) do
-        Utils.halt(IO.ANSI.format([:red, "Unknown toolchain #{inspect(component["toolchain"])} in #{dir}"]))
+        message = error_message(dir, "Unknown build.toolchain #{inspect(component["toolchain"])}")
+        Utils.halt(message)
       end
     end)
+  end
+
+  defp error_message(dir, error_message) do
+    IO.ANSI.format([:red, "Error in #{Path.join(dir, ".mbs.json")}\n#{error_message}"])
   end
 end

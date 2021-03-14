@@ -52,7 +52,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
         [component.toolchain.id | component.dependencies]
 
       %Manifest.Toolchain{} ->
-        Utils.halt("Bad target, the target should by a component con a toolchain")
+        Utils.halt("Bad target, the target should be a component not a toolchain")
 
       nil ->
         Utils.halt("Unknown target")

@@ -9,10 +9,10 @@ defmodule MBS.Workflow do
   require MBS.CLI.Reporter.Status
 
   @spec workflow(
-          [Manifest.t()],
+          [Manifest.Type.t()],
           Config.Data.t(),
           Reporter.t(),
-          (Reporter.t(), Config.Data.t(), Manifest.t() -> Dask.Job.fun()),
+          (Reporter.t(), Config.Data.t(), Manifest.Type.t() -> Dask.Job.fun()),
           Dask.Job.on_exit()
         ) :: Dask.t()
   def workflow(

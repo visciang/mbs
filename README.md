@@ -37,12 +37,12 @@ As explained above, `mbs` is mostly targeted at mono-repository, and if you land
 
 It naturally feets well with domain / component oriented design.
 
-Remeber that, like every tool, `mbs` / mono-repos / etc. are just patterns and guidelines, not a silver buller, and should not be misused otherwise you will shoot that silver bullet in your feet. So is essential to correclty design modules / components, their boundaries / what (business) logic we put into them and the dependecies we introduce beetween them.
+Remeber that, like every tool, `mbs` / mono-repos / etc. are just patterns and guidelines, not a silver bullet, and should not be misused otherwise you will shoot that silver bullet in your feet. So is essential to correclty design modules / components, their boundaries / what (business) logic we put into them and the dependecies we introduce beetween them.
 
 ### A bit of history
 
 TODO:
-extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / baur / please / hearthly / gitlab / "pipelines in general"
+extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / baur / please / hearthly / waypoint / gitlab / "pipelines in general"
 
 ## Getting Started
 
@@ -100,6 +100,8 @@ Environment variable that you can pass to `mbs`:
 {
     // toolchain identifier
     "id": "toolchain-abc",
+    // timeout: [optional] toolchain build timeout sec (default: global | :infinity)
+    "timeout": 3600,
     "toolchain": {
         // toolchain dockerfile
         "dockerfile": "Dockerfile",
@@ -126,7 +128,6 @@ Environment variable that you can pass to `mbs`:
 ### Component manifest
 
 ```js
-
 {
     // component identifier
     "id": "component-xyz",
