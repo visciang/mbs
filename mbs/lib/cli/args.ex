@@ -156,7 +156,7 @@ defmodule MBS.CLI.Args do
       Utils.halt("Missing release --tag")
     end
 
-    defaults = [output_dir: ".mbs-releases/#{options[:tag]}"]
+    defaults = [output_dir: Path.join(".mbs-releases", options[:tag])]
     options = Keyword.merge(defaults, options)
 
     File.mkdir_p!(options[:output_dir])

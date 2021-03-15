@@ -93,7 +93,7 @@ defmodule MBS.Workflow.Job do
   end
 
   @spec release_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), Path.t()) :: job_fun()
-  def release_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _output_dir) do
+  def release_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _release_dir) do
     fn _job_id, _upstream_results ->
       %Job.JobFunResult{checksum: checksum, targets: []}
     end
@@ -103,7 +103,7 @@ defmodule MBS.Workflow.Job do
         reporter,
         %Config.Data{cache: %{dir: cache_dir}},
         %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component,
-        output_dir
+        release_dir
       ) do
     fn job_id, upstream_results ->
       start_time = Reporter.time()
@@ -112,12 +112,12 @@ defmodule MBS.Workflow.Job do
       upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
       checksum = Job.Utils.checksum(component_dir, files, upstream_results)
 
-      output_dir = Path.join(output_dir, id)
+      targets_dir = Path.join(release_dir, id)
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(cache_dir, id, checksum, targets, output_dir) do
+        case Job.Cache.copy_targets(cache_dir, id, checksum, targets, targets_dir) do
           :ok ->
-            {Reporter.Status.ok(), output_dir}
+            {Reporter.Status.ok(), targets_dir}
 
           {:error, reason} ->
             {Reporter.Status.error(reason), nil}
