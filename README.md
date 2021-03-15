@@ -6,7 +6,7 @@ A **Meta Build System** to organizate / build / release / deploy a large ~~micro
 
 Docker **containerization** technology is used both to run `mbs` and to define your own standardized toolchains to build your software components.
 
-With MBS you can easly define the toolchains to build the different type of software components in you mono-repo and express the **dependency graph** among them, to consistently build only what's really changed (**checksum** based) and **cache** the results. This will give you highly **parallelized** and fast builds for free that you can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
+With MBS you can easly define the toolchains to build the different type of software components in you mono-repo and express the **dependency graph** among them, to consistently build only what's really changed (**checksum** based) and **cache** the results. This is a radically different approach to "git trigger based" pipeline services. This will give you highly **parallelized** and fast builds for free that you can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
 
 The user experience we aim to is to give you a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a ~~micro~~ service oriented solution.
 
