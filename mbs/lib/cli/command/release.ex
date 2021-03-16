@@ -1,11 +1,12 @@
 defmodule MBS.CLI.Command.Release do
   @moduledoc false
-  defstruct [:targets, :tag, :output_dir]
+  defstruct [:targets, :id, :output_dir, :metadata]
 
   @type t :: %__MODULE__{
           targets: [String.t()],
-          tag: String.t(),
-          output_dir: Path.t()
+          id: String.t(),
+          output_dir: Path.t(),
+          metadata: nil | String.t()
         }
 end
 
@@ -14,7 +15,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
   alias MBS.{Checksum, CLI, Config, Manifest, Utils, Workflow}
 
   @spec run(Command.Release.t(), Config.Data.t(), Reporter.t()) :: Dask.await_result()
-  def run(%Command.Release{tag: tag, targets: target_ids, output_dir: output_dir}, %Config.Data{} = config, reporter) do
+  def run(
+        %Command.Release{id: id, targets: target_ids, output_dir: output_dir, metadata: metadata},
+        %Config.Data{} = config,
+        reporter
+      ) do
     File.mkdir_p!(output_dir)
 
     manifests =
@@ -40,22 +45,20 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
 
     res = Dask.await(dask)
 
-    release_manifest(manifests, tag, output_dir)
+    release_manifest(manifests, id, output_dir, metadata)
 
     res
   end
 
-  defp release_manifest(manifests, tag, output_dir) do
-    {commit, 0} = System.cmd("git", ["rev-parse", "HEAD"])
-
-    release_manifest = %{
-      tag: tag,
-      commit: commit |> String.trim(),
-      checksum: release_checksum(manifests, output_dir)
+  defp release_manifest(manifests, id, output_dir, metadata) do
+    rel_manifest = %{
+      id: id,
+      checksum: release_checksum(manifests, output_dir),
+      metadat: metadata
     }
 
-    release_manifest_path = Path.join(output_dir, "manifest.json")
-    File.write!(release_manifest_path, Jason.encode!(release_manifest, pretty: true))
+    rel_manifest_path = Path.join(output_dir, "manifest.json")
+    File.write!(rel_manifest_path, Jason.encode!(rel_manifest, pretty: true))
   end
 
   defp release_checksum(manifests, output_dir) do

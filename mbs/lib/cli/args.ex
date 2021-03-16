@@ -141,7 +141,9 @@ defmodule MBS.CLI.Args do
   defp parse("release", args, reporter) do
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean, tag: :string, output_dir: :string, logs: :boolean])
+        OptionParser.parse!(args,
+          strict: [help: :boolean, id: :string, output_dir: :string, logs: :boolean, metadata: :string]
+        )
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
@@ -151,26 +153,28 @@ defmodule MBS.CLI.Args do
       IO.puts("\nUsage:  mbs release --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nMake a release (default: all targets)")
       IO.puts("\nOptions:")
-      IO.puts("  --tag           release tag identifier")
-      IO.puts("  --output-dir    output directory (default: '.mbs-releases/<tag>/')")
+      IO.puts("  --id            release identifier")
+      IO.puts("  --output-dir    output directory (default: '.mbs-releases/<id>/')")
       IO.puts("  --logs          Stream jobs log to the console")
+      IO.puts("  --metadata      Extra metadata to include in the release manifest.json")
+      IO.puts("                  ex: --metadata='git_commit=...'")
       Utils.halt("", 0)
     end
 
-    unless options[:tag] do
-      Utils.halt("Missing release --tag")
+    unless options[:id] do
+      Utils.halt("Missing release --id")
     end
 
     if options[:logs] do
       Reporter.logs(reporter, options[:logs])
     end
 
-    defaults = [output_dir: Path.join(".mbs-releases", options[:tag])]
+    defaults = [output_dir: Path.join(".mbs-releases", options[:id])]
     options = Keyword.merge(defaults, options)
 
     File.mkdir_p!(options[:output_dir])
 
-    %Command.Release{targets: targets, tag: options[:tag], output_dir: options[:output_dir]}
+    %Command.Release{id: options[:id], targets: targets, output_dir: options[:output_dir], metadata: options[:metadata]}
   end
 
   defp parse("outdated", args, _reporter) do
