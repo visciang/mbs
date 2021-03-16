@@ -21,7 +21,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   end
 
   def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, reporter) do
-    Reporter.mute(reporter)
+    Reporter.mute(reporter, true)
 
     manifests = Manifest.find_all()
 

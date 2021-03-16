@@ -33,10 +33,12 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec image_save(String.t(), String.t(), Path.t()) :: :ok | {:error, term()}
-  def image_save(repository, tag, out_dir) do
+  @spec image_save(String.t(), String.t(), Path.t(), Reporter.t(), String.t()) :: :ok | {:error, term()}
+  def image_save(repository, tag, out_dir, reporter, job_id) do
     cmd_args = ["image", "save", "#{repository}:#{tag}"]
     image_file_path = Path.join(out_dir, "#{repository}.tar.gz")
+
+    Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true, into: File.stream!(image_file_path, [:compressed])) do
       {_, 0} ->
@@ -47,11 +49,11 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec image_build(String.t(), String.t(), Path.t(), String.t(), Reporter.t(), String.t(), boolean) ::
+  @spec image_build(String.t(), String.t(), Path.t(), String.t(), Reporter.t(), String.t()) ::
           :ok | {:error, term()}
-  def image_build(repository, tag, dir, dockerfile, reporter, job_id, logs_enabled) do
+  def image_build(repository, tag, dir, dockerfile, reporter, job_id) do
     cmd_args = ["image", "build", "--rm", "-t", "#{repository}:#{tag}", "-f", dockerfile, "."]
-    cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
+    cmd_into = %Reporter.Log{reporter: reporter, job_id: job_id}
 
     if Logger.level() == :debug do
       Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
@@ -86,12 +88,11 @@ defmodule MBS.Docker do
           [{String.t(), String.t()}],
           [String.t()],
           Reporter.t(),
-          String.t(),
-          boolean()
+          String.t()
         ) :: :ok | {:error, {term(), pos_integer()}}
-  def image_run(repository, tag, opts, env, command, reporter, job_id, logs_enabled) do
+  def image_run(repository, tag, opts, env, command, reporter, job_id) do
     cmd_args = ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"] ++ command
-    cmd_into = if logs_enabled, do: %Reporter.Log{reporter: reporter, job_id: job_id}, else: ""
+    cmd_into = %Reporter.Log{reporter: reporter, job_id: job_id}
 
     if Logger.level() == :debug do
       Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)

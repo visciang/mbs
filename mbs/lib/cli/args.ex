@@ -3,7 +3,7 @@ defmodule MBS.CLI.Args do
   Cli arguments
   """
 
-  alias MBS.CLI.Command
+  alias MBS.CLI.{Command, Reporter}
   alias MBS.Utils
 
   @type t ::
@@ -16,12 +16,12 @@ defmodule MBS.CLI.Args do
           | %Command.Tree{}
           | %Command.Version{}
 
-  @spec parse([String.t()]) :: t()
-  def parse([]) do
-    parse(["--help"])
+  @spec parse([String.t()], Reporter.t()) :: t()
+  def parse([], reporter) do
+    parse(["--help"], reporter)
   end
 
-  def parse(["--help"]) do
+  def parse(["--help"], _reporter) do
     IO.puts("\nUsage:  mbs --help | COMMAND")
     IO.puts("\nA Meta Build System")
     IO.puts("\nCommands:")
@@ -38,15 +38,15 @@ defmodule MBS.CLI.Args do
     Utils.halt("", 0)
   end
 
-  def parse([command | args]) do
-    parse(command, args)
+  def parse([command | args], reporter) do
+    parse(command, args, reporter)
   end
 
-  defp parse("version", _args) do
+  defp parse("version", _args, _reporter) do
     %Command.Version{}
   end
 
-  defp parse("tree", args) do
+  defp parse("tree", args, _reporter) do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean])
@@ -65,7 +65,7 @@ defmodule MBS.CLI.Args do
     %Command.Tree{targets: targets}
   end
 
-  defp parse("ls", args) do
+  defp parse("ls", args, _reporter) do
     defaults = [verbose: false]
 
     {options, targets} =
@@ -89,7 +89,7 @@ defmodule MBS.CLI.Args do
     %Command.Ls{verbose: options[:verbose], targets: targets}
   end
 
-  defp parse("graph", args) do
+  defp parse("graph", args, _reporter) do
     default_output_file = "graph.svg"
     defaults = [output_svg_file: default_output_file]
 
@@ -114,7 +114,7 @@ defmodule MBS.CLI.Args do
     %Command.Graph{targets: targets, output_svg_file: options[:output_svg_file]}
   end
 
-  defp parse("run", args) do
+  defp parse("run", args, reporter) do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
@@ -131,13 +131,17 @@ defmodule MBS.CLI.Args do
       Utils.halt("", 0)
     end
 
-    %Command.Run{targets: targets, logs: options[:logs]}
+    if options[:logs] do
+      Reporter.logs(reporter, options[:logs])
+    end
+
+    %Command.Run{targets: targets}
   end
 
-  defp parse("release", args) do
+  defp parse("release", args, reporter) do
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean, tag: :string, output_dir: :string])
+        OptionParser.parse!(args, strict: [help: :boolean, tag: :string, output_dir: :string, logs: :boolean])
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
@@ -149,11 +153,16 @@ defmodule MBS.CLI.Args do
       IO.puts("\nOptions:")
       IO.puts("  --tag           release tag identifier")
       IO.puts("  --output-dir    output directory (default: '.mbs-releases/<tag>/')")
+      IO.puts("  --logs          Stream jobs log to the console")
       Utils.halt("", 0)
     end
 
     unless options[:tag] do
       Utils.halt("Missing release --tag")
+    end
+
+    if options[:logs] do
+      Reporter.logs(reporter, options[:logs])
     end
 
     defaults = [output_dir: Path.join(".mbs-releases", options[:tag])]
@@ -164,7 +173,7 @@ defmodule MBS.CLI.Args do
     %Command.Release{targets: targets, tag: options[:tag], output_dir: options[:output_dir]}
   end
 
-  defp parse("outdated", args) do
+  defp parse("outdated", args, _reporter) do
     {options, _} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean])
@@ -183,7 +192,7 @@ defmodule MBS.CLI.Args do
     %Command.Outdated{}
   end
 
-  defp parse("shell", args) do
+  defp parse("shell", args, _reporter) do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean, docker_cmd: :boolean])
@@ -210,7 +219,7 @@ defmodule MBS.CLI.Args do
     %Command.Shell{target: target, docker_cmd: options[:docker_cmd]}
   end
 
-  defp parse(cmd, _args) do
+  defp parse(cmd, _args, _reporter) do
     Utils.halt("Unknown command #{cmd}")
   end
 end

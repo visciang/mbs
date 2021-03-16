@@ -16,11 +16,12 @@ defmodule MBS.CLI.Reporter do
   defmodule State do
     @moduledoc false
 
-    defstruct [:start_time, :muted]
+    defstruct [:start_time, :muted, :logs_enabled]
 
     @type t :: %__MODULE__{
             start_time: integer(),
-            muted: boolean()
+            muted: boolean(),
+            logs_enabled: boolean()
           }
   end
 
@@ -35,14 +36,14 @@ defmodule MBS.CLI.Reporter do
     GenServer.call(pid, {:stop, workflow_status})
   end
 
-  @spec mute(t()) :: :ok
-  def mute(pid) do
-    GenServer.call(pid, {:mute, true})
+  @spec mute(t(), boolean()) :: :ok
+  def mute(pid, status) do
+    GenServer.call(pid, {:mute, status})
   end
 
-  @spec unmute(t()) :: :ok
-  def unmute(pid) do
-    GenServer.call(pid, {:mute, false})
+  @spec logs(t(), boolean()) :: :ok
+  def logs(pid, enabled) do
+    GenServer.call(pid, {:logs, enabled})
   end
 
   @spec job_report(t(), String.t(), Status.t(), nil | String.t(), nil | non_neg_integer()) :: :ok
@@ -57,10 +58,14 @@ defmodule MBS.CLI.Reporter do
 
   @impl true
   def init(start_time: start_time) do
-    {:ok, %State{start_time: start_time, muted: false}}
+    {:ok, %State{start_time: start_time, muted: false, logs_enabled: false}}
   end
 
   @impl true
+  def handle_cast(%Report{status: Status.log()}, %State{logs_enabled: false} = state) do
+    {:noreply, state}
+  end
+
   def handle_cast(%Report{job_id: job_id, status: status, description: description, elapsed: elapsed}, %State{} = state) do
     {status_icon, status_info} = status_icon_info(status)
 
@@ -84,6 +89,11 @@ defmodule MBS.CLI.Reporter do
   @impl true
   def handle_call({:mute, status}, _from, %State{} = state) do
     {:reply, :ok, put_in(state.muted, status)}
+  end
+
+  @impl true
+  def handle_call({:logs, enabled}, _from, %State{} = state) do
+    {:reply, :ok, put_in(state.logs_enabled, enabled)}
   end
 
   @impl true

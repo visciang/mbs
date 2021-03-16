@@ -9,9 +9,9 @@ defmodule MBS.Toolchain do
 
   require Reporter.Status
 
-  @spec build(Manifest.Toolchain.t(), Reporter.t(), boolean()) :: :ok | {:error, term()}
-  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}, reporter, logs_enabled) do
-    Docker.image_build(id, checksum, dir, dockerfile, reporter, "#{id}:build", logs_enabled)
+  @spec build(Manifest.Toolchain.t(), Reporter.t()) :: :ok | {:error, term()}
+  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}, reporter) do
+    Docker.image_build(id, checksum, dir, dockerfile, reporter, "#{id}:build")
   end
 
   @spec shell_cmd(Manifest.Component.t(), String.t(), Config.Data.t(), Dask.Job.upstream_results()) :: String.t()
@@ -33,17 +33,16 @@ defmodule MBS.Toolchain do
           Config.Data.t(),
           Dask.Job.upstream_results(),
           String.t(),
-          Reporter.t(),
-          boolean()
-        ) :: :ok | {:error, term()}
+          Reporter.t()
+        ) ::
+          :ok | {:error, term()}
   def exec(
         %Manifest.Component{dir: work_dir, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
         checksum,
         %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
         upstream_results,
         job_id,
-        reporter,
-        logs_enabled
+        reporter
       ) do
     env = run_env_vars(component, checksum, cache_dir, upstream_results)
     toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
@@ -60,8 +59,7 @@ defmodule MBS.Toolchain do
              env,
              [toolchain_step | toolchain_opts],
              reporter,
-             reporter_id,
-             logs_enabled
+             reporter_id
            ) do
         :ok ->
           Reporter.job_report(reporter, reporter_id, Reporter.Status.ok(), nil, Reporter.time() - start_time)

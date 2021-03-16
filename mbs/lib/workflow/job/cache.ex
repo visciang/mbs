@@ -3,8 +3,11 @@ defmodule MBS.Workflow.Job.Cache do
   Workflow job cache utils
   """
 
+  alias MBS.CLI.Reporter
   alias MBS.{Cache, Docker}
   alias MBS.Manifest.Target
+
+  require MBS.CLI.Reporter.Status
 
   @spec hit_toolchain(String.t(), String.t()) :: boolean()
   def hit_toolchain(id, checksum) do
@@ -67,8 +70,8 @@ defmodule MBS.Workflow.Job.Cache do
     :ok
   end
 
-  @spec copy_targets(Path.t(), String.t(), String.t(), [Target.t()], Path.t()) :: :ok | {:error, term()}
-  def copy_targets(cache_dir, id, checksum, targets, output_dir) do
+  @spec copy_targets(Path.t(), String.t(), String.t(), [Target.t()], Path.t(), Reporter.t()) :: :ok | {:error, term()}
+  def copy_targets(cache_dir, id, checksum, targets, output_dir, reporter) do
     File.mkdir_p!(output_dir)
 
     res =
@@ -77,6 +80,14 @@ defmodule MBS.Workflow.Job.Cache do
           if Cache.hit(cache_dir, id, checksum, target) do
             cache_target_path = Cache.path(cache_dir, id, checksum, target)
             release_target_path = Path.join(output_dir, Path.basename(target))
+
+            Reporter.job_report(
+              reporter,
+              id,
+              Reporter.Status.log(),
+              "cp #{cache_target_path} #{release_target_path}",
+              nil
+            )
 
             File.cp!(cache_target_path, release_target_path)
 
@@ -87,7 +98,7 @@ defmodule MBS.Workflow.Job.Cache do
 
         %Target{type: :docker, target: target}, _ ->
           with {:ok, image_id} when is_binary(image_id) <- Docker.image_id(target, checksum),
-               :ok <- Docker.image_save(target, checksum, output_dir) do
+               :ok <- Docker.image_save(target, checksum, output_dir, reporter, id) do
             {:cont, :ok}
           else
             {:ok, nil} ->

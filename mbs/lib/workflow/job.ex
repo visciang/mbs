@@ -12,14 +12,14 @@ defmodule MBS.Workflow.Job do
 
   @type job_fun :: (String.t(), Dask.Job.upstream_results() -> Job.JobFunResult.t())
 
-  @spec run_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), boolean()) :: job_fun()
-  def run_fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain, logs_enabled) do
+  @spec run_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) :: job_fun()
+  def run_fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_toolchain(id, checksum),
-             :ok <- Toolchain.build(toolchain, reporter, logs_enabled),
+             :ok <- Toolchain.build(toolchain, reporter),
              :ok <- Job.Cache.put_toolchain(id, checksum) do
           {Reporter.Status.ok(), checksum}
         else
@@ -45,8 +45,7 @@ defmodule MBS.Workflow.Job do
   def run_fun(
         reporter,
         %Config.Data{cache: %{dir: cache_dir}} = config,
-        %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component,
-        logs_enabled
+        %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component
       ) do
     fn job_id, upstream_results ->
       start_time = Reporter.time()
@@ -57,7 +56,7 @@ defmodule MBS.Workflow.Job do
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_targets(cache_dir, id, checksum, targets),
-             :ok <- Toolchain.exec(component, checksum, config, upstream_results, job_id, reporter, logs_enabled),
+             :ok <- Toolchain.exec(component, checksum, config, upstream_results, job_id, reporter),
              :ok <- Job.Utils.assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(cache_dir, id, checksum, targets) do
           {Reporter.Status.ok(), checksum}
@@ -93,8 +92,35 @@ defmodule MBS.Workflow.Job do
   end
 
   @spec release_fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), Path.t()) :: job_fun()
-  def release_fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _release_dir) do
-    fn _job_id, _upstream_results ->
+  def release_fun(
+        reporter,
+        %Config.Data{cache: %{dir: cache_dir}},
+        %Manifest.Toolchain{id: id, checksum: checksum},
+        release_dir
+      ) do
+    fn job_id, _upstream_results ->
+      start_time = Reporter.time()
+
+      targets_dir = Path.join(release_dir, id)
+      target = %Manifest.Target{type: :docker, target: id}
+
+      {report_status, report_desc} =
+        case Job.Cache.copy_targets(cache_dir, id, checksum, [target], targets_dir, reporter) do
+          :ok ->
+            {Reporter.Status.ok(), targets_dir}
+
+          {:error, reason} ->
+            {Reporter.Status.error(reason), nil}
+        end
+
+      end_time = Reporter.time()
+
+      Reporter.job_report(reporter, job_id, report_status, report_desc, end_time - start_time)
+
+      unless match?(Reporter.Status.ok(), report_status) do
+        raise "Job failed #{inspect(report_status)}"
+      end
+
       %Job.JobFunResult{checksum: checksum, targets: []}
     end
   end
@@ -115,7 +141,7 @@ defmodule MBS.Workflow.Job do
       targets_dir = Path.join(release_dir, id)
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(cache_dir, id, checksum, targets, targets_dir) do
+        case Job.Cache.copy_targets(cache_dir, id, checksum, targets, targets_dir, reporter) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 
