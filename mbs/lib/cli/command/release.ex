@@ -67,6 +67,6 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
       |> Map.fetch!("checksum")
     end)
     |> Enum.join()
-    |> Checksum.checksum("")
+    |> Checksum.checksum()
   end
 end

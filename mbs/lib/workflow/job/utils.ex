@@ -19,7 +19,7 @@ defmodule MBS.Workflow.Job.Utils do
 
     [files_checksum | dependencies_checksums]
     |> Enum.join()
-    |> Checksum.checksum("")
+    |> Checksum.checksum()
   end
 
   @spec filter_upstream_results(Dask.Job.upstream_results(), [String.t()]) :: Dask.Job.upstream_results()
