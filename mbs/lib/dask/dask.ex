@@ -16,7 +16,10 @@ defmodule Dask do
 
   @type await_result :: :ok | :error | :timeout
 
+  @spec start_job_id :: :__start_job__
   def start_job_id, do: :__start_job__
+
+  @spec end_job_id :: :__end_job__
   def end_job_id, do: :__end_job__
 
   @spec new :: M.t()
