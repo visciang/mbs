@@ -113,6 +113,10 @@ defmodule MBS.Workflow.Job do
             {Reporter.Status.error(reason), nil}
         end
 
+      if report_status == :ok do
+        release_targets_manifest(id, checksum, [target], targets_dir)
+      end
+
       end_time = Reporter.time()
 
       Reporter.job_report(reporter, job_id, report_status, report_desc, end_time - start_time)
@@ -148,6 +152,10 @@ defmodule MBS.Workflow.Job do
           {:error, reason} ->
             {Reporter.Status.error(reason), nil}
         end
+
+      if report_status == :ok do
+        release_targets_manifest(id, checksum, targets, targets_dir)
+      end
 
       end_time = Reporter.time()
 
@@ -215,5 +223,26 @@ defmodule MBS.Workflow.Job do
 
       %Job.JobFunResult{checksum: checksum, targets: targets}
     end
+  end
+
+  defp release_targets_manifest(id, checksum, targets, output_dir) do
+    release_manifest_path = Path.join(output_dir, "manifest.json")
+
+    release_manifest = %{
+      id: id,
+      checksum: checksum,
+      targets:
+        targets
+        |> Enum.map(fn
+          %Manifest.Target{type: :file} = target ->
+            put_in(target.target, Path.basename(target.target))
+
+          target ->
+            target
+        end)
+        |> Enum.map(&Map.from_struct/1)
+    }
+
+    File.write!(release_manifest_path, Jason.encode!(release_manifest, pretty: true))
   end
 end

@@ -74,60 +74,38 @@ defmodule MBS.Workflow.Job.Cache do
   def copy_targets(cache_dir, id, checksum, targets, output_dir, reporter) do
     File.mkdir_p!(output_dir)
 
-    res =
-      Enum.reduce_while(targets, :ok, fn
-        %Target{type: :file, target: target}, _ ->
-          if Cache.hit(cache_dir, id, checksum, target) do
-            cache_target_path = Cache.path(cache_dir, id, checksum, target)
-            release_target_path = Path.join(output_dir, Path.basename(target))
+    Enum.reduce_while(targets, :ok, fn
+      %Target{type: :file, target: target}, _ ->
+        if Cache.hit(cache_dir, id, checksum, target) do
+          cache_target_path = Cache.path(cache_dir, id, checksum, target)
+          release_target_path = Path.join(output_dir, Path.basename(target))
 
-            Reporter.job_report(
-              reporter,
-              id,
-              Reporter.Status.log(),
-              "cp #{cache_target_path} #{release_target_path}",
-              nil
-            )
+          Reporter.job_report(
+            reporter,
+            id,
+            Reporter.Status.log(),
+            "cp #{cache_target_path} #{release_target_path}",
+            nil
+          )
 
-            File.cp!(cache_target_path, release_target_path)
+          File.cp!(cache_target_path, release_target_path)
 
-            {:cont, :ok}
-          else
-            {:halt, {:error, "Missing target #{target}. Have you run a build?"}}
-          end
+          {:cont, :ok}
+        else
+          {:halt, {:error, "Missing target #{target}. Have you run a build?"}}
+        end
 
-        %Target{type: :docker, target: target}, _ ->
-          with {:ok, image_id} when is_binary(image_id) <- Docker.image_id(target, checksum),
-               :ok <- Docker.image_save(target, checksum, output_dir, reporter, id) do
-            {:cont, :ok}
-          else
-            {:ok, nil} ->
-              {:halt, {:error, "Missing target docker image #{target}:#{checksum}. Have you run a build?"}}
+      %Target{type: :docker, target: target}, _ ->
+        with {:ok, image_id} when is_binary(image_id) <- Docker.image_id(target, checksum),
+             :ok <- Docker.image_save(target, checksum, output_dir, reporter, id) do
+          {:cont, :ok}
+        else
+          {:ok, nil} ->
+            {:halt, {:error, "Missing target docker image #{target}:#{checksum}. Have you run a build?"}}
 
-            {:error, reason} ->
-              {:halt, {:error, reason}}
-          end
-      end)
-
-    release_manifest_path = Path.join(output_dir, "manifest.json")
-
-    release_manifest = %{
-      id: id,
-      checksum: checksum,
-      targets:
-        targets
-        |> Enum.map(fn
-          %Target{type: :file} = target ->
-            put_in(target.target, Path.basename(target.target))
-
-          target ->
-            target
-        end)
-        |> Enum.map(&Map.from_struct/1)
-    }
-
-    File.write!(release_manifest_path, Jason.encode!(release_manifest, pretty: true))
-
-    res
+          {:error, reason} ->
+            {:halt, {:error, reason}}
+        end
+    end)
   end
 end
