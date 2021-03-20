@@ -48,7 +48,7 @@ extra reference to monorepo or other similar tools/solutions: cmake / ninja / do
 
 ## Getting Started
 
-To start playing with some toy examples, first build `mbs` (run `./ci.sh`, only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`! For example run `mbs --help` and `mbs ls`, it will list also some examples included in the repository under `examples/monorepo/`.
+To start playing with some toy examples, first build `mbs` (run `./ci.sh`, only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`! For example run `mbs --help` and `mbs build ls`, it will list also some examples included in the repository under `examples/monorepo/`.
 
 TODO: a quick tour based on the example/
 TODO: A word about building `mbs` in `mbs`
@@ -56,17 +56,19 @@ TODO: A word about building `mbs` in `mbs`
 
 ## CLI interface
 
-The information below are available via `mbs --help` or `mbs <COMMAND> --help`.
+The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMAND> --help`.
 
 ### Commands
 
-- **ls**: list available targets
-- **graph**: generate dependency graph
-- **outdated**: show outdated targets
-- **release**: make a release
-- **run**: run a target build
-- **shell**: interactive toolchain shell
-- **tree**: display a dependecy tree
+- **build graph**: generate dependency graph
+- **build ls**: list available targets
+- **build outdated**: show outdated targets
+- **build run**: run a target build
+- **build shell**: interactive toolchain shell
+- **build graph**: generate dependency graph
+- **deploy ls**: list available targets
+- **deploy release**: make a release
+- **deploy tree**: display a dependecy tree
 - **version**: show the mbs version
 
 ## Configuration
@@ -96,7 +98,7 @@ Environment variable that you can pass to `mbs`:
 }
 ```
 
-### Toolchain manifest
+### Toolchain manifest (`.mbs-toolchain.json`)
 
 ```js
 {
@@ -127,7 +129,7 @@ Environment variable that you can pass to `mbs`:
 }
 ```
 
-### Component manifest
+### Component build manifest (`.mbs-build.json`)
 
 ```js
 {
@@ -152,7 +154,41 @@ Environment variable that you can pass to `mbs`:
         // target supported are files (via file:// scheme or no scheme)
         // and docker images (docker://)
         "targets": [
-            "xxx"
+            "xyz-target.bin"
+        ],
+        // build "dependencies", components this build depends on.
+        // This is the element that define the build graph.
+        // These dependencies will run before the current component and their target
+        // will be available to this component
+        "dependencies": [
+            "xyz-library"
+        ]
+    }
+}
+```
+
+### Component deploy manifest (`.mbs-deploy.json`)
+
+```js
+{
+    // component identifier
+    "id": "component-xyz",
+    // timeout: [optional] components deploy timeout sec (default: global | :infinity)
+    "timeout": 3600,
+    "component": {
+        // toolchain used to deploy the component's target
+        "toolchain": "toolchain-abc",
+        // toolchain run options (passed to every toolchain "step" commands)
+        "toolchain_opts": ["--type", "app"],
+        // toolchain deployed artifacts (this should be a subset of targets in the same component .mbs-build.json manifest)
+        "files": [
+            "xyz-target.bin"
+        ],
+        // deploy "dependencies".
+        // This is the element that define the deploy graph.
+        // These dependencies will run before the current component.
+        "dependencies": [
+            "xyz-infrastructure"
         ]
     }
 }
@@ -205,7 +241,7 @@ that is build with the cmake toolchain:
 }
 ```
 
-When we `mbs run make_coffee`, `mbs` will apply the toolchain recipe to build the component (after building any upstream dependency, toolchain included, if needed).
+When we `mbs build run make_coffee`, `mbs` will apply the toolchain recipe to build the component (after building any upstream dependency, toolchain included, if needed).
 
 By abstraction, if we think the toolchain as an "executable binary", the build process will be:
 
@@ -224,7 +260,7 @@ And at the end it expect to find the component target `build/make_coffee`.
 
 A set of predefined environment variables are available in the toolchain run context:
 
-- `MBS_ID`: the component identifier (ref .mbs.json `id` field)
+- `MBS_ID`: the component identifier (ref .mbs-*.json `id` field)
 - `MBS_CWD`: component current working directory
 - `MBS_CHECKSUM`: component checksum
 - `MBS_DEPS_<deps_name_normalized>`: one for every deps, the path to the directory where we can find the dependency targets. For example, give a dependency named `my-lib` we will have `MBS_DEPS_MY_LIB`.

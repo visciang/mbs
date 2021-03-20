@@ -5,7 +5,7 @@ defmodule MBS.Toolchain do
 
   alias MBS.{Cache, Config, Docker, Manifest}
   alias MBS.CLI.Reporter
-  alias MBS.Workflow.Job.JobFunResult
+  alias MBS.Workflow.Job
 
   require Reporter.Status
 
@@ -88,7 +88,7 @@ defmodule MBS.Toolchain do
        ) do
     env =
       Enum.map(dependencies, fn dep_id ->
-        %JobFunResult{checksum: dep_checksum} = Map.fetch!(upstream_results, dep_id)
+        %Job.FunResult{checksum: dep_checksum} = Map.fetch!(upstream_results, dep_id)
 
         shell_dep_id =
           dep_id

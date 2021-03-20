@@ -15,6 +15,7 @@ misc
 - git://... dependencies
 
 cli
+- pass secrets in mbs
 - cache command (purge | size | info ... ?)
 - Job logs on files option?
 

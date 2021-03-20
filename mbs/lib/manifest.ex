@@ -1,24 +1,35 @@
 defmodule MBS.Manifest do
   @moduledoc """
-  .mbs.json manifest
+  MBS manifest functions
   """
 
-  alias MBS.{Checksum, Utils}
+  alias MBS.{Checksum, Const, Utils}
   alias MBS.Manifest.{Component, Target, Toolchain, Type, Validator}
 
-  @manifest_filename ".mbs.json"
+  @spec find_all(Type.type(), boolean()) :: [Type.t()]
+  def find_all(type, exclude_mbs_private_dirs \\ true) do
+    exclude_dirs = if exclude_mbs_private_dirs, do: Const.mbs_dirs(), else: []
 
-  @spec find_all :: [Type.t()]
-  def find_all do
-    "**/#{@manifest_filename}"
+    "**/#{manifest_name(type)}"
     |> Path.wildcard(match_dot: true)
+    |> reject_files_in_dirs(exclude_dirs)
     |> Enum.map(fn manifest_path ->
-      decode(manifest_path)
+      manifest_path
+      |> decode()
       |> add_defaults(manifest_path)
     end)
     |> Validator.validate()
-    |> Enum.map(&to_struct(&1))
+    |> Enum.map(&to_struct(type, &1))
     |> add_toolchain_data()
+  end
+
+  defp manifest_name(:build), do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_build_filename()}}"
+  defp manifest_name(:deploy), do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_deploy_filename()}}"
+
+  defp reject_files_in_dirs(paths, dirs) do
+    Enum.reject(paths, fn path ->
+      Enum.any?(dirs, &String.starts_with?(path, &1))
+    end)
   end
 
   defp decode(manifest_path) do
@@ -35,28 +46,59 @@ defmodule MBS.Manifest do
   end
 
   defp add_defaults(manifest, manifest_path) do
-    manifest
-    |> Map.put("dir", Path.dirname(Path.expand(manifest_path)))
-    |> Map.put_new("timeout", :infinity)
+    manifest =
+      manifest
+      |> Map.put("dir", Path.dirname(Path.expand(manifest_path)))
+      |> Map.put_new("timeout", :infinity)
+
+    cond do
+      Path.basename(manifest_path) in [Const.manifest_build_filename(), Const.manifest_deploy_filename()] ->
+        manifest = Map.put(manifest, "__schema__", "component")
+
+        if manifest["component"] do
+          manifest = put_in(manifest["component"]["toolchain_opts"], manifest["component"]["toolchain_opts"] || [])
+          manifest = put_in(manifest["component"]["targets"], manifest["component"]["targets"] || [])
+          put_in(manifest["component"]["dependencies"], manifest["component"]["dependencies"] || [])
+        else
+          manifest
+        end
+
+      Path.basename(manifest_path) == Const.manifest_toolchain_filename() ->
+        Map.put(manifest, "__schema__", "toolchain")
+    end
   end
 
-  defp to_struct(%{"id" => id, "dir" => dir, "timeout" => timeout, "component" => component}) do
+  defp to_struct(type, %{
+         "__schema__" => "component",
+         "id" => id,
+         "dir" => dir,
+         "timeout" => timeout,
+         "component" => component
+       }) do
     %Component{
+      type: type,
       id: id,
       dir: dir,
       timeout: timeout,
       toolchain: component["toolchain"],
-      toolchain_opts: component["toolchain_opts"] || [],
-      files: files(dir, component["files"]),
+      toolchain_opts: component["toolchain_opts"],
+      files: files(type, dir, component["files"]),
       targets: targets(dir, component["targets"]),
-      dependencies: component["dependencies"] || []
+      dependencies: component["dependencies"]
     }
   end
 
-  defp to_struct(%{"id" => id, "dir" => dir, "timeout" => timeout, "toolchain" => toolchain}) do
-    files_ = files(dir, [toolchain["dockerfile"] | toolchain["files"]])
+  defp to_struct(type, %{
+         "__schema__" => "toolchain",
+         "id" => id,
+         "dir" => dir,
+         "timeout" => timeout,
+         "toolchain" => toolchain
+       }) do
+    files_ = files(:build, dir, [toolchain["dockerfile"] | toolchain["files"]])
 
     %Toolchain{
+      type: type,
       id: id,
       dir: dir,
       timeout: timeout,
@@ -67,8 +109,8 @@ defmodule MBS.Manifest do
     }
   end
 
-  defp files(dir, file_globs) do
-    file_globs = [@manifest_filename | file_globs]
+  defp files(:build, dir, file_globs) do
+    file_globs = [manifest_name(:build) | file_globs]
     {file_exclude_glob, file_include_glob} = Enum.split_with(file_globs, &String.starts_with?(&1, "!"))
 
     files_include_match =
@@ -85,6 +127,10 @@ defmodule MBS.Manifest do
     files_match = MapSet.difference(files_include_match, files_exclude_match)
 
     MapSet.to_list(files_match)
+  end
+
+  defp files(:deploy, dir, files) do
+    targets(dir, files)
   end
 
   defp targets(dir, targets) do

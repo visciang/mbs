@@ -27,7 +27,7 @@ defmodule MBS do
   defp exit_status(workflow_status) do
     case workflow_status do
       :ok ->
-        workflow_status
+        :ok
 
       :error ->
         Utils.halt(nil, 1)

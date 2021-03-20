@@ -1,8 +1,9 @@
 defmodule MBS.CLI.Command.Ls do
   @moduledoc false
-  defstruct [:verbose, :targets]
+  defstruct [:type, :verbose, :targets]
 
   @type t :: %__MODULE__{
+          type: MBS.Manifest.Type.type(),
           verbose: boolean(),
           targets: [String.t()]
         }
@@ -13,19 +14,19 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   alias MBS.{Config, Manifest}
 
   @spec run(Command.Ls.t(), Config.Data.t(), Reporter.t()) :: :ok
-  def run(%Command.Ls{verbose: verbose, targets: target_ids}, %Config.Data{}, _reporter) do
+  def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{}, _reporter) do
     IO.puts("")
 
-    Manifest.find_all()
+    Manifest.find_all(type)
     |> Enum.filter(&Utils.filter_manifest_by_id(&1.id, target_ids))
     |> Enum.sort_by(& &1.id)
-    |> Enum.each(&print_ls(&1, verbose))
+    |> Enum.each(&print_ls(&1, type, verbose))
 
     :ok
   end
 
-  defp print_ls(%Manifest.Component{} = component, true) do
-    IO.puts(IO.ANSI.format([:bright, "#{component.id}", :normal, ":"]))
+  defp print_ls(%Manifest.Component{} = component, type, true) do
+    IO.puts(IO.ANSI.format([:bright, "#{component.id}", :normal, "  (component)", ":"]))
     IO.puts("  dir:")
     IO.puts("    #{component.dir}")
     IO.puts("  timeout:")
@@ -37,7 +38,15 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     Enum.each(component.targets, &IO.puts("    - #{target_to_str(&1)}"))
 
     IO.puts("  files:")
-    component.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
+
+    component.files
+    |> Enum.sort()
+    |> Enum.each(
+      &case type do
+        :build -> IO.puts("    - #{&1}")
+        :deploy -> IO.puts("    - #{target_to_str(&1)}")
+      end
+    )
 
     if component.dependencies != [] do
       IO.puts("  dependencies:")
@@ -47,8 +56,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     IO.puts("")
   end
 
-  defp print_ls(%Manifest.Toolchain{} = toolchain, true) do
-    IO.puts(IO.ANSI.format([:bright, "#{toolchain.id}", :normal, ":"]))
+  defp print_ls(%Manifest.Toolchain{} = toolchain, _type, true) do
+    IO.puts(IO.ANSI.format([:bright, "#{toolchain.id}", :normal, "  (toolchain)", ":"]))
     IO.puts("  dir:")
     IO.puts("    #{toolchain.dir}")
     IO.puts("  timeout:")
@@ -63,17 +72,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     IO.puts("")
   end
 
-  defp print_ls(manifest, false) do
-    extras =
-      case manifest do
-        %Manifest.Toolchain{} ->
-          "toolchain"
-
-        %Manifest.Component{} ->
-          "component"
-      end
-
-    IO.puts(IO.ANSI.format([:bright, manifest.id, :normal, "  (", extras, ")"]))
+  defp print_ls(manifest, _type, false) do
+    IO.puts(IO.ANSI.format([:bright, manifest.id, :normal, "  (", flavor(manifest), ")"]))
   end
 
   defp target_to_str(target) do
@@ -85,4 +85,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
         "docker://#{target}"
     end
   end
+
+  defp flavor(%Manifest.Toolchain{}), do: "toolchain"
+  defp flavor(%Manifest.Component{}), do: "component"
 end

@@ -7,10 +7,12 @@ docker build --rm -f dockerfiles/Dockerfile --target full --tag mbs:full .
 
 if [ ! -z "$RUN_IT" ]; then
     ./mbs.sh version
-    ./mbs.sh ls
-    ./mbs.sh ls --verbose
-    ./mbs.sh outdated
-    ./mbs.sh tree mbs
-    ./mbs.sh run --logs
-    ./mbs.sh graph
+    ./mbs.sh build ls
+    ./mbs.sh build ls --verbose
+    ./mbs.sh deploy ls
+    ./mbs.sh deploy ls --verbose
+    ./mbs.sh build outdated
+    ./mbs.sh build tree mbs
+    ./mbs.sh build run --logs
+    ./mbs.sh build graph
 fi

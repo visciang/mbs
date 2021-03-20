@@ -11,16 +11,16 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Run do
   alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
-  @spec run(Command.Run.t(), Config.Data.t(), Reporter.t()) :: Dask.await_result()
+  @spec run(Command.Run.t(), Config.Data.t(), Reporter.t()) :: :ok | :error
   def run(%Command.Run{targets: target_ids}, %Config.Data{} = config, reporter) do
     dask =
-      Manifest.find_all()
+      Manifest.find_all(:build)
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
       |> Workflow.workflow(
         config,
         reporter,
-        &Workflow.Job.run_fun(&1, &2, &3),
-        &Workflow.Job.run_fun_on_exit(&1, &2, &3, reporter)
+        &Workflow.Job.Run.fun(&1, &2, &3),
+        &Workflow.Job.OnExit.fun(&1, &2, &3, reporter)
       )
 
     dask =
@@ -31,6 +31,12 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Run do
           Utils.halt(error.message)
       end
 
-    Dask.await(dask)
+    dask
+    |> Dask.await()
+    |> case do
+      {:ok, _} -> :ok
+      {:error, _} -> :error
+      :timeout -> :timeout
+    end
   end
 end

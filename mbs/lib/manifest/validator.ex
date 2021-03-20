@@ -3,11 +3,11 @@ defmodule MBS.Manifest.Validator do
   Manifest file validator
   """
 
-  alias MBS.Utils
+  alias MBS.{Manifest, Utils}
 
   @name_regex "^[a-zA-Z0-9_-]+$"
 
-  @spec validate([MBS.Manifest.Type.t()]) :: [MBS.Manifest.Type.t()]
+  @spec validate([Manifest.Type.t()]) :: [Manifest.Type.t()]
   def validate(manifests) do
     validate_schema(manifests)
 
@@ -51,9 +51,14 @@ defmodule MBS.Manifest.Validator do
     end
   end
 
-  defp validate_timeout(_), do: :ok
+  defp validate_type(%{"__schema__" => "toolchain", "dir" => dir} = type) do
+    toolchain = type["toolchain"]
 
-  defp validate_type(%{"dir" => dir, "toolchain" => toolchain}) do
+    unless toolchain do
+      message = error_message(dir, "Bad toolchain type, missing toolchain field")
+      Utils.halt(message)
+    end
+
     unless is_map(toolchain) do
       message = error_message(dir, "Bad toolchain type")
       Utils.halt(message)
@@ -68,7 +73,14 @@ defmodule MBS.Manifest.Validator do
     validate_list_of_strings(toolchain, ["steps"], dir)
   end
 
-  defp validate_type(%{"dir" => dir, "component" => component}) do
+  defp validate_type(%{"__schema__" => "component", "dir" => dir} = type) do
+    component = type["component"]
+
+    unless component do
+      message = error_message(dir, "Bad component type, missing component field")
+      Utils.halt(message)
+    end
+
     unless is_map(component) do
       message = error_message(dir, "Bad component type")
       Utils.halt(message)
@@ -79,16 +91,10 @@ defmodule MBS.Manifest.Validator do
       Utils.halt(message)
     end
 
-    if component["toolchain_opts"] != nil do
-      validate_list_of_strings(component, ["toolchain_opts"], dir)
-    end
-
+    validate_list_of_strings(component, ["toolchain_opts"], dir)
     validate_list_of_strings(component, ["files"], dir)
     validate_list_of_strings(component, ["targets"], dir)
-
-    if component["dependencies"] do
-      validate_list_of_strings(component, ["dependencies"], dir)
-    end
+    validate_list_of_strings(component, ["dependencies"], dir)
   end
 
   defp validate_list_of_strings(manifest, path, dir) do
@@ -122,11 +128,11 @@ defmodule MBS.Manifest.Validator do
   defp validate_components(manifests, ids) do
     toolchains_ids =
       manifests
-      |> Enum.filter(&(&1["toolchain"] != nil))
+      |> Enum.filter(&(&1["__schema__"] == "toolchain"))
       |> MapSet.new(& &1["id"])
 
     manifests
-    |> Enum.filter(&(&1["component"] != nil))
+    |> Enum.filter(&(&1["__schema__"] == "component"))
     |> Enum.each(fn %{"dir" => dir, "component" => component} ->
       unknown_dependencies = MapSet.difference(MapSet.new(component["dependencies"] || []), ids)
 
@@ -136,13 +142,13 @@ defmodule MBS.Manifest.Validator do
       end
 
       unless MapSet.member?(toolchains_ids, component["toolchain"]) do
-        message = error_message(dir, "Unknown build.toolchain #{inspect(component["toolchain"])}")
+        message = error_message(dir, "Unknown toolchain #{inspect(component["toolchain"])}")
         Utils.halt(message)
       end
     end)
   end
 
   defp error_message(dir, error_message) do
-    IO.ANSI.format([:red, "Error in #{Path.join(dir, ".mbs.json")}\n#{error_message}"])
+    IO.ANSI.format([:red, "Error in #{dir} manifest\n#{error_message}"])
   end
 end

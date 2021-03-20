@@ -56,7 +56,7 @@ component_ids_max_len = String.length(to_string(n_components))
     }
   )
 
-  manifest_path = Path.join(component_name, ".mbs.json")
+  manifest_path = Path.join(component_name, ".mbs-build.json")
   File.write!(manifest_path, mbs_manifest)
 end)
 
@@ -78,7 +78,7 @@ mbs_manifest = ~s(
   }
 )
 
-File.write!(".mbs.json", mbs_manifest)
+File.write!(".mbs-toolchain.json", mbs_manifest)
 
 script = ~s(#!/bin/sh
 set -e

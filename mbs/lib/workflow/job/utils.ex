@@ -6,25 +6,34 @@ defmodule MBS.Workflow.Job.Utils do
   alias MBS.Checksum
   alias MBS.Docker
   alias MBS.Manifest.{Component, Target, Toolchain, Type}
-  alias MBS.Workflow.Job.JobFunResult
+  alias MBS.Workflow.Job
 
-  @spec checksum(Path.t(), [Path.t()], Dask.Job.upstream_results()) :: String.t()
-  def checksum(component_dir, files, upstream_results) do
+  @spec checksum(Path.t(), [Path.t()], %{String.t() => String.t()}) :: String.t()
+  def checksum(component_dir, files, upstream_checksums) do
     files_checksum = Checksum.files_checksum(files, component_dir)
 
     dependencies_checksums =
-      upstream_results
+      upstream_checksums
       |> Enum.sort_by(fn {dependency_name, _} -> dependency_name end)
-      |> Enum.map(fn {_dependency_name, %JobFunResult{checksum: dependency_checksum}} -> dependency_checksum end)
+      |> Enum.map(fn {_dependency_name, dependency_checksum} -> dependency_checksum end)
 
     [files_checksum | dependencies_checksums]
     |> Enum.join()
     |> Checksum.checksum()
   end
 
+  @spec upstream_results_to_checksums_map(%{String.t() => Job.FunResult.t()}) :: %{String.t() => String.t()}
+  def upstream_results_to_checksums_map(upstream_results) do
+    Map.new(upstream_results, fn
+      {dependency_name, %Job.FunResult{checksum: dependency_checksum}} ->
+        {dependency_name, dependency_checksum}
+    end)
+  end
+
   @spec filter_upstream_results(Dask.Job.upstream_results(), [String.t()]) :: Dask.Job.upstream_results()
   def filter_upstream_results(upstream_results, job_dependencies) do
-    Enum.filter(upstream_results, fn {dependency_name, _} -> dependency_name in job_dependencies end)
+    upstream_results
+    |> Enum.filter(fn {dependency_name, _} -> dependency_name in job_dependencies end)
     |> Map.new()
   end
 

@@ -14,7 +14,7 @@ defmodule Dask do
   defstruct [:jobs]
   @type t :: %M{jobs: %{Job.id() => Job.t()}}
 
-  @type await_result :: :ok | :error | :timeout
+  @type await_result :: {:ok, term()} | {:error, term()} | :timeout
 
   @spec start_job_id :: :__start_job__
   def start_job_id, do: :__start_job__
@@ -104,7 +104,7 @@ defmodule Dask do
 
     end_job = %Job{
       id: end_job_id(),
-      fun: fn _, _ -> :ok end,
+      fun: fn _, upstream_results -> upstream_results end,
       timeout: :infinity,
       downstream_jobs: MapSet.new(),
       on_exit: fn _, _, _ -> :ok end

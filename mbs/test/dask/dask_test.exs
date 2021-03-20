@@ -2,11 +2,7 @@ defmodule Test.Dask do
   use ExUnit.Case, async: true
 
   test "basic dask exec" do
-    workflow_status =
-      Dask.new()
-      |> add_jobs()
-      |> Dask.async()
-      |> Dask.await(1_000)
+    workflow_status = Dask.new() |> add_jobs() |> Dask.async() |> Dask.await(1_000)
 
     expected_workflow_execution = [
       job_a1: %{Dask.start_job_id() => :ok},
@@ -20,7 +16,28 @@ defmodule Test.Dask do
       job_d2: %{job_c1: :ok, job_c2: :ok}
     ]
 
-    assert workflow_status == :error
+    assert match?({:error, _}, workflow_status)
+    assert_workflow_execution(expected_workflow_execution)
+  end
+
+  test "dask await returns the right final result" do
+    test_job_fun_1 = gen_test_job_fun(fn -> :ok_1 end)
+    test_job_fun_2 = gen_test_job_fun(fn -> :ok_2 end)
+
+    workflow_status =
+      Dask.new()
+      |> Dask.job(:job_1, test_job_fun_1)
+      |> Dask.job(:job_2, test_job_fun_2)
+      |> Dask.flow(:job_1, :job_2)
+      |> Dask.async()
+      |> Dask.await(1_000)
+
+    expected_workflow_execution = [
+      job_1: %{Dask.start_job_id() => :ok},
+      job_2: %{:job_1 => :ok_1}
+    ]
+
+    assert match?({:ok, %{job_2: :ok_2}}, workflow_status)
     assert_workflow_execution(expected_workflow_execution)
   end
 
@@ -42,7 +59,7 @@ defmodule Test.Dask do
       job_1: %{Dask.start_job_id() => :ok}
     ]
 
-    assert workflow_status == :error
+    assert match?({:error, _}, workflow_status)
     assert_workflow_execution(expected_workflow_execution)
   end
 
