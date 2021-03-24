@@ -3,7 +3,7 @@ defmodule MBS.Toolchain do
   Toolchain functions
   """
 
-  alias MBS.{Cache, Config, Docker, Manifest}
+  alias MBS.{Cache, Config, Const, Docker, Manifest}
   alias MBS.CLI.Reporter
   alias MBS.Workflow.Job
 
@@ -18,16 +18,16 @@ defmodule MBS.Toolchain do
   def shell_cmd(
         %Manifest.Component{dir: work_dir, toolchain: toolchain} = component,
         checksum,
-        %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
+        %Config.Data{root_dir: root_dir},
         upstream_results
       ) do
-    env = run_env_vars(component, checksum, cache_dir, upstream_results)
+    env = run_build_env_vars(component, root_dir, checksum, upstream_results)
     opts = run_opts(root_dir, work_dir) ++ ["--entrypoint", "sh", "--interactive"]
 
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
   end
 
-  @spec exec(
+  @spec exec_build(
           Manifest.Component.t(),
           String.t(),
           Config.Data.t(),
@@ -36,15 +36,32 @@ defmodule MBS.Toolchain do
           Reporter.t()
         ) ::
           :ok | {:error, term()}
-  def exec(
-        %Manifest.Component{dir: work_dir, toolchain: toolchain, toolchain_opts: toolchain_opts} = component,
+  def exec_build(
+        %Manifest.Component{} = component,
         checksum,
-        %Config.Data{cache: %{dir: cache_dir}, root_dir: root_dir},
+        %Config.Data{root_dir: root_dir} = config,
         upstream_results,
         job_id,
         reporter
       ) do
-    env = run_env_vars(component, checksum, cache_dir, upstream_results)
+    env = run_build_env_vars(component, root_dir, checksum, upstream_results)
+    exec(component, config, env, job_id, reporter)
+  end
+
+  @spec exec_deploy(Manifest.Component.t(), String.t(), Config.Data.t(), String.t(), Reporter.t()) ::
+          :ok | {:error, term()}
+  def exec_deploy(%Manifest.Component{} = component, checksum, %Config.Data{} = config, job_id, reporter) do
+    env = run_deploy_env_vars(component, checksum)
+    exec(component, config, env, job_id, reporter)
+  end
+
+  defp exec(
+         %Manifest.Component{dir: work_dir, toolchain: toolchain, toolchain_opts: toolchain_opts},
+         %Config.Data{root_dir: root_dir},
+         env,
+         job_id,
+         reporter
+       ) do
     toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
     opts = run_opts(root_dir, work_dir)
 
@@ -80,10 +97,10 @@ defmodule MBS.Toolchain do
     opts ++ work_dir ++ dir_mount
   end
 
-  defp run_env_vars(
+  defp run_build_env_vars(
          %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
+         root_dir,
          checksum,
-         cache_dir,
          upstream_results
        ) do
     env =
@@ -96,11 +113,16 @@ defmodule MBS.Toolchain do
           |> String.replace(":", "_")
           |> String.replace("-", "_")
 
+        cache_dir = Path.join(root_dir, Const.cache_dir())
         deps_path = Cache.path(cache_dir, dep_id, dep_checksum, "")
         {"MBS_DEPS_#{shell_dep_id}", deps_path}
       end)
 
     [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
+  end
+
+  defp run_deploy_env_vars(%Manifest.Component{id: id, dir: dir}, checksum) do
+    [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum}]
   end
 
   defp toolchain_opts_env_subs(toolchain_opts, env) do

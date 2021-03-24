@@ -1,6 +1,6 @@
 defmodule MBS do
   @moduledoc """
-  Multi Build System
+  Meta Build System
   """
 
   alias MBS.Config

@@ -1,10 +1,10 @@
-defmodule MBS.Workflow.Job.Run do
+defmodule MBS.Workflow.Job.RunBuild do
   @moduledoc """
-  Workflow job logic for "run" command
+  Workflow job logic for "build run" command
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Manifest}
+  alias MBS.{Config, Const, Manifest}
   alias MBS.Toolchain
   alias MBS.Workflow.Job
 
@@ -36,13 +36,13 @@ defmodule MBS.Workflow.Job.Run do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum, targets: []}
+      %Job.FunResult{checksum: checksum}
     end
   end
 
   def fun(
         reporter,
-        %Config.Data{cache: %{dir: cache_dir}} = config,
+        %Config.Data{} = config,
         %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component
       ) do
     fn job_id, upstream_results ->
@@ -54,10 +54,10 @@ defmodule MBS.Workflow.Job.Run do
       checksum = Job.Utils.checksum(component_dir, files, upstream_checksums_map)
 
       {report_status, report_desc} =
-        with :cache_miss <- Job.Cache.get_targets(cache_dir, id, checksum, targets),
-             :ok <- Toolchain.exec(component, checksum, config, upstream_results, job_id, reporter),
+        with :cache_miss <- Job.Cache.get_targets(Const.cache_dir(), id, checksum, targets),
+             :ok <- Toolchain.exec_build(component, checksum, config, upstream_results, job_id, reporter),
              :ok <- Job.Utils.assert_targets(targets, checksum),
-             :ok <- Job.Cache.put_targets(cache_dir, id, checksum, targets) do
+             :ok <- Job.Cache.put_targets(Const.cache_dir(), id, checksum, targets) do
           {Reporter.Status.ok(), checksum}
         else
           :cached ->
@@ -75,7 +75,7 @@ defmodule MBS.Workflow.Job.Run do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum, targets: targets}
+      %Job.FunResult{checksum: checksum}
     end
   end
 end

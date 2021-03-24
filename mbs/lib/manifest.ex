@@ -6,11 +6,11 @@ defmodule MBS.Manifest do
   alias MBS.{Checksum, Const, Utils}
   alias MBS.Manifest.{Component, Target, Toolchain, Type, Validator}
 
-  @spec find_all(Type.type(), boolean()) :: [Type.t()]
-  def find_all(type, exclude_mbs_private_dirs \\ true) do
+  @spec find_all(Type.type(), Path.t(), boolean()) :: [Type.t()]
+  def find_all(type, in_dir \\ ".", exclude_mbs_private_dirs \\ true) do
     exclude_dirs = if exclude_mbs_private_dirs, do: Const.mbs_dirs(), else: []
 
-    "**/#{manifest_name(type)}"
+    Path.join(in_dir, "**/#{manifest_name(type)}")
     |> Path.wildcard(match_dot: true)
     |> reject_files_in_dirs(exclude_dirs)
     |> Enum.map(fn manifest_path ->

@@ -49,6 +49,24 @@ defmodule MBS.Docker do
     end
   end
 
+  @spec image_load(Path.t(), Reporter.t(), String.t()) :: :ok | {:error, term()}
+  def image_load(path_tar_gz, reporter, job_id) do
+    path_tar = Path.join(System.tmp_dir!(), Path.basename(path_tar_gz, ".gz"))
+    gunzip(path_tar_gz, path_tar)
+
+    cmd_args = ["image", "load", "--input", path_tar]
+
+    Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
+
+    case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
+      {_, 0} ->
+        :ok
+
+      {res, _} ->
+        {:error, res}
+    end
+  end
+
   @spec image_build(String.t(), String.t(), Path.t(), String.t(), Reporter.t(), String.t()) ::
           :ok | {:error, term()}
   def image_build(repository, tag, dir, dockerfile, reporter, job_id) do
@@ -115,5 +133,12 @@ defmodule MBS.Docker do
 
   defp docker_env(env) do
     Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
+  end
+
+  defp gunzip(src, dest) do
+    src
+    |> File.stream!([:compressed], 2048)
+    |> Stream.into(File.stream!(dest, [], 2048))
+    |> Stream.run()
   end
 end

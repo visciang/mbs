@@ -13,7 +13,7 @@ defmodule MBS.Workflow.Job.Release do
           Job.job_fun()
   def fun(
         reporter,
-        %Config.Data{cache: %{dir: cache_dir}},
+        %Config.Data{},
         %Manifest.Toolchain{type: :deploy, dir: toolchain_dir, id: id, checksum: checksum},
         release_dir,
         _build_checksums
@@ -25,7 +25,7 @@ defmodule MBS.Workflow.Job.Release do
       target = %Manifest.Target{type: :docker, target: id}
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(cache_dir, id, checksum, [target], targets_dir, reporter) do
+        case Job.Cache.copy_targets(Const.cache_dir(), id, checksum, [target], targets_dir, reporter) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 
@@ -46,13 +46,13 @@ defmodule MBS.Workflow.Job.Release do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum, targets: []}
+      %Job.FunResult{checksum: checksum}
     end
   end
 
   def fun(
         reporter,
-        %Config.Data{cache: %{dir: cache_dir}},
+        %Config.Data{},
         %Manifest.Component{type: :deploy, id: id, dir: component_dir, files: deploy_targets} = component,
         release_dir,
         build_checksums
@@ -72,7 +72,7 @@ defmodule MBS.Workflow.Job.Release do
       targets_dir = Path.join(release_dir, id)
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(cache_dir, id, build_checksum, deploy_targets, targets_dir, reporter) do
+        case Job.Cache.copy_targets(Const.cache_dir(), id, build_checksum, deploy_targets, targets_dir, reporter) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 
@@ -93,7 +93,7 @@ defmodule MBS.Workflow.Job.Release do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: deploy_checksum, targets: []}
+      %Job.FunResult{checksum: deploy_checksum}
     end
   end
 

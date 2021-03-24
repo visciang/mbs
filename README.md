@@ -4,7 +4,7 @@
 
 A **Meta Build System** to organizate / build / release / deploy a large ~~micro~~ service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
-Docker **containerization** technology is used both to run `mbs` and to define your own standardized toolchains to build your software components.
+Docker **containerization** technology is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
 
 With MBS you can easly define the toolchains to build the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services.
 
@@ -18,8 +18,8 @@ The system scales well, but:
 ... the git repo should fit in the dev machine
 
 ### Terminology
-- **Toolchain**: defines your "build" recipes, standardized and parameterizable.
-- **Component**: a sofware component, a piece of software with well defined functionalities and boundaries that can be build to a target artifact (via a toolchain).
+- **Toolchain**: defines your "build" / "deploy" recipes, standardized and parameterizable.
+- **Component**: a sofware component, a piece of software with well defined functionalities and boundaries that can be build to a target artifact (via a toolchain). Acomponent could be also a deployable target or not (for example a library that is only consumed by other components)
 
 In other words we can think about *toolchains* as "functions" that turns *components* into *artifacts*. If you think about it, also *toolchains* are components, in fact there's a special "bootstrapping" *toolchain*, docker, that is able to turn a *toolchain component* into a toolchain (artifact).
 MBS in a "high order function" that you feed with your mono-repo (a set of components and toolchain components) and gives you back the artifacts of your components built with your toolchain built with docker...
@@ -39,7 +39,7 @@ As explained above, `mbs` is mostly targeted at mono-repository, and if you land
 
 It naturally feets well with domain / component oriented design.
 
-Remeber that, like every tool, `mbs` / mono-repos / etc. are just patterns and guidelines, not a silver bullet, and should not be misused otherwise you will shoot that silver bullet in your feet. So is essential to correclty design modules / components, their boundaries / what (business) logic we put into them and the dependecies we introduce beetween them.
+Remember that, like every tool, `mbs` / mono-repos / etc. are just patterns and guidelines, not a silver bullet, and should not be misused otherwise you will shoot that silver bullet in your feet. So is essential to correclty design modules / components, their boundaries / what (business) logic we put into them and the dependecies we introduce beetween them.
 
 ### A bit of history
 
@@ -48,7 +48,9 @@ extra reference to monorepo or other similar tools/solutions: cmake / ninja / do
 
 ## Getting Started
 
-To start playing with some toy examples, first build `mbs` (run `./ci.sh`, only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`! For example run `mbs --help` and `mbs build ls`, it will list also some examples included in the repository under `examples/monorepo/`.
+To start playing with some toy examples, let's build first `mbs` (run `./ci.sh`, the only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`!
+
+For example run `mbs --help` and `mbs build ls`, it will list also some examples included in the repository under `examples/monorepo/`.
 
 TODO: a quick tour based on the example/
 TODO: A word about building `mbs` in `mbs`
@@ -60,16 +62,18 @@ The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMA
 
 ### Commands
 
-- **build graph**: generate dependency graph
-- **build ls**: list available targets
-- **build outdated**: show outdated targets
-- **build run**: run a target build
-- **build shell**: interactive toolchain shell
-- **build graph**: generate dependency graph
-- **deploy ls**: list available targets
-- **deploy release**: make a release
-- **deploy tree**: display a dependecy tree
-- **version**: show the mbs version
+- **version**:           Show the mbs version
+- **build graph**:       Generate dependency graph
+- **build ls**:          List available targets
+- **build outdated**:    Show outdated targets
+- **build run**:         Run a target build
+- **build shell**:       Interactive toolchain shell
+- **build tree**:        Display a dependency tree
+- **release**:           Make a deployable release
+- **deploy graph**:      Generate dependency graph
+- **deploy ls**:         List available targets
+- **deploy run**:        Run a release deploy
+- **deploy tree**:       Display a dependency tree
 
 ## Configuration
 
@@ -208,7 +212,7 @@ Let's say we have a component:
 {
     "id": "make_coffee",
     "component": {
-        "toolchain": "cmake-toolchain",
+        "toolchain": "toolchain-build-cmake",
         "toolchain_opts": ["--param1", "a", "--switch2"],
         "files": [
             "CMakeLists.txt",
@@ -225,7 +229,7 @@ that is build with the cmake toolchain:
 
 ```js
 {
-    "id": "cmake-toolchain",
+    "id": "toolchain-build-cmake",
     "toolchain": {
         "dockerfile": "Dockerfile",
         "files": [
@@ -247,9 +251,9 @@ By abstraction, if we think the toolchain as an "executable binary", the build p
 
 ```sh
 cd monorepo/components/make_coffee
-cmake-toolchain "build" --param1 a --switch 2
-cmake-toolchain "lint" --param1 a --switch 2
-cmake-toolchain "test" --param1 a --switch 2
+toolchain-build-cmake "build" --param1 a --switch 2
+toolchain-build-cmake "lint" --param1 a --switch 2
+toolchain-build-cmake "test" --param1 a --switch 2
 ...
 
 ```

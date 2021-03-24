@@ -14,7 +14,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
   alias MBS.CLI.{Command, Reporter}
   alias MBS.{Checksum, CLI, Config, Const, Manifest, Utils, Workflow}
 
-  @spec run(Command.Release.t(), Config.Data.t(), Reporter.t()) :: :ok | :error
+  @spec run(Command.Release.t(), Config.Data.t(), Reporter.t()) :: :ok | :error | :timeout
   def run(
         %Command.Release{id: id, targets: target_ids, output_dir: output_dir, metadata: metadata},
         %Config.Data{} = config,
@@ -44,7 +44,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
         &Workflow.Job.OnExit.fun(&1, &2, &3, reporter)
       )
 
-    dask =
+    dask_exec =
       try do
         Dask.async(dask, config.parallelism)
       rescue
@@ -53,7 +53,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
       end
 
     res =
-      dask
+      dask_exec
       |> Dask.await()
       |> case do
         {:ok, _} -> :ok
@@ -62,7 +62,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
       end
 
     if res == :ok do
-      release_manifest(deploy_manifests, id, output_dir, metadata)
+      write_release_manifest(deploy_manifests, id, output_dir, metadata)
     end
 
     res
@@ -76,15 +76,17 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
     |> Enum.flat_map(&[&1, &1.toolchain])
   end
 
-  defp release_manifest(manifests, id, output_dir, metadata) do
-    rel_manifest = %{
+  defp write_release_manifest(manifests, id, output_dir, metadata) do
+    release_manifest = %Manifest.Release{
       id: id,
       checksum: release_checksum(manifests, output_dir),
       metadata: metadata
     }
 
-    rel_manifest_path = Path.join(output_dir, Const.release_metadata())
-    File.write!(rel_manifest_path, Jason.encode!(rel_manifest, pretty: true))
+    File.write!(
+      Path.join(output_dir, Const.release_metadata()),
+      release_manifest |> Map.from_struct() |> Jason.encode!(pretty: true)
+    )
   end
 
   defp release_checksum(manifests, output_dir) do
@@ -121,7 +123,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
   defp build_checksums(target_ids, build_manifests, config, reporter) do
     dask = Workflow.workflow(build_manifests, config, reporter, &Workflow.Job.Checksums.fun/3)
 
-    dask =
+    dask_exec =
       try do
         Dask.async(dask, config.parallelism)
       rescue
@@ -129,7 +131,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
           Utils.halt(error.message)
       end
 
-    dask
+    dask_exec
     |> Dask.await()
     |> case do
       {:ok, checksums_map} ->

@@ -12,12 +12,12 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
-  @spec run(Command.Shell.t(), Config.Data.t(), Reporter.t()) :: :ok | :error
+  @spec run(Command.Shell.t(), Config.Data.t(), Reporter.t()) :: :ok | :error | :timeout
   def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config, reporter) do
     manifests = Manifest.find_all(:build)
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)
 
-    CLI.Command.run(%Command.Run{targets: target_direct_dependencies}, config, reporter)
+    CLI.Command.run(%Command.RunBuild{targets: target_direct_dependencies}, config, reporter)
   end
 
   def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, reporter) do
@@ -35,7 +35,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
         &Workflow.Job.OnExit.fun(&1, &2, &3, reporter)
       )
 
-    dask =
+    dask_exec =
       try do
         Dask.async(dask, config.parallelism)
       rescue
@@ -43,7 +43,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
           Utils.halt(error.message)
       end
 
-    dask
+    dask_exec
     |> Dask.await()
     |> case do
       {:ok, _} -> :ok

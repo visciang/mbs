@@ -24,7 +24,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
 
       Manifest.find_all(type)
       |> Utils.transitive_dependencies_closure(target_ids)
-      |> Workflow.workflow(config, reporter, fn _, _, _ -> :ok end)
+      |> Workflow.workflow(config, reporter, &null_fun/3)
       |> Dask.Dot.export()
       |> Dask.Utils.dot_to_svg(output_filename)
 
@@ -42,5 +42,9 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
   rescue
     ErlangError ->
       false
+  end
+
+  defp null_fun(_, _, _) do
+    fn _, _ -> :ok end
   end
 end

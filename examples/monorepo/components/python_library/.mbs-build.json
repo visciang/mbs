@@ -1,7 +1,7 @@
 {
     "id": "python_library",
     "component": {
-        "toolchain": "python-toolchain",
+        "toolchain": "toolchain-build-python",
         "toolchain_opts": ["--type", "wheel"],
         "files": [
             "python_library/**/*.py",

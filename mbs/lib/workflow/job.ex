@@ -8,11 +8,10 @@ defmodule MBS.Workflow.Job do
     Job function result data
     """
 
-    defstruct [:checksum, :targets]
+    defstruct [:checksum]
 
     @type t :: %__MODULE__{
-            checksum: String.t(),
-            targets: [String.t()]
+            checksum: String.t()
           }
   end
 

@@ -1,7 +1,7 @@
 {
     "id": "golib",
     "component": {
-        "toolchain": "go-toolchain",
+        "toolchain": "toolchain-build-go",
         "toolchain_opts": ["--type", "lib"],
         "files": [
             "*.go",

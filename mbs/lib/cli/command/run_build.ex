@@ -1,4 +1,4 @@
-defmodule MBS.CLI.Command.Run do
+defmodule MBS.CLI.Command.RunBuild do
   @moduledoc false
   defstruct [:targets]
 
@@ -7,23 +7,23 @@ defmodule MBS.CLI.Command.Run do
         }
 end
 
-defimpl MBS.CLI.Command, for: MBS.CLI.Command.Run do
+defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
   alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
-  @spec run(Command.Run.t(), Config.Data.t(), Reporter.t()) :: :ok | :error
-  def run(%Command.Run{targets: target_ids}, %Config.Data{} = config, reporter) do
+  @spec run(Command.RunBuild.t(), Config.Data.t(), Reporter.t()) :: :ok | :error | :timeout
+  def run(%Command.RunBuild{targets: target_ids}, %Config.Data{} = config, reporter) do
     dask =
       Manifest.find_all(:build)
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
       |> Workflow.workflow(
         config,
         reporter,
-        &Workflow.Job.Run.fun(&1, &2, &3),
+        &Workflow.Job.RunBuild.fun/3,
         &Workflow.Job.OnExit.fun(&1, &2, &3, reporter)
       )
 
-    dask =
+    dask_exec =
       try do
         Dask.async(dask, config.parallelism)
       rescue
@@ -31,7 +31,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Run do
           Utils.halt(error.message)
       end
 
-    dask
+    dask_exec
     |> Dask.await()
     |> case do
       {:ok, _} -> :ok

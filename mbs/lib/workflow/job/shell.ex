@@ -13,14 +13,14 @@ defmodule MBS.Workflow.Job.Shell do
   @spec fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), String.t()) :: Job.job_fun()
   def fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _shell_target) do
     fn _job_id, _upstream_results ->
-      %Job.FunResult{checksum: checksum, targets: []}
+      %Job.FunResult{checksum: checksum}
     end
   end
 
   def fun(
         _reporter,
         %Config.Data{} = config,
-        %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component,
+        %Manifest.Component{id: id, dir: component_dir, files: files} = component,
         shell_target
       ) do
     fn _job_id, upstream_results ->
@@ -34,7 +34,7 @@ defmodule MBS.Workflow.Job.Shell do
         |> IO.puts()
       end
 
-      %Job.FunResult{checksum: checksum, targets: targets}
+      %Job.FunResult{checksum: checksum}
     end
   end
 end

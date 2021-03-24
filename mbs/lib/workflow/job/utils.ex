@@ -10,14 +10,18 @@ defmodule MBS.Workflow.Job.Utils do
 
   @spec checksum(Path.t(), [Path.t()], %{String.t() => String.t()}) :: String.t()
   def checksum(component_dir, files, upstream_checksums) do
-    files_checksum = Checksum.files_checksum(files, component_dir)
+    component_checksum = Checksum.files_checksum(files, component_dir)
+    checksum(component_checksum, upstream_checksums)
+  end
 
+  @spec checksum(String.t(), %{String.t() => String.t()}) :: String.t()
+  def checksum(component_checksum, upstream_checksums) do
     dependencies_checksums =
       upstream_checksums
       |> Enum.sort_by(fn {dependency_name, _} -> dependency_name end)
       |> Enum.map(fn {_dependency_name, dependency_checksum} -> dependency_checksum end)
 
-    [files_checksum | dependencies_checksums]
+    [component_checksum | dependencies_checksums]
     |> Enum.join()
     |> Checksum.checksum()
   end

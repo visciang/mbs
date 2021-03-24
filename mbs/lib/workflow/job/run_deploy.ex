@@ -1,0 +1,100 @@
+defmodule MBS.Workflow.Job.RunDeploy do
+  @moduledoc """
+  Workflow job logic for "deploy run" command
+  """
+
+  alias MBS.CLI.Reporter
+  alias MBS.{Config, Const, Docker, Manifest, Toolchain}
+  alias MBS.Workflow.Job
+
+  require Reporter.Status
+
+  @spec fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
+  def fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, dir: toolchain_dir}) do
+    fn job_id, _upstream_results ->
+      start_time = Reporter.time()
+
+      {report_status, checksum} =
+        with {:ok, checksum} <- build_checksum(toolchain_dir),
+             {:image_exists, false, checksum} <- {:image_exists, Docker.image_exists(id, checksum), checksum},
+             path_tar_gz = Path.join(toolchain_dir, "#{id}.tar.gz"),
+             :ok <- Docker.image_load(path_tar_gz, reporter, job_id) do
+          {Reporter.Status.ok(), checksum}
+        else
+          {:image_exists, true, checksum} ->
+            {Reporter.Status.uptodate(), checksum}
+
+          {:error, reason} ->
+            {Reporter.Status.error(reason), nil}
+        end
+
+      end_time = Reporter.time()
+
+      Reporter.job_report(reporter, job_id, report_status, checksum, end_time - start_time)
+
+      unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
+        raise "Job failed #{inspect(report_status)}"
+      end
+
+      %Job.FunResult{checksum: checksum}
+    end
+  end
+
+  def fun(
+        reporter,
+        %Config.Data{} = config,
+        %Manifest.Component{dir: component_dir, toolchain: %Manifest.Toolchain{dir: toolchain_dir}} = component
+      ) do
+    fn job_id, upstream_results ->
+      start_time = Reporter.time()
+
+      dependencies = Job.Utils.component_dependencies(component)
+      upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
+      upstream_checksums_map = Job.Utils.upstream_results_to_checksums_map(upstream_results)
+
+      {report_status, checksum} =
+        with {:ok, component_checksum} <- build_checksum(component_dir),
+             {:ok, toolchain_checksum} <- build_checksum(toolchain_dir),
+             checksum = Job.Utils.checksum(component_checksum, upstream_checksums_map),
+             component = put_in(component.toolchain.checksum, toolchain_checksum),
+             :ok <- Toolchain.exec_deploy(component, component_checksum, config, job_id, reporter) do
+          {Reporter.Status.ok(), checksum}
+        else
+          {:error, reason} ->
+            {Reporter.Status.error(reason), nil}
+        end
+
+      # define "release state" (environment should be supported)
+      # Check release state to determine if the component should be deployed
+      # [execute ...]
+      # Update release state
+
+      end_time = Reporter.time()
+
+      Reporter.job_report(reporter, job_id, report_status, checksum, end_time - start_time)
+
+      # unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
+      unless match?(Reporter.Status.ok(), report_status) do
+        raise "Job failed #{inspect(report_status)}"
+      end
+
+      %Job.FunResult{checksum: checksum}
+    end
+  end
+
+  defp build_checksum(dir) do
+    metadata_path = Path.join(dir, Const.release_metadata())
+
+    if File.exists?(metadata_path) do
+      checksum =
+        metadata_path
+        |> File.read!()
+        |> Jason.decode!()
+        |> Map.fetch!("checksum")
+
+      {:ok, checksum}
+    else
+      {:error, "Can't find #{metadata_path}"}
+    end
+  end
+end

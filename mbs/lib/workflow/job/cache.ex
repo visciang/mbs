@@ -96,11 +96,11 @@ defmodule MBS.Workflow.Job.Cache do
         end
 
       %Target{type: :docker, target: target}, _ ->
-        with {:ok, image_id} when is_binary(image_id) <- Docker.image_id(target, checksum),
+        with true <- Docker.image_exists(target, checksum),
              :ok <- Docker.image_save(target, checksum, output_dir, reporter, id) do
           {:cont, :ok}
         else
-          {:ok, nil} ->
+          false ->
             {:halt, {:error, "Missing target docker image #{target}:#{checksum}. Have you run a build?"}}
 
           {:error, reason} ->

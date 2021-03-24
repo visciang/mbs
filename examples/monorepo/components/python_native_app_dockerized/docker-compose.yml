@@ -1,0 +1,7 @@
+version: "3.8"
+
+services:
+  python_native_app:
+    init: true
+    image: "python_native_app_dockerized:${TAG}"
+    restart: always

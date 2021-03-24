@@ -10,12 +10,11 @@ defmodule MBS.Config.Data do
           }
   end
 
-  defstruct [:root_dir, :parallelism, :cache, :timeout]
+  defstruct [:root_dir, :parallelism, :timeout]
 
   @type t :: %__MODULE__{
           root_dir: Path.t(),
           parallelism: non_neg_integer(),
-          cache: %Cache{},
           timeout: timeout()
         }
 end
@@ -91,7 +90,6 @@ defmodule MBS.Config do
   defp validate(conf) do
     validate_root_dir(conf["root_dir"])
     validate_parallelism(conf["parallelism"])
-    validate_cache(conf["cache"])
     validate_timeout(conf["timeout"])
     conf
   end
@@ -108,12 +106,6 @@ defmodule MBS.Config do
     end
   end
 
-  defp validate_cache(cache) do
-    unless is_binary(cache["dir"]) and Path.type(cache["dir"]) == :relative do
-      Utils.halt("Bad cache dir in #{Const.config_file()}. Should be a relative path (in the repo root)")
-    end
-  end
-
   defp validate_timeout(timeout) do
     unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
       Utils.halt("Bad timeout in #{Const.config_file()}")
@@ -124,9 +116,6 @@ defmodule MBS.Config do
     %Data{
       root_dir: conf["root_dir"],
       parallelism: conf["parallelism"],
-      cache: %Data.Cache{
-        dir: conf["cache"]["dir"] |> Path.expand()
-      },
       timeout: conf["timeout"]
     }
   end

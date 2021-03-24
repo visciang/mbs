@@ -1,0 +1,11 @@
+{
+    "id": "python_native_app_dockerized",
+    "component": {
+        "toolchain": "toolchain-deploy-docker-compose",
+        "files": [
+            "docker://python_native_app_dockerized",
+            "docker-compose.yml"
+        ],
+        "dependencies": []
+    }
+}

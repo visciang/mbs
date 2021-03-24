@@ -121,7 +121,7 @@ defmodule MBS.CLI.Reporter do
   defp status_icon_info(status) do
     case status do
       Status.ok() -> {IO.ANSI.format([:green, "✔"]), nil}
-      Status.error(reason) -> {IO.ANSI.format([:red, "✘"]), reason}
+      Status.error(reason) -> {IO.ANSI.format([:red, "✘"]), inspect(reason)}
       Status.uptodate() -> {"✔", nil}
       Status.outdated() -> {IO.ANSI.format([:yellow, "!"]), nil}
       Status.timeout() -> {"⏰", nil}
