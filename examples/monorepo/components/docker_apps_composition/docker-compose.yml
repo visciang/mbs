@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  docker_app:
+    init: true
+    image: "docker_app:${MBS_CHECKSUM_DOCKER_APP}"
+    restart: always
+  python_native_app_dockerized:
+    init: true
+    image: "python_native_app_dockerized:${MBS_CHECKSUM_PYTHON_NATIVE_APP_DOCKERIZED}"
+    restart: always
+    

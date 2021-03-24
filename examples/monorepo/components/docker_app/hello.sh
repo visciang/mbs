@@ -1,3 +1,7 @@
 #!/bin/sh
 
-echo "Hello $1!"
+set -e
+
+while sleep 2; do
+    echo "Hello $1!"
+done

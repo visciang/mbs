@@ -46,6 +46,10 @@ Remember that, like every tool, `mbs` / mono-repos / etc. are just patterns and 
 TODO:
 extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / baur / please / hearthly / waypoint / gitlab / "pipelines in general"
 
+## The build -> release -> deploy flow
+
+TODO: few words about CI / CD. The real CI / CD (merge on master -> deploy production). More "waterfall" deploy cycles with "environments".
+
 ## Getting Started
 
 To start playing with some toy examples, let's build first `mbs` (run `./ci.sh`, the only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`!
@@ -267,7 +271,8 @@ A set of predefined environment variables are available in the toolchain run con
 - `MBS_ID`: the component identifier (ref .mbs-*.json `id` field)
 - `MBS_CWD`: component current working directory
 - `MBS_CHECKSUM`: component checksum
-- `MBS_DEPS_<deps_name_normalized>`: one for every deps, the path to the directory where we can find the dependency targets. For example, give a dependency named `my-lib` we will have `MBS_DEPS_MY_LIB`.
+- `MBS_CHECKSUM_<deps_name_normalized>`: one for every deps, the dependency checksum. For example, give a dependency named `my-lib` we will have `MBS_CHECKSUM_MY_LIB`.
+- `MBS_DIR_<deps_name_normalized>`: one for every deps, the path to the directory where we can find the dependency targets. For example, give a dependency named `my-lib` we will have `MBS_DIR_MY_LIB`.
 
 ## MBS Development
 

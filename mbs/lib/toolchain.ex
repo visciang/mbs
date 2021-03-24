@@ -104,7 +104,7 @@ defmodule MBS.Toolchain do
          upstream_results
        ) do
     env =
-      Enum.map(dependencies, fn dep_id ->
+      Enum.flat_map(dependencies, fn dep_id ->
         %Job.FunResult{checksum: dep_checksum} = Map.fetch!(upstream_results, dep_id)
 
         shell_dep_id =
@@ -115,7 +115,7 @@ defmodule MBS.Toolchain do
 
         cache_dir = Path.join(root_dir, Const.cache_dir())
         deps_path = Cache.path(cache_dir, dep_id, dep_checksum, "")
-        {"MBS_DEPS_#{shell_dep_id}", deps_path}
+        [{"MBS_DIR_#{shell_dep_id}", deps_path}, {"MBS_CHECKSUM_#{shell_dep_id}", dep_checksum}]
       end)
 
     [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]

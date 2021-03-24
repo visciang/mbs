@@ -4,7 +4,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Const, Docker, Manifest, Toolchain}
+  alias MBS.{Checksum, Config, Const, Docker, Manifest, Toolchain}
   alias MBS.Workflow.Job
 
   require Reporter.Status
@@ -14,12 +14,14 @@ defmodule MBS.Workflow.Job.RunDeploy do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
-      {report_status, checksum} =
-        with {:ok, checksum} <- build_checksum(toolchain_dir),
-             {:image_exists, false, checksum} <- {:image_exists, Docker.image_exists(id, checksum), checksum},
+      {report_status, deploy_checksum} =
+        with {:ok, build_checksum} <- build_checksum(toolchain_dir),
+             deploy_checksum = deploy_checksum(toolchain_dir, build_checksum, %{}),
+             {:image_exists, false, deploy_checksum} <-
+               {:image_exists, Docker.image_exists(id, build_checksum), deploy_checksum},
              path_tar_gz = Path.join(toolchain_dir, "#{id}.tar.gz"),
              :ok <- Docker.image_load(path_tar_gz, reporter, job_id) do
-          {Reporter.Status.ok(), checksum}
+          {Reporter.Status.ok(), deploy_checksum}
         else
           {:image_exists, true, checksum} ->
             {Reporter.Status.uptodate(), checksum}
@@ -30,13 +32,13 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(reporter, job_id, report_status, checksum, end_time - start_time)
+      Reporter.job_report(reporter, job_id, report_status, deploy_checksum, end_time - start_time)
 
       unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum}
+      %Job.FunResult{checksum: deploy_checksum}
     end
   end
 
@@ -52,13 +54,13 @@ defmodule MBS.Workflow.Job.RunDeploy do
       upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
       upstream_checksums_map = Job.Utils.upstream_results_to_checksums_map(upstream_results)
 
-      {report_status, checksum} =
-        with {:ok, component_checksum} <- build_checksum(component_dir),
+      {report_status, deploy_checksum} =
+        with {:ok, build_checksum} <- build_checksum(component_dir),
              {:ok, toolchain_checksum} <- build_checksum(toolchain_dir),
-             checksum = Job.Utils.checksum(component_checksum, upstream_checksums_map),
+             deploy_checksum = deploy_checksum(component_dir, build_checksum, upstream_checksums_map),
              component = put_in(component.toolchain.checksum, toolchain_checksum),
-             :ok <- Toolchain.exec_deploy(component, component_checksum, config, job_id, reporter) do
-          {Reporter.Status.ok(), checksum}
+             :ok <- Toolchain.exec_deploy(component, build_checksum, config, job_id, reporter) do
+          {Reporter.Status.ok(), deploy_checksum}
         else
           {:error, reason} ->
             {Reporter.Status.error(reason), nil}
@@ -71,14 +73,14 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(reporter, job_id, report_status, checksum, end_time - start_time)
+      Reporter.job_report(reporter, job_id, report_status, deploy_checksum, end_time - start_time)
 
       # unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
       unless match?(Reporter.Status.ok(), report_status) do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum}
+      %Job.FunResult{checksum: deploy_checksum}
     end
   end
 
@@ -96,5 +98,14 @@ defmodule MBS.Workflow.Job.RunDeploy do
     else
       {:error, "Can't find #{metadata_path}"}
     end
+  end
+
+  defp deploy_checksum(component_dir, build_checksum, upstream_checksums_map) do
+    deploy_manifest_path = Path.join(component_dir, Const.manifest_deploy_filename())
+    deploy_partial_checksum = Job.Utils.checksum(component_dir, [deploy_manifest_path], upstream_checksums_map)
+
+    [build_checksum, deploy_partial_checksum]
+    |> Enum.join()
+    |> Checksum.checksum()
   end
 end

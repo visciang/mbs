@@ -1,10 +1,10 @@
 {
-    "id": "python_native_app_dockerized",
+    "id": "docker_app",
     "component": {
         "toolchain": "toolchain-deploy-docker-compose",
         "toolchain_opts": ["--load-only"],
         "files": [
-            "docker://python_native_app_dockerized"
+            "docker://docker_app"
         ]
     }
 }
