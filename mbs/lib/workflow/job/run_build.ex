@@ -10,13 +10,13 @@ defmodule MBS.Workflow.Job.RunBuild do
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
-  def fun(%Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain) do
+  @spec fun(Config.Data.t(), Manifest.Type.t(), boolean()) :: Job.job_fun()
+  def fun(%Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain, force) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
       {report_status, report_desc} =
-        with :cache_miss <- Job.Cache.get_toolchain(id, checksum),
+        with :cache_miss <- cache_get_toolchain(id, checksum, force),
              :ok <- Toolchain.build(toolchain),
              :ok <- Job.Cache.put_toolchain(id, checksum) do
           {Reporter.Status.ok(), checksum}
@@ -42,7 +42,8 @@ defmodule MBS.Workflow.Job.RunBuild do
 
   def fun(
         %Config.Data{} = config,
-        %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component
+        %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component,
+        force
       ) do
     fn job_id, upstream_results ->
       start_time = Reporter.time()
@@ -53,7 +54,7 @@ defmodule MBS.Workflow.Job.RunBuild do
       checksum = Job.Utils.checksum(component_dir, files, upstream_checksums_map)
 
       {report_status, report_desc} =
-        with :cache_miss <- Job.Cache.get_targets(Const.cache_dir(), id, checksum, targets),
+        with :cache_miss <- cache_get_targets(Const.cache_dir(), id, checksum, targets, force),
              :ok <- Toolchain.exec_build(component, checksum, config, upstream_results, job_id),
              :ok <- Job.Utils.assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(Const.cache_dir(), id, checksum, targets) do
@@ -75,6 +76,22 @@ defmodule MBS.Workflow.Job.RunBuild do
       end
 
       %Job.FunResult{checksum: checksum}
+    end
+  end
+
+  defp cache_get_toolchain(id, checksum, force) do
+    if force do
+      :cache_miss
+    else
+      Job.Cache.get_toolchain(id, checksum)
+    end
+  end
+
+  defp cache_get_targets(cache_dir, id, checksum, targets, force) do
+    if force do
+      :cache_miss
+    else
+      Job.Cache.get_targets(cache_dir, id, checksum, targets)
     end
   end
 end

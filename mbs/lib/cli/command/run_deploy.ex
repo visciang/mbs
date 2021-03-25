@@ -1,9 +1,10 @@
 defmodule MBS.CLI.Command.RunDeploy do
   @moduledoc false
-  defstruct [:release_id]
+  defstruct [:release_id, :force]
 
   @type t :: %__MODULE__{
-          release_id: [String.t()]
+          release_id: [String.t()],
+          force: nil | boolean()
         }
 end
 
@@ -12,7 +13,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunDeploy do
   alias MBS.{Config, Const, Manifest, Utils, Workflow}
 
   @spec run(Command.RunDeploy.t(), Config.Data.t()) :: :ok | :error | :timeout
-  def run(%Command.RunDeploy{release_id: release_id}, %Config.Data{} = config) do
+  def run(%Command.RunDeploy{release_id: release_id, force: force}, %Config.Data{} = config) do
     release_dir = Path.join(Const.releases_dir(), release_id)
 
     release = find_release(release_dir)
@@ -23,8 +24,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunDeploy do
       Manifest.find_all(:deploy, release_dir, false)
       |> Workflow.workflow(
         config,
-        &Workflow.Job.RunDeploy.fun/2,
-        &Workflow.Job.OnExit.fun(&1, &2, &3)
+        &Workflow.Job.RunDeploy.fun(&1, &2, force),
+        &Workflow.Job.OnExit.fun/3
       )
 
     dask_exec =

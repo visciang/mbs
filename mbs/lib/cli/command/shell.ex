@@ -31,7 +31,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
       |> Workflow.workflow(
         config,
         &Workflow.Job.Shell.fun(&1, &2, target),
-        &Workflow.Job.OnExit.fun(&1, &2, &3)
+        &Workflow.Job.OnExit.fun/3
       )
 
     dask_exec =

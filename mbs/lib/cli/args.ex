@@ -26,21 +26,23 @@ defmodule MBS.CLI.Args do
     IO.puts("\nA Meta Build System")
     IO.puts("\nCommands:")
     IO.puts("")
+    IO.puts("  ---------------------------------------------")
     IO.puts("  version           Show the mbs version")
-    IO.puts("")
+    IO.puts("  ---------------------------------------------")
     IO.puts("  build graph       Generate dependency graph")
     IO.puts("  build ls          List available targets")
     IO.puts("  build outdated    Show outdated targets")
     IO.puts("  build run         Run a target build")
     IO.puts("  build shell       Interactive toolchain shell")
     IO.puts("  build tree        Display a dependency tree")
-    IO.puts("")
+    IO.puts("  ---------------------------------------------")
     IO.puts("  release           Make a deployable release")
-    IO.puts("")
+    IO.puts("  ---------------------------------------------")
     IO.puts("  deploy graph      Generate dependency graph")
     IO.puts("  deploy ls         List available targets")
     IO.puts("  deploy run        Run a release deploy")
     IO.puts("  deploy tree       Display a dependency tree")
+    IO.puts("  ---------------------------------------------")
     IO.puts("")
     IO.puts("\nRun 'mbs COMMAND [SUBCOMMAND] --help' for more information.")
 
@@ -124,7 +126,7 @@ defmodule MBS.CLI.Args do
   def parse(["build", "run" | args]) do
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
+        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean, force: :boolean])
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
@@ -134,7 +136,8 @@ defmodule MBS.CLI.Args do
       IO.puts("\nUsage:  mbs build run --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nRun a target(s) build (default: all targets)")
       IO.puts("\nOptions:")
-      IO.puts("  --logs    Stream jobs log to the console")
+      IO.puts("  --logs     Stream jobs log to the console")
+      IO.puts("  --force    Skip cache and force a re-run")
       Utils.halt("", 0)
     end
 
@@ -142,7 +145,7 @@ defmodule MBS.CLI.Args do
       Reporter.logs(options[:logs])
     end
 
-    %Command.RunBuild{targets: targets}
+    %Command.RunBuild{targets: targets, force: options[:force]}
   end
 
   def parse(["build", "outdated" | args]) do
@@ -230,7 +233,7 @@ defmodule MBS.CLI.Args do
   def parse(["deploy", "run" | args]) do
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
+        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean, force: :boolean])
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
@@ -242,7 +245,8 @@ defmodule MBS.CLI.Args do
       IO.puts("\nRelease id:")
       IO.puts("  The release identifier (ref. 'mbs release --id=RELEASE-ID')")
       IO.puts("\nOptions:")
-      IO.puts("  --logs    Stream jobs log to the console")
+      IO.puts("  --logs     Stream jobs log to the console")
+      IO.puts("  --force    Force a re-run")
       Utils.halt("", 0)
     end
 
@@ -259,7 +263,7 @@ defmodule MBS.CLI.Args do
       Reporter.logs(options[:logs])
     end
 
-    %Command.RunDeploy{release_id: release_id}
+    %Command.RunDeploy{release_id: release_id, force: options[:force]}
   end
 
   def parse([type, "--help"]) when type == "build" or type == "deploy" do

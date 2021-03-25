@@ -39,7 +39,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
       |> Workflow.workflow(
         config,
         &Workflow.Job.Release.fun(&1, &2, output_dir, build_checksums_map),
-        &Workflow.Job.OnExit.fun(&1, &2, &3)
+        &Workflow.Job.OnExit.fun/3
       )
 
     dask_exec =
