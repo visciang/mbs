@@ -63,10 +63,10 @@ defmodule MBS.Workflow.Job.RunDeploy do
             {Reporter.Status.error(reason), nil}
         end
 
-      # define "release state" (environment should be supported)
-      # Check release state to determine if the component should be deployed
+      # define "deploy state" (environment should be supported)
+      # Check deploy state to determine if the component should be deployed
       # [execute ...]
-      # Update release state
+      # Update deploy state
 
       end_time = Reporter.time()
 

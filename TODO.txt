@@ -1,3 +1,6 @@
+deploy:
+- deploy state (to deploy only if needed)
+
 execution:
 - docker-compose support
 - podman / docker executor choice ?
@@ -17,6 +20,7 @@ misc
 - git://... dependencies
 
 cli
+- run --force to skip-cache checks and force a re-run
 - pass secrets in mbs
 - cache command (purge | size | info ... ?)
 - Job logs on files option?
