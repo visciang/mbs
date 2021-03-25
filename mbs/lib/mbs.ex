@@ -1,6 +1,6 @@
 defmodule MBS do
   @moduledoc """
-  Multi Build System
+  Meta Build System
   """
 
   alias MBS.Config
@@ -9,17 +9,17 @@ defmodule MBS do
 
   @spec main([String.t()]) :: :ok
   def main(args) do
-    {:ok, reporter} = Reporter.start_link()
+    :ok = Reporter.start_link()
 
     config = Config.load()
 
     workflow_status =
       args
-      |> Args.parse(reporter)
-      |> Command.run(config, reporter)
+      |> Args.parse()
+      |> Command.run(config)
       |> exit_status()
 
-    Reporter.stop(reporter, workflow_status)
+    Reporter.stop(workflow_status)
 
     :ok
   end
@@ -27,7 +27,7 @@ defmodule MBS do
   defp exit_status(workflow_status) do
     case workflow_status do
       :ok ->
-        workflow_status
+        :ok
 
       :error ->
         Utils.halt(nil, 1)

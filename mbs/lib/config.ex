@@ -10,12 +10,11 @@ defmodule MBS.Config.Data do
           }
   end
 
-  defstruct [:root_dir, :parallelism, :cache, :timeout]
+  defstruct [:root_dir, :parallelism, :timeout]
 
   @type t :: %__MODULE__{
           root_dir: Path.t(),
           parallelism: non_neg_integer(),
-          cache: %Cache{},
           timeout: timeout()
         }
 end
@@ -27,20 +26,18 @@ defmodule MBS.Config do
   require Logger
 
   alias MBS.Config.Data
-  alias MBS.Utils
-
-  @config_file ".mbs-config.json"
+  alias MBS.{Const, Utils}
 
   @spec load :: Data.t()
   def load do
-    @config_file
+    Const.config_file()
     |> File.read()
     |> case do
       {:ok, conf_data} ->
         conf_data
 
       {:error, reason} ->
-        Utils.halt("Cannot read configuration file #{@config_file} (#{reason})")
+        Utils.halt("Cannot read configuration file #{Const.config_file()} (#{reason})")
     end
     |> decode()
     |> add_defaults()
@@ -56,7 +53,7 @@ defmodule MBS.Config do
         conf
 
       {:error, reason} ->
-        Utils.halt("Error parsing configuration file #{@config_file}\n  #{Jason.DecodeError.message(reason)}")
+        Utils.halt("Error parsing configuration file #{Const.config_file()}\n  #{Jason.DecodeError.message(reason)}")
     end
   end
 
@@ -93,32 +90,25 @@ defmodule MBS.Config do
   defp validate(conf) do
     validate_root_dir(conf["root_dir"])
     validate_parallelism(conf["parallelism"])
-    validate_cache(conf["cache"])
     validate_timeout(conf["timeout"])
     conf
   end
 
   defp validate_root_dir(root_dir) do
     unless is_binary(root_dir) and File.exists?(root_dir) do
-      Utils.halt("Bad root_dir in #{@config_file}")
+      Utils.halt("Bad root_dir in #{Const.config_file()}")
     end
   end
 
   defp validate_parallelism(parallelism) do
     unless is_integer(parallelism) and parallelism > 0 do
-      Utils.halt("Bad parallelism in #{@config_file}")
-    end
-  end
-
-  defp validate_cache(cache) do
-    unless is_binary(cache["dir"]) and Path.type(cache["dir"]) == :relative do
-      Utils.halt("Bad cache dir in #{@config_file}. Should be a relative path (in the repo root)")
+      Utils.halt("Bad parallelism in #{Const.config_file()}")
     end
   end
 
   defp validate_timeout(timeout) do
     unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
-      Utils.halt("Bad timeout in #{@config_file}")
+      Utils.halt("Bad timeout in #{Const.config_file()}")
     end
   end
 
@@ -126,9 +116,6 @@ defmodule MBS.Config do
     %Data{
       root_dir: conf["root_dir"],
       parallelism: conf["parallelism"],
-      cache: %Data.Cache{
-        dir: conf["cache"]["dir"] |> Path.expand()
-      },
       timeout: conf["timeout"]
     }
   end

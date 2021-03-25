@@ -1,7 +1,7 @@
 {
     "id": "python_native_app",
     "component": {
-        "toolchain": "python-toolchain",
+        "toolchain": "toolchain-build-python",
         "toolchain_opts": ["--type", "zipapp"],
         "files": [
             "python_native_app/__main__.py",

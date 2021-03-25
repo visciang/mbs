@@ -12,30 +12,29 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   alias MBS.CLI.{Command, Reporter}
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
-  @spec run(Command.Shell.t(), Config.Data.t(), Reporter.t()) :: Dask.await_result()
-  def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config, reporter) do
-    manifests = Manifest.find_all()
+  @spec run(Command.Shell.t(), Config.Data.t()) :: :ok | :error | :timeout
+  def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config) do
+    manifests = Manifest.find_all(:build)
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)
 
-    CLI.Command.run(%Command.Run{targets: target_direct_dependencies}, config, reporter)
+    CLI.Command.run(%Command.RunBuild{targets: target_direct_dependencies}, config)
   end
 
-  def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, reporter) do
-    Reporter.mute(reporter, true)
+  def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config) do
+    Reporter.mute(true)
 
-    manifests = Manifest.find_all()
+    manifests = Manifest.find_all(:build)
 
     dask =
       manifests
       |> CLI.Utils.transitive_dependencies_closure([target])
       |> Workflow.workflow(
         config,
-        reporter,
-        &Workflow.Job.shell_fun(&1, &2, &3, target),
-        &Workflow.Job.run_fun_on_exit(&1, &2, &3, reporter)
+        &Workflow.Job.Shell.fun(&1, &2, target),
+        &Workflow.Job.OnExit.fun(&1, &2, &3)
       )
 
-    dask =
+    dask_exec =
       try do
         Dask.async(dask, config.parallelism)
       rescue
@@ -43,7 +42,13 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
           Utils.halt(error.message)
       end
 
-    Dask.await(dask)
+    dask_exec
+    |> Dask.await()
+    |> case do
+      {:ok, _} -> :ok
+      {:error, _} -> :error
+      :timeout -> :timeout
+    end
   end
 
   defp target_component_direct_dependencies(manifests, id) do

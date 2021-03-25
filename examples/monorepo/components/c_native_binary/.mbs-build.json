@@ -1,7 +1,7 @@
 {
     "id": "c-native-binary",
     "component": {
-        "toolchain": "cmake-toolchain",
+        "toolchain": "toolchain-build-cmake",
         "files": [
             "CMakeLists.txt",
             "main.c"

@@ -49,10 +49,10 @@ mkdir -p $GOPATH/src
 export MONOREPO=$GOPATH/src/monorepo.com
 mkdir -p $MONOREPO
 
-MBS_DEPS_VARS=$(env | grep -o -E "MBS_DEPS_[^=]+" || echo "")
-for MBS_DEPS_VAR in $MBS_DEPS_VARS; do
-    echo "Copy $MBS_DEPS_VAR in build context"
-    tar xzf $(printenv $MBS_DEPS_VAR)/*.tgz -C $MONOREPO/
+MBS_DIR_VARS=$(env | grep -o -E "MBS_DIR_[^=]+" || echo "")
+for MBS_DIR_VAR in $MBS_DIR_VARS; do
+    echo "Copy $MBS_DIR_VAR in build context"
+    tar xzf $(printenv $MBS_DIR_VAR)/*.tgz -C $MONOREPO/
 done
 
 ln -s $MBS_CWD $MONOREPO/

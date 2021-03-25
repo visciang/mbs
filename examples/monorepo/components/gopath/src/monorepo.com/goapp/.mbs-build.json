@@ -1,7 +1,7 @@
 {
     "id": "goapp",
     "component": {
-        "toolchain": "go-toolchain",
+        "toolchain": "toolchain-build-go",
         "toolchain_opts": ["--type", "app"],
         "files": [
             "*.go",

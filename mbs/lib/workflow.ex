@@ -3,22 +3,17 @@ defmodule MBS.Workflow do
   Workflow DAG builder
   """
 
-  alias MBS.CLI.Reporter
   alias MBS.{Config, Manifest, Utils}
-
-  require MBS.CLI.Reporter.Status
 
   @spec workflow(
           [Manifest.Type.t()],
           Config.Data.t(),
-          Reporter.t(),
-          (Reporter.t(), Config.Data.t(), Manifest.Type.t() -> Dask.Job.fun()),
+          (Config.Data.t(), Manifest.Type.t() -> Dask.Job.fun()),
           Dask.Job.on_exit()
         ) :: Dask.t()
   def workflow(
         manifests,
         %Config.Data{timeout: global_timeout_sec} = config,
-        reporter,
         job_fun,
         job_on_exit \\ fn _, _, _ -> :ok end
       ) do
@@ -29,7 +24,7 @@ defmodule MBS.Workflow do
 
         timeout_ms = min(global_timeout_ms, local_timeout_ms)
 
-        Dask.job(workflow, manifest.id, job_fun.(reporter, config, manifest), timeout_ms, job_on_exit)
+        Dask.job(workflow, manifest.id, job_fun.(config, manifest), timeout_ms, job_on_exit)
       end)
 
     Enum.reduce(manifests, workflow, fn

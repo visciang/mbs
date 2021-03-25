@@ -26,6 +26,7 @@ mbs-*.tar
 /tmp
 
 .mbs-cache/
+.mbs-graph/
 .mbs-releases/
 
 **/.elixir_ls

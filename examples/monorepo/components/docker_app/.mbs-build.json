@@ -2,7 +2,7 @@
     {
       "id": "docker_app",
       "component": {
-        "toolchain": "docker-toolchain",
+        "toolchain": "toolchain-build-docker",
         "files": [
             "hello.sh",
             "Dockerfile"

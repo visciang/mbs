@@ -1,12 +1,14 @@
 {
     "id": "python_native_app_dockerized",
     "component": {
-        "toolchain": "docker-toolchain",
+        "toolchain": "toolchain-build-docker",
         "files": [
-            "Dockerfile"
+            "Dockerfile",
+            "docker-compose.yml"
         ],
         "targets": [
-            "docker://python_native_app_dockerized"
+            "docker://python_native_app_dockerized",
+            "docker-compose.yml"
         ],
         "dependencies": [
             "python_native_app"

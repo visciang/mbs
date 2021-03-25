@@ -70,8 +70,8 @@ defmodule MBS.Workflow.Job.Cache do
     :ok
   end
 
-  @spec copy_targets(Path.t(), String.t(), String.t(), [Target.t()], Path.t(), Reporter.t()) :: :ok | {:error, term()}
-  def copy_targets(cache_dir, id, checksum, targets, output_dir, reporter) do
+  @spec copy_targets(Path.t(), String.t(), String.t(), [Target.t()], Path.t()) :: :ok | {:error, term()}
+  def copy_targets(cache_dir, id, checksum, targets, output_dir) do
     File.mkdir_p!(output_dir)
 
     Enum.reduce_while(targets, :ok, fn
@@ -81,7 +81,6 @@ defmodule MBS.Workflow.Job.Cache do
           release_target_path = Path.join(output_dir, Path.basename(target))
 
           Reporter.job_report(
-            reporter,
             id,
             Reporter.Status.log(),
             "cp #{cache_target_path} #{release_target_path}",
@@ -96,11 +95,11 @@ defmodule MBS.Workflow.Job.Cache do
         end
 
       %Target{type: :docker, target: target}, _ ->
-        with {:ok, image_id} when is_binary(image_id) <- Docker.image_id(target, checksum),
-             :ok <- Docker.image_save(target, checksum, output_dir, reporter, id) do
+        with true <- Docker.image_exists(target, checksum),
+             :ok <- Docker.image_save(target, checksum, output_dir, id) do
           {:cont, :ok}
         else
-          {:ok, nil} ->
+          false ->
             {:halt, {:error, "Missing target docker image #{target}:#{checksum}. Have you run a build?"}}
 
           {:error, reason} ->

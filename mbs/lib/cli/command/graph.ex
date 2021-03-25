@@ -1,25 +1,30 @@
 defmodule MBS.CLI.Command.Graph do
   @moduledoc false
-  defstruct [:targets, :output_svg_file]
+  defstruct [:type, :targets, :output_filename]
 
   @type t :: %__MODULE__{
+          type: MBS.Manifest.Type.type(),
           targets: [String.t()],
-          output_svg_file: Path.t()
+          output_filename: Path.t()
         }
 end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
-  alias MBS.CLI.{Command, Reporter, Utils}
-  alias MBS.{Config, Manifest, Workflow}
+  alias MBS.CLI.{Command, Utils}
+  alias MBS.{Config, Const, Manifest, Workflow}
 
-  @spec run(Command.Graph.t(), Config.Data.t(), Reporter.t()) :: :error | :ok
-  def run(%Command.Graph{targets: target_ids, output_svg_file: output_svg_file}, %Config.Data{} = config, reporter) do
+  @spec run(Command.Graph.t(), Config.Data.t()) :: :ok | :error
+  def run(%Command.Graph{type: type, targets: target_ids, output_filename: output_filename}, %Config.Data{} = config) do
     if dot_command_installed?() do
-      Manifest.find_all()
+      File.mkdir_p!(Const.graph_dir())
+
+      Manifest.find_all(type)
       |> Utils.transitive_dependencies_closure(target_ids)
-      |> Workflow.workflow(config, reporter, fn _, _, _ -> :ok end)
+      |> Workflow.workflow(config, &null_fun/2)
       |> Dask.Dot.export()
-      |> Dask.Utils.dot_to_svg(output_svg_file)
+      |> Dask.Utils.dot_to_svg(output_filename)
+
+      IO.puts("Produced #{output_filename}")
 
       :ok
     else
@@ -33,5 +38,9 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
   rescue
     ErlangError ->
       false
+  end
+
+  defp null_fun(_, _) do
+    fn _, _ -> :ok end
   end
 end

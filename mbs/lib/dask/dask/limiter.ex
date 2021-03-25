@@ -1,6 +1,15 @@
 defmodule Dask.Limiter do
   @moduledoc false
 
+  # "Tricky point" about the limiter waiting_list (queue):
+  #
+  # When a process join the limiter asking "to wait its turn"
+  # the limiter adds the process in FRONT of the queue (waiting_list is a LIFO queue).
+  # This behaviour plays nice with the Dask DAG, since it startup the DAG in a reverse
+  # topologically sorted order (why: see how it's implemented the Dask DAG ;)
+  # So the last job joining the queue, that is the root job oin the DAG, will be the first
+  # to be served
+
   use GenServer
   require Logger
 
@@ -21,12 +30,12 @@ defmodule Dask.Limiter do
     end
   end
 
-  @spec wait_my_turn(pid()) :: :ok
-  def wait_my_turn(limiter) do
+  @spec wait_my_turn(pid(), term()) :: :ok
+  def wait_my_turn(limiter, name \\ nil) do
     if limiter == nil do
       :ok
     else
-      GenServer.call(limiter, :wait_my_turn, :infinity)
+      GenServer.call(limiter, {:wait_my_turn, name}, :infinity)
     end
   end
 
@@ -41,15 +50,15 @@ defmodule Dask.Limiter do
   end
 
   @impl true
-  def handle_call(:wait_my_turn, {process, _} = from, %State{} = state) do
-    Logger.debug("[process=#{inspect(process)}] wait_my_turn #{inspect(state, pretty: true)}")
+  def handle_call({:wait_my_turn, name}, {process, _} = from, %State{} = state) do
+    Logger.debug("[process=#{inspect(process)}] (#{inspect(name)}) wait_my_turn #{inspect(state, pretty: true)}")
 
     if map_size(state.running_jobs) == state.max_concurrency do
       Logger.debug(
         "[process=#{inspect(process)}] reached max_concurrency=#{state.max_concurrency}, adding process to the waiting list"
       )
 
-      state = put_in(state.waiting_list, [from | state.waiting_list])
+      state = put_in(state.waiting_list, [{name, from} | state.waiting_list])
       {:noreply, state}
     else
       monitor = Process.monitor(process)
@@ -72,13 +81,16 @@ defmodule Dask.Limiter do
 
     state =
       if state.waiting_list != [] do
-        [waiting_job | waiting_list] = state.waiting_list
+        [{waiting_job_name, waiting_job} | waiting_list] = state.waiting_list
         GenServer.reply(waiting_job, :ok)
 
         {waiting_process, _} = waiting_job
-        Logger.debug("[process=#{inspect(waiting_process)}] it's your turn")
+        Logger.debug("[process=#{inspect(waiting_process)}] (#{inspect(waiting_job_name)}) it's your turn")
 
-        put_in(state.waiting_list, waiting_list)
+        state = put_in(state.waiting_list, waiting_list)
+
+        monitor = Process.monitor(waiting_process)
+        put_in(state.running_jobs, Map.put(state.running_jobs, waiting_process, monitor))
       else
         state
       end

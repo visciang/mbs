@@ -1,7 +1,7 @@
 {
     "id": "c-shared-library",
     "component": {
-        "toolchain": "cmake-toolchain",
+        "toolchain": "toolchain-build-cmake",
         "files": [
             "CMakeLists.txt",
             "lib.{c,h}"

@@ -1,12 +1,12 @@
 {
-    "id": "python-toolchain",
+    "id": "toolchain-deploy-docker-compose",
     "toolchain": {
         "dockerfile": "Dockerfile",
         "files": [
-            "build.sh"
+            "deploy.sh"
         ],
         "steps": [
-            "build"
+            "deploy"
         ]
     }
 }

@@ -6,16 +6,16 @@ defmodule MBS.CLI.Command.Outdated do
 end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Outdated do
-  alias MBS.CLI.{Command, Reporter}
+  alias MBS.CLI.Command
   alias MBS.{Config, Manifest, Utils, Workflow}
 
-  @spec run(Command.Outdated.t(), Config.Data.t(), Reporter.t()) :: Dask.await_result()
-  def run(%Command.Outdated{}, %Config.Data{} = config, reporter) do
+  @spec run(Command.Outdated.t(), Config.Data.t()) :: :ok | :error | :timeout
+  def run(%Command.Outdated{}, %Config.Data{} = config) do
     dask =
-      Manifest.find_all()
-      |> Workflow.workflow(config, reporter, &Workflow.Job.outdated_fun/3)
+      Manifest.find_all(:build)
+      |> Workflow.workflow(config, &Workflow.Job.Outdated.fun/2)
 
-    dask =
+    dask_exec =
       try do
         Dask.async(dask, config.parallelism)
       rescue
@@ -23,6 +23,12 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Outdated do
           Utils.halt(error.message)
       end
 
-    Dask.await(dask)
+    dask_exec
+    |> Dask.await()
+    |> case do
+      {:ok, _} -> :ok
+      {:error, _} -> :error
+      :timeout -> :timeout
+    end
   end
 end

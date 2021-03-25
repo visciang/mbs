@@ -4,49 +4,54 @@ defmodule MBS.CLI.Args do
   """
 
   alias MBS.CLI.{Command, Reporter}
-  alias MBS.Utils
+  alias MBS.{Const, Utils}
 
   @type t ::
           %Command.Graph{}
           | %Command.Ls{}
           | %Command.Outdated{}
           | %Command.Release{}
-          | %Command.Run{}
+          | %Command.RunBuild{}
           | %Command.Shell{}
           | %Command.Tree{}
           | %Command.Version{}
 
-  @spec parse([String.t()], Reporter.t()) :: t()
-  def parse([], reporter) do
-    parse(["--help"], reporter)
+  @spec parse([String.t()]) :: t()
+  def parse([]) do
+    parse(["--help"])
   end
 
-  def parse(["--help"], _reporter) do
-    IO.puts("\nUsage:  mbs --help | COMMAND")
+  def parse(["--help"]) do
+    IO.puts("\nUsage:  mbs --help | (build | deploy) [SUBCOMMAND] | version")
     IO.puts("\nA Meta Build System")
     IO.puts("\nCommands:")
-    IO.puts("  ls          List available targets")
-    IO.puts("  graph       Generate dependency graph")
-    IO.puts("  outdated    Show outdated targets")
-    IO.puts("  release     Make a release")
-    IO.puts("  run         Run a target build")
-    IO.puts("  shell       Interactive toolchain shell")
-    IO.puts("  tree        Display a dependecy tree")
-    IO.puts("  version     Show the mbs version")
-    IO.puts("\nRun 'mbs COMMAND --help' for more information on a command.")
+    IO.puts("")
+    IO.puts("  version           Show the mbs version")
+    IO.puts("")
+    IO.puts("  build graph       Generate dependency graph")
+    IO.puts("  build ls          List available targets")
+    IO.puts("  build outdated    Show outdated targets")
+    IO.puts("  build run         Run a target build")
+    IO.puts("  build shell       Interactive toolchain shell")
+    IO.puts("  build tree        Display a dependency tree")
+    IO.puts("")
+    IO.puts("  release           Make a deployable release")
+    IO.puts("")
+    IO.puts("  deploy graph      Generate dependency graph")
+    IO.puts("  deploy ls         List available targets")
+    IO.puts("  deploy run        Run a release deploy")
+    IO.puts("  deploy tree       Display a dependency tree")
+    IO.puts("")
+    IO.puts("\nRun 'mbs COMMAND [SUBCOMMAND] --help' for more information.")
 
     Utils.halt("", 0)
   end
 
-  def parse([command | args], reporter) do
-    parse(command, args, reporter)
-  end
-
-  defp parse("version", _args, _reporter) do
+  def parse(["version" | _args]) do
     %Command.Version{}
   end
 
-  defp parse("tree", args, _reporter) do
+  def parse([type, "tree" | args]) when type == "build" or type == "deploy" do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean])
@@ -56,16 +61,16 @@ defmodule MBS.CLI.Args do
       end
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs tree --help | [TARGETS...]")
-      IO.puts("\nDisplay the dependecy tree for the provided targets (default: all targets)")
+      IO.puts("\nUsage:  mbs #{type} tree --help | [TARGETS...]")
+      IO.puts("\nDisplay the dependency tree for the provided targets (default: all targets)")
 
       Utils.halt("", 0)
     end
 
-    %Command.Tree{targets: targets}
+    %Command.Tree{type: String.to_atom(type), targets: targets}
   end
 
-  defp parse("ls", args, _reporter) do
+  def parse([type, "ls" | args]) when type == "build" or type == "deploy" do
     defaults = [verbose: false]
 
     {options, targets} =
@@ -77,7 +82,7 @@ defmodule MBS.CLI.Args do
       end
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs ls --help | [OPTIONS] [TARGETS...]")
+      IO.puts("\nUsage:  mbs #{type} ls --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nList available targets (default: all targets)")
       IO.puts("\nOptions:")
       IO.puts("  --verbose    Show target details")
@@ -86,35 +91,37 @@ defmodule MBS.CLI.Args do
     end
 
     options = Keyword.merge(defaults, options)
-    %Command.Ls{verbose: options[:verbose], targets: targets}
+    %Command.Ls{type: String.to_atom(type), verbose: options[:verbose], targets: targets}
   end
 
-  defp parse("graph", args, _reporter) do
-    default_output_file = "graph.svg"
-    defaults = [output_svg_file: default_output_file]
+  def parse([type, "graph" | args]) when type == "build" or type == "deploy" do
+    default_output_filename = "graph.svg"
+    defaults = [output_filename: default_output_filename]
 
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean, output_svg_file: :string])
+        OptionParser.parse!(args, strict: [help: :boolean, output_filename: :string])
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
       end
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs graph --help | [OPTIONS] [TARGETS...]")
+      IO.puts("\nUsage:  mbs #{type} graph --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nGenerate SVG dependency graph for the requested targets (default: all targets)")
       IO.puts("\nOptions:")
-      IO.puts("  --output-svg-file    Output file (default: './#{default_output_file}')")
+      IO.puts("  --output-filename    Output file (default: '#{default_output_filename}')")
 
       Utils.halt("", 0)
     end
 
     options = Keyword.merge(defaults, options)
-    %Command.Graph{targets: targets, output_svg_file: options[:output_svg_file]}
+    options = put_in(options[:output_filename], Path.join(Const.graph_dir(), options[:output_filename]))
+
+    %Command.Graph{type: String.to_atom(type), targets: targets, output_filename: options[:output_filename]}
   end
 
-  defp parse("run", args, reporter) do
+  def parse(["build", "run" | args]) do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
@@ -124,7 +131,7 @@ defmodule MBS.CLI.Args do
       end
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs run --help | [OPTIONS] [TARGETS...]")
+      IO.puts("\nUsage:  mbs build run --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nRun a target(s) build (default: all targets)")
       IO.puts("\nOptions:")
       IO.puts("  --logs    Stream jobs log to the console")
@@ -132,52 +139,13 @@ defmodule MBS.CLI.Args do
     end
 
     if options[:logs] do
-      Reporter.logs(reporter, options[:logs])
+      Reporter.logs(options[:logs])
     end
 
-    %Command.Run{targets: targets}
+    %Command.RunBuild{targets: targets}
   end
 
-  defp parse("release", args, reporter) do
-    {options, targets} =
-      try do
-        OptionParser.parse!(args,
-          strict: [help: :boolean, id: :string, output_dir: :string, logs: :boolean, metadata: :string]
-        )
-      rescue
-        e in [OptionParser.ParseError] ->
-          Utils.halt(e.message)
-      end
-
-    if options[:help] do
-      IO.puts("\nUsage:  mbs release --help | [OPTIONS] [TARGETS...]")
-      IO.puts("\nMake a release (default: all targets)")
-      IO.puts("\nOptions:")
-      IO.puts("  --id            release identifier")
-      IO.puts("  --output-dir    output directory (default: '.mbs-releases/<id>/')")
-      IO.puts("  --logs          Stream jobs log to the console")
-      IO.puts("  --metadata      Extra metadata to include in the release manifest.json")
-      IO.puts("                  ex: --metadata='git_commit=...'")
-      Utils.halt("", 0)
-    end
-
-    unless options[:id] do
-      Utils.halt("Missing release --id")
-    end
-
-    if options[:logs] do
-      Reporter.logs(reporter, options[:logs])
-    end
-
-    defaults = [output_dir: Path.join(".mbs-releases", options[:id])]
-    options = Keyword.merge(defaults, options)
-
-    File.mkdir_p!(options[:output_dir])
-
-    %Command.Release{id: options[:id], targets: targets, output_dir: options[:output_dir], metadata: options[:metadata]}
-  end
-
-  defp parse("outdated", args, _reporter) do
+  def parse(["build", "outdated" | args]) do
     {options, _} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean])
@@ -187,7 +155,7 @@ defmodule MBS.CLI.Args do
       end
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs outdated --help")
+      IO.puts("\nUsage:  mbs build outdated --help")
       IO.puts("\nShow outdated targets")
 
       Utils.halt("", 0)
@@ -196,7 +164,7 @@ defmodule MBS.CLI.Args do
     %Command.Outdated{}
   end
 
-  defp parse("shell", args, _reporter) do
+  def parse(["build", "shell" | args]) do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean, docker_cmd: :boolean])
@@ -206,7 +174,7 @@ defmodule MBS.CLI.Args do
       end
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs shell --help | TARGET")
+      IO.puts("\nUsage:  mbs build shell --help | TARGET")
       IO.puts("\nInteractive toolchain shell")
       Utils.halt("", 0)
     end
@@ -223,7 +191,82 @@ defmodule MBS.CLI.Args do
     %Command.Shell{target: target, docker_cmd: options[:docker_cmd]}
   end
 
-  defp parse(cmd, _args, _reporter) do
-    Utils.halt("Unknown command #{cmd}")
+  def parse(["release" | args]) do
+    {options, targets} =
+      try do
+        OptionParser.parse!(args,
+          strict: [help: :boolean, id: :string, output_dir: :string, logs: :boolean, metadata: :string]
+        )
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    if options[:help] do
+      IO.puts("\nUsage:  mbs release --help | [OPTIONS] [TARGETS...]")
+      IO.puts("\nMake a release (default: all targets) - output dir '#{Const.releases_dir()}/<id>/')")
+      IO.puts("\nOptions:")
+      IO.puts("  --id            release identifier")
+      IO.puts("  --logs          Stream jobs log to the console")
+      IO.puts("  --metadata      Extra metadata to include in the release manifest")
+      IO.puts("                  ex: --metadata='git_commit=...'")
+      Utils.halt("", 0)
+    end
+
+    unless options[:id] do
+      Utils.halt("Missing release --id")
+    end
+
+    if options[:logs] do
+      Reporter.logs(options[:logs])
+    end
+
+    defaults = [output_dir: Path.join(Const.releases_dir(), options[:id])]
+    options = Keyword.merge(defaults, options)
+
+    %Command.Release{id: options[:id], targets: targets, output_dir: options[:output_dir], metadata: options[:metadata]}
+  end
+
+  def parse(["deploy", "run" | args]) do
+    {options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    if options[:help] do
+      IO.puts("\nUsage:  mbs deploy run --help | [OPTIONS] RELEASE-ID")
+      IO.puts("\nRun a release deploy")
+      IO.puts("\nRelease id:")
+      IO.puts("  The release identifier (ref. 'mbs release --id=RELEASE-ID')")
+      IO.puts("\nOptions:")
+      IO.puts("  --logs    Stream jobs log to the console")
+      Utils.halt("", 0)
+    end
+
+    release_id =
+      case targets do
+        [release_id] ->
+          release_id
+
+        _ ->
+          Utils.halt("Expected exactly one release-id")
+      end
+
+    if options[:logs] do
+      Reporter.logs(options[:logs])
+    end
+
+    %Command.RunDeploy{release_id: release_id}
+  end
+
+  def parse([type, "--help"]) when type == "build" or type == "deploy" do
+    parse(["--help"])
+  end
+
+  def parse(args) do
+    Utils.halt("Unknown command #{inspect(args)}")
   end
 end

@@ -1,0 +1,10 @@
+{
+    "id": "docker_app",
+    "component": {
+        "toolchain": "toolchain-deploy-docker-compose",
+        "toolchain_opts": ["--load-only"],
+        "files": [
+            "docker://docker_app"
+        ]
+    }
+}

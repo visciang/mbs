@@ -1,0 +1,16 @@
+{
+    "id": "docker_apps_composition",
+    "component": {
+        "toolchain": "toolchain-build-docker-compose",
+        "files": [
+            "docker-compose.yml"
+        ],
+        "targets": [
+            ".build/docker-compose.yml"
+        ],
+        "dependencies": [
+            "docker_app",
+            "python_native_app_dockerized"
+        ]
+    }
+}

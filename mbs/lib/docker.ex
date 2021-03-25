@@ -33,12 +33,12 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec image_save(String.t(), String.t(), Path.t(), Reporter.t(), String.t()) :: :ok | {:error, term()}
-  def image_save(repository, tag, out_dir, reporter, job_id) do
+  @spec image_save(String.t(), String.t(), Path.t(), String.t()) :: :ok | {:error, term()}
+  def image_save(repository, tag, out_dir, job_id) do
     cmd_args = ["image", "save", "#{repository}:#{tag}"]
     image_file_path = Path.join(out_dir, "#{repository}.tar.gz")
 
-    Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
+    Reporter.job_report(job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true, into: File.stream!(image_file_path, [:compressed])) do
       {_, 0} ->
@@ -49,14 +49,31 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec image_build(String.t(), String.t(), Path.t(), String.t(), Reporter.t(), String.t()) ::
-          :ok | {:error, term()}
-  def image_build(repository, tag, dir, dockerfile, reporter, job_id) do
+  @spec image_load(Path.t(), String.t()) :: :ok | {:error, term()}
+  def image_load(path_tar_gz, job_id) do
+    path_tar = Path.join(System.tmp_dir!(), Path.basename(path_tar_gz, ".gz"))
+    gunzip(path_tar_gz, path_tar)
+
+    cmd_args = ["image", "load", "--input", path_tar]
+
+    Reporter.job_report(job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
+
+    case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
+      {_, 0} ->
+        :ok
+
+      {res, _} ->
+        {:error, res}
+    end
+  end
+
+  @spec image_build(String.t(), String.t(), Path.t(), String.t(), String.t()) :: :ok | {:error, term()}
+  def image_build(repository, tag, dir, dockerfile, job_id) do
     cmd_args = ["image", "build", "--rm", "-t", "#{repository}:#{tag}", "-f", dockerfile, "."]
-    cmd_into = %Reporter.Log{reporter: reporter, job_id: job_id}
+    cmd_into = %Reporter.Log{job_id: job_id}
 
     if Logger.level() == :debug do
-      Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
+      Reporter.job_report(job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
     end
 
     case System.cmd("docker", cmd_args, cd: dir, stderr_to_stdout: true, into: cmd_into) do
@@ -81,21 +98,14 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec image_run(
-          String.t(),
-          String.t(),
-          [String.t()],
-          [{String.t(), String.t()}],
-          [String.t()],
-          Reporter.t(),
-          String.t()
-        ) :: :ok | {:error, {term(), pos_integer()}}
-  def image_run(repository, tag, opts, env, command, reporter, job_id) do
+  @spec image_run(String.t(), String.t(), [String.t()], [{String.t(), String.t()}], [String.t()], String.t()) ::
+          :ok | {:error, {term(), pos_integer()}}
+  def image_run(repository, tag, opts, env, command, job_id) do
     cmd_args = ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"] ++ command
-    cmd_into = %Reporter.Log{reporter: reporter, job_id: job_id}
+    cmd_into = %Reporter.Log{job_id: job_id}
 
     if Logger.level() == :debug do
-      Reporter.job_report(reporter, job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
+      Reporter.job_report(job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
     end
 
     case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
@@ -115,5 +125,12 @@ defmodule MBS.Docker do
 
   defp docker_env(env) do
     Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
+  end
+
+  defp gunzip(src, dest) do
+    src
+    |> File.stream!([:compressed], 2048)
+    |> Stream.into(File.stream!(dest, [], 2048))
+    |> Stream.run()
   end
 end

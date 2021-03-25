@@ -11,7 +11,8 @@ defmodule Dask.JobExec do
     if MapSet.size(upstream_job_id_set) == 0 do
       Logger.debug("START #{inspect(job.id)}  upstream_jobs_status: #{inspect(upstream_jobs_status)}")
 
-      {job_status, elapsed_time} = timed(fn -> exec_job_fun(job, limiter, upstream_jobs_status) end, job.timeout)
+      {job_status, elapsed_time} =
+        timed(fn -> exec_job_fun(job, limiter, upstream_jobs_status, job.id) end, job.timeout)
 
       job.on_exit.(job.id, job_status, elapsed_time)
 
@@ -29,14 +30,14 @@ defmodule Dask.JobExec do
     end
   end
 
-  defp exec_job_fun(%Job{} = job, limiter, upstream_jobs_status) do
+  defp exec_job_fun(%Job{} = job, limiter, upstream_jobs_status, job_id) do
     if Enum.all?(Map.values(upstream_jobs_status), &match?({:job_ok, _}, &1)) do
       try do
         upstream_jobs_result =
           upstream_jobs_status
-          |> Map.new(fn {job_id, {_, job_result}} -> {job_id, job_result} end)
+          |> Map.new(fn {upstream_job_id, {_, upstream_job_result}} -> {upstream_job_id, upstream_job_result} end)
 
-        Limiter.wait_my_turn(limiter)
+        Limiter.wait_my_turn(limiter, job_id)
 
         job.fun.(job.id, upstream_jobs_result)
       rescue
