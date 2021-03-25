@@ -9,10 +9,8 @@ defmodule MBS.Workflow.Job.Release do
 
   require Reporter.Status
 
-  @spec fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), Path.t(), %{String.t() => String.t()}) ::
-          Job.job_fun()
+  @spec fun(Config.Data.t(), Manifest.Type.t(), Path.t(), %{String.t() => String.t()}) :: Job.job_fun()
   def fun(
-        reporter,
         %Config.Data{},
         %Manifest.Toolchain{type: :deploy, dir: toolchain_dir, id: id, checksum: checksum},
         release_dir,
@@ -25,7 +23,7 @@ defmodule MBS.Workflow.Job.Release do
       target = %Manifest.Target{type: :docker, target: id}
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(Const.cache_dir(), id, checksum, [target], targets_dir, reporter) do
+        case Job.Cache.copy_targets(Const.cache_dir(), id, checksum, [target], targets_dir) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 
@@ -40,7 +38,7 @@ defmodule MBS.Workflow.Job.Release do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(reporter, job_id, report_status, report_desc, end_time - start_time)
+      Reporter.job_report(job_id, report_status, report_desc, end_time - start_time)
 
       unless match?(Reporter.Status.ok(), report_status) do
         raise "Job failed #{inspect(report_status)}"
@@ -51,7 +49,6 @@ defmodule MBS.Workflow.Job.Release do
   end
 
   def fun(
-        reporter,
         %Config.Data{},
         %Manifest.Component{type: :deploy, id: id, dir: component_dir, files: deploy_targets} = component,
         release_dir,
@@ -72,7 +69,7 @@ defmodule MBS.Workflow.Job.Release do
       targets_dir = Path.join(release_dir, id)
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(Const.cache_dir(), id, build_checksum, deploy_targets, targets_dir, reporter) do
+        case Job.Cache.copy_targets(Const.cache_dir(), id, build_checksum, deploy_targets, targets_dir) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 
@@ -87,7 +84,7 @@ defmodule MBS.Workflow.Job.Release do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(reporter, job_id, report_status, report_desc, end_time - start_time)
+      Reporter.job_report(job_id, report_status, report_desc, end_time - start_time)
 
       unless match?(Reporter.Status.ok(), report_status) do
         raise "Job failed #{inspect(report_status)}"

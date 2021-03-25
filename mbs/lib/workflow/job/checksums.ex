@@ -3,26 +3,19 @@ defmodule MBS.Workflow.Job.Checksums do
   Workflow job logic for "checksums" command
   """
 
-  alias MBS.CLI.Reporter
   alias MBS.{Config, Manifest}
   alias MBS.Workflow.Job
 
-  require Reporter.Status
-
   @type fun :: (String.t(), Dask.Job.upstream_results() -> %{String.t() => String.t()})
 
-  @spec fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) :: fun()
-  def fun(_reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum}) do
+  @spec fun(Config.Data.t(), Manifest.Type.t()) :: fun()
+  def fun(%Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum}) do
     fn _job_id, %{__start_job__: :ok} ->
       %{id => checksum}
     end
   end
 
-  def fun(
-        _reporter,
-        %Config.Data{},
-        %Manifest.Component{id: id, dir: component_dir, files: files} = component
-      ) do
+  def fun(%Config.Data{}, %Manifest.Component{id: id, dir: component_dir, files: files} = component) do
     fn _job_id, upstream_checksums ->
       dependencies = Job.Utils.component_dependencies(component)
 

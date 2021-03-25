@@ -8,7 +8,7 @@ defmodule MBS.CLI.Reporter do
   alias MBS.CLI.Reporter.{Report, Status}
   require MBS.CLI.Reporter.Status
 
-  @type t() :: GenServer.server()
+  @name __MODULE__
 
   @time_unit :millisecond
   @time_unit_scale 0.001
@@ -25,30 +25,30 @@ defmodule MBS.CLI.Reporter do
           }
   end
 
-  @spec start_link :: {:ok, t()}
+  @spec start_link :: :ok
   def start_link do
-    {:ok, pid} = GenServer.start_link(__MODULE__, start_time: time())
-    {:ok, pid}
+    {:ok, _pid} = GenServer.start_link(__MODULE__, [start_time: time()], name: @name)
+    :ok
   end
 
-  @spec stop(t(), Status.t()) :: :ok
-  def stop(pid, workflow_status) do
-    GenServer.call(pid, {:stop, workflow_status})
+  @spec stop(Status.t()) :: :ok
+  def stop(workflow_status) do
+    GenServer.call(@name, {:stop, workflow_status})
   end
 
-  @spec mute(t(), boolean()) :: :ok
-  def mute(pid, status) do
-    GenServer.call(pid, {:mute, status})
+  @spec mute(boolean()) :: :ok
+  def mute(status) do
+    GenServer.call(@name, {:mute, status})
   end
 
-  @spec logs(t(), boolean()) :: :ok
-  def logs(pid, enabled) do
-    GenServer.call(pid, {:logs, enabled})
+  @spec logs(boolean()) :: :ok
+  def logs(enabled) do
+    GenServer.call(@name, {:logs, enabled})
   end
 
-  @spec job_report(t(), String.t(), Status.t(), nil | String.t(), nil | non_neg_integer()) :: :ok
-  def job_report(pid, job_id, status, description, elapsed) do
-    GenServer.cast(pid, %Report{job_id: job_id, status: status, description: description, elapsed: elapsed})
+  @spec job_report(String.t(), Status.t(), nil | String.t(), nil | non_neg_integer()) :: :ok
+  def job_report(job_id, status, description, elapsed) do
+    GenServer.cast(@name, %Report{job_id: job_id, status: status, description: description, elapsed: elapsed})
   end
 
   @spec time :: integer()
@@ -129,9 +129,6 @@ defmodule MBS.CLI.Reporter do
     end
   end
 
-  defp puts(message, %State{muted: muted}) do
-    unless muted do
-      IO.puts(message)
-    end
-  end
+  defp puts(_message, %State{muted: true}), do: :ok
+  defp puts(message, %State{muted: false}), do: IO.puts(message)
 end

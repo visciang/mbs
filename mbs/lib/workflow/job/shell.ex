@@ -10,15 +10,14 @@ defmodule MBS.Workflow.Job.Shell do
 
   require Reporter.Status
 
-  @spec fun(Reporter.t(), Config.Data.t(), Manifest.Type.t(), String.t()) :: Job.job_fun()
-  def fun(_reporter, %Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _shell_target) do
+  @spec fun(Config.Data.t(), Manifest.Type.t(), String.t()) :: Job.job_fun()
+  def fun(%Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _shell_target) do
     fn _job_id, _upstream_results ->
       %Job.FunResult{checksum: checksum}
     end
   end
 
   def fun(
-        _reporter,
         %Config.Data{} = config,
         %Manifest.Component{id: id, dir: component_dir, files: files} = component,
         shell_target

@@ -1,5 +1,5 @@
 execution:
-- docker-compose  support
+- docker-compose support
 - podman / docker executor choice ?
 - System.cmd replacement (occhio agli zombi), ma serve se stacchiamo toolchain exec con docker?
   --init anche su toolchain "docker run"?
@@ -8,9 +8,11 @@ manifest:
 - .mbs-config.json sezione file_profiles
 - lookup .mbs-config.json from the current directory up (come asdf)
 - currently we apply a recursive glob discover of manifests, introduce a components manifest to explicitly list them (usefull also to add/remove a component from the run)
+  it scales well in big repository with lot's of untracked file (-> node_modules)
 - Config option use .gitignore to filter job.files
 
 misc
+- docker image namespacing
 - docker build --rm and intermediate container ... (docker rmi $(docker images -f "dangling=true" -q))
 - git://... dependencies
 
@@ -31,7 +33,6 @@ support / doc
   - Ruby
   - Elixir
   - Rust
-  - V
 - https://opencollective.com/
 
 cache:

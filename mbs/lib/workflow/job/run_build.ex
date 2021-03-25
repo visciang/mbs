@@ -10,14 +10,14 @@ defmodule MBS.Workflow.Job.RunBuild do
 
   require Reporter.Status
 
-  @spec fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
-  def fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain) do
+  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
+  def fun(%Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_toolchain(id, checksum),
-             :ok <- Toolchain.build(toolchain, reporter),
+             :ok <- Toolchain.build(toolchain),
              :ok <- Job.Cache.put_toolchain(id, checksum) do
           {Reporter.Status.ok(), checksum}
         else
@@ -30,7 +30,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(reporter, job_id, report_status, report_desc, end_time - start_time)
+      Reporter.job_report(job_id, report_status, report_desc, end_time - start_time)
 
       unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
         raise "Job failed #{inspect(report_status)}"
@@ -41,7 +41,6 @@ defmodule MBS.Workflow.Job.RunBuild do
   end
 
   def fun(
-        reporter,
         %Config.Data{} = config,
         %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component
       ) do
@@ -55,7 +54,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       {report_status, report_desc} =
         with :cache_miss <- Job.Cache.get_targets(Const.cache_dir(), id, checksum, targets),
-             :ok <- Toolchain.exec_build(component, checksum, config, upstream_results, job_id, reporter),
+             :ok <- Toolchain.exec_build(component, checksum, config, upstream_results, job_id),
              :ok <- Job.Utils.assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(Const.cache_dir(), id, checksum, targets) do
           {Reporter.Status.ok(), checksum}
@@ -69,7 +68,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(reporter, job_id, report_status, report_desc, end_time - start_time)
+      Reporter.job_report(job_id, report_status, report_desc, end_time - start_time)
 
       unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
         raise "Job failed #{inspect(report_status)}"

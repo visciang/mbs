@@ -9,12 +9,12 @@ defmodule MBS.CLI.Command.Tree do
 end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
-  alias MBS.CLI.{Command, Reporter}
+  alias MBS.CLI.Command
   alias MBS.{CLI, Config, Manifest}
   alias MBS.Workflow.Job
 
-  @spec run(CLI.Command.Tree.t(), Config.Data.t(), Reporter.t()) :: :ok
-  def run(%Command.Tree{type: type, targets: target_ids}, %Config.Data{}, _reporter) do
+  @spec run(CLI.Command.Tree.t(), Config.Data.t()) :: :ok
+  def run(%Command.Tree{type: type, targets: target_ids}, %Config.Data{}) do
     IO.puts("")
 
     manifests = Manifest.find_all(type)

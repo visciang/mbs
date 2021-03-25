@@ -9,22 +9,18 @@ defmodule MBS.Workflow.Job.Outdated do
 
   require Reporter.Status
 
-  @spec fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
-  def fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum}) do
+  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
+  def fun(%Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum}) do
     fn job_id, _upstream_results ->
       unless Job.Cache.hit_toolchain(id, checksum) do
-        Reporter.job_report(reporter, job_id, Reporter.Status.outdated(), checksum, nil)
+        Reporter.job_report(job_id, Reporter.Status.outdated(), checksum, nil)
       end
 
       %Job.FunResult{checksum: checksum}
     end
   end
 
-  def fun(
-        reporter,
-        %Config.Data{},
-        %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component
-      ) do
+  def fun(%Config.Data{}, %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component) do
     fn job_id, upstream_results ->
       dependencies = Job.Utils.component_dependencies(component)
       upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
@@ -32,7 +28,7 @@ defmodule MBS.Workflow.Job.Outdated do
       checksum = Job.Utils.checksum(component_dir, files, upstream_checksums_map)
 
       unless Job.Cache.hit_targets(Const.cache_dir(), id, checksum, targets) do
-        Reporter.job_report(reporter, job_id, Reporter.Status.outdated(), checksum, nil)
+        Reporter.job_report(job_id, Reporter.Status.outdated(), checksum, nil)
       end
 
       %Job.FunResult{checksum: checksum}

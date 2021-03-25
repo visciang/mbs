@@ -9,17 +9,17 @@ defmodule MBS do
 
   @spec main([String.t()]) :: :ok
   def main(args) do
-    {:ok, reporter} = Reporter.start_link()
+    :ok = Reporter.start_link()
 
     config = Config.load()
 
     workflow_status =
       args
-      |> Args.parse(reporter)
-      |> Command.run(config, reporter)
+      |> Args.parse()
+      |> Command.run(config)
       |> exit_status()
 
-    Reporter.stop(reporter, workflow_status)
+    Reporter.stop(workflow_status)
 
     :ok
   end

@@ -9,9 +9,9 @@ defmodule MBS.Toolchain do
 
   require Reporter.Status
 
-  @spec build(Manifest.Toolchain.t(), Reporter.t()) :: :ok | {:error, term()}
-  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}, reporter) do
-    Docker.image_build(id, checksum, dir, dockerfile, reporter, "#{id}:build")
+  @spec build(Manifest.Toolchain.t()) :: :ok | {:error, term()}
+  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}) do
+    Docker.image_build(id, checksum, dir, dockerfile, "#{id}:build")
   end
 
   @spec shell_cmd(Manifest.Component.t(), String.t(), Config.Data.t(), Dask.Job.upstream_results()) :: String.t()
@@ -27,40 +27,31 @@ defmodule MBS.Toolchain do
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
   end
 
-  @spec exec_build(
-          Manifest.Component.t(),
-          String.t(),
-          Config.Data.t(),
-          Dask.Job.upstream_results(),
-          String.t(),
-          Reporter.t()
-        ) ::
+  @spec exec_build(Manifest.Component.t(), String.t(), Config.Data.t(), Dask.Job.upstream_results(), String.t()) ::
           :ok | {:error, term()}
   def exec_build(
         %Manifest.Component{} = component,
         checksum,
         %Config.Data{root_dir: root_dir} = config,
         upstream_results,
-        job_id,
-        reporter
+        job_id
       ) do
     env = run_build_env_vars(component, root_dir, checksum, upstream_results)
-    exec(component, config, env, job_id, reporter)
+    exec(component, config, env, job_id)
   end
 
-  @spec exec_deploy(Manifest.Component.t(), String.t(), Config.Data.t(), String.t(), Reporter.t()) ::
+  @spec exec_deploy(Manifest.Component.t(), String.t(), Config.Data.t(), String.t()) ::
           :ok | {:error, term()}
-  def exec_deploy(%Manifest.Component{} = component, checksum, %Config.Data{} = config, job_id, reporter) do
+  def exec_deploy(%Manifest.Component{} = component, checksum, %Config.Data{} = config, job_id) do
     env = run_deploy_env_vars(component, checksum)
-    exec(component, config, env, job_id, reporter)
+    exec(component, config, env, job_id)
   end
 
   defp exec(
          %Manifest.Component{dir: work_dir, toolchain: toolchain, toolchain_opts: toolchain_opts},
          %Config.Data{root_dir: root_dir},
          env,
-         job_id,
-         reporter
+         job_id
        ) do
     toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
     opts = run_opts(root_dir, work_dir)
@@ -75,15 +66,14 @@ defmodule MBS.Toolchain do
              opts,
              env,
              [toolchain_step | toolchain_opts],
-             reporter,
              reporter_id
            ) do
         :ok ->
-          Reporter.job_report(reporter, reporter_id, Reporter.Status.ok(), nil, Reporter.time() - start_time)
+          Reporter.job_report(reporter_id, Reporter.Status.ok(), nil, Reporter.time() - start_time)
           {:cont, :ok}
 
         {:error, {cmd_result, cmd_exit_status}} ->
-          Reporter.job_report(reporter, reporter_id, Reporter.Status.error(""), nil, Reporter.time() - start_time)
+          Reporter.job_report(reporter_id, Reporter.Status.error(""), nil, Reporter.time() - start_time)
           {:halt, {:error, "exec error: exit status #{cmd_exit_status}\n\n#{cmd_result}"}}
       end
     end)

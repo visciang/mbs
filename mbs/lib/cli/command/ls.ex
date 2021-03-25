@@ -10,11 +10,11 @@ defmodule MBS.CLI.Command.Ls do
 end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
-  alias MBS.CLI.{Command, Reporter, Utils}
+  alias MBS.CLI.{Command, Utils}
   alias MBS.{Config, Manifest}
 
-  @spec run(Command.Ls.t(), Config.Data.t(), Reporter.t()) :: :ok
-  def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{}, _reporter) do
+  @spec run(Command.Ls.t(), Config.Data.t()) :: :ok
+  def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{}) do
     IO.puts("")
 
     Manifest.find_all(type)

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 LOAD_ONLY=0
 

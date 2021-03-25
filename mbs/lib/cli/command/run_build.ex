@@ -8,19 +8,18 @@ defmodule MBS.CLI.Command.RunBuild do
 end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
-  alias MBS.CLI.{Command, Reporter}
+  alias MBS.CLI.Command
   alias MBS.{CLI, Config, Manifest, Utils, Workflow}
 
-  @spec run(Command.RunBuild.t(), Config.Data.t(), Reporter.t()) :: :ok | :error | :timeout
-  def run(%Command.RunBuild{targets: target_ids}, %Config.Data{} = config, reporter) do
+  @spec run(Command.RunBuild.t(), Config.Data.t()) :: :ok | :error | :timeout
+  def run(%Command.RunBuild{targets: target_ids}, %Config.Data{} = config) do
     dask =
       Manifest.find_all(:build)
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
       |> Workflow.workflow(
         config,
-        reporter,
-        &Workflow.Job.RunBuild.fun/3,
-        &Workflow.Job.OnExit.fun(&1, &2, &3, reporter)
+        &Workflow.Job.RunBuild.fun/2,
+        &Workflow.Job.OnExit.fun(&1, &2, &3)
       )
 
     dask_exec =

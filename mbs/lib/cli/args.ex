@@ -16,12 +16,12 @@ defmodule MBS.CLI.Args do
           | %Command.Tree{}
           | %Command.Version{}
 
-  @spec parse([String.t()], Reporter.t()) :: t()
-  def parse([], reporter) do
-    parse(["--help"], reporter)
+  @spec parse([String.t()]) :: t()
+  def parse([]) do
+    parse(["--help"])
   end
 
-  def parse(["--help"], _reporter) do
+  def parse(["--help"]) do
     IO.puts("\nUsage:  mbs --help | (build | deploy) [SUBCOMMAND] | version")
     IO.puts("\nA Meta Build System")
     IO.puts("\nCommands:")
@@ -47,11 +47,11 @@ defmodule MBS.CLI.Args do
     Utils.halt("", 0)
   end
 
-  def parse(["version" | _args], _reporter) do
+  def parse(["version" | _args]) do
     %Command.Version{}
   end
 
-  def parse([type, "tree" | args], _reporter) when type == "build" or type == "deploy" do
+  def parse([type, "tree" | args]) when type == "build" or type == "deploy" do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean])
@@ -70,7 +70,7 @@ defmodule MBS.CLI.Args do
     %Command.Tree{type: String.to_atom(type), targets: targets}
   end
 
-  def parse([type, "ls" | args], _reporter) when type == "build" or type == "deploy" do
+  def parse([type, "ls" | args]) when type == "build" or type == "deploy" do
     defaults = [verbose: false]
 
     {options, targets} =
@@ -94,7 +94,7 @@ defmodule MBS.CLI.Args do
     %Command.Ls{type: String.to_atom(type), verbose: options[:verbose], targets: targets}
   end
 
-  def parse([type, "graph" | args], _reporter) when type == "build" or type == "deploy" do
+  def parse([type, "graph" | args]) when type == "build" or type == "deploy" do
     default_output_filename = "graph.svg"
     defaults = [output_filename: default_output_filename]
 
@@ -121,7 +121,7 @@ defmodule MBS.CLI.Args do
     %Command.Graph{type: String.to_atom(type), targets: targets, output_filename: options[:output_filename]}
   end
 
-  def parse(["build", "run" | args], reporter) do
+  def parse(["build", "run" | args]) do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
@@ -139,13 +139,13 @@ defmodule MBS.CLI.Args do
     end
 
     if options[:logs] do
-      Reporter.logs(reporter, options[:logs])
+      Reporter.logs(options[:logs])
     end
 
     %Command.RunBuild{targets: targets}
   end
 
-  def parse(["build", "outdated" | args], _reporter) do
+  def parse(["build", "outdated" | args]) do
     {options, _} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean])
@@ -164,7 +164,7 @@ defmodule MBS.CLI.Args do
     %Command.Outdated{}
   end
 
-  def parse(["build", "shell" | args], _reporter) do
+  def parse(["build", "shell" | args]) do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean, docker_cmd: :boolean])
@@ -191,7 +191,7 @@ defmodule MBS.CLI.Args do
     %Command.Shell{target: target, docker_cmd: options[:docker_cmd]}
   end
 
-  def parse(["release" | args], reporter) do
+  def parse(["release" | args]) do
     {options, targets} =
       try do
         OptionParser.parse!(args,
@@ -218,7 +218,7 @@ defmodule MBS.CLI.Args do
     end
 
     if options[:logs] do
-      Reporter.logs(reporter, options[:logs])
+      Reporter.logs(options[:logs])
     end
 
     defaults = [output_dir: Path.join(Const.releases_dir(), options[:id])]
@@ -227,7 +227,7 @@ defmodule MBS.CLI.Args do
     %Command.Release{id: options[:id], targets: targets, output_dir: options[:output_dir], metadata: options[:metadata]}
   end
 
-  def parse(["deploy", "run" | args], reporter) do
+  def parse(["deploy", "run" | args]) do
     {options, targets} =
       try do
         OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
@@ -256,17 +256,17 @@ defmodule MBS.CLI.Args do
       end
 
     if options[:logs] do
-      Reporter.logs(reporter, options[:logs])
+      Reporter.logs(options[:logs])
     end
 
     %Command.RunDeploy{release_id: release_id}
   end
 
-  def parse([type, "--help"], reporter) when type == "build" or type == "deploy" do
-    parse(["--help"], reporter)
+  def parse([type, "--help"]) when type == "build" or type == "deploy" do
+    parse(["--help"])
   end
 
-  def parse(args, _reporter) do
+  def parse(args) do
     Utils.halt("Unknown command #{inspect(args)}")
   end
 end

@@ -1,9 +1,8 @@
 defmodule MBS.CLI.Reporter.Log do
   @moduledoc false
-  defstruct [:reporter, :job_id]
+  defstruct [:job_id]
 
   @type t :: %__MODULE__{
-          reporter: MBS.CLI.Reporter.t(),
           job_id: String.t()
         }
 end
@@ -13,12 +12,12 @@ defimpl Collectable, for: MBS.CLI.Reporter.Log do
   require MBS.CLI.Reporter.Status
 
   @spec into(Reporter.Log.t()) :: {Reporter.Log.t(), (any(), :done | :halt | {:cont, any()} -> :ok | Reporter.Log.t())}
-  def into(%Reporter.Log{job_id: job_id, reporter: reporter} = original) do
+  def into(%Reporter.Log{job_id: job_id} = original) do
     collector_fun = fn
       _, {:cont, log_message} ->
         log_message
         |> String.split(~r/\R/)
-        |> Enum.each(&Reporter.job_report(reporter, job_id, Reporter.Status.log(), &1, nil))
+        |> Enum.each(&Reporter.job_report(job_id, Reporter.Status.log(), &1, nil))
 
         original
 

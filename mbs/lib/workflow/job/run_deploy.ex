@@ -9,19 +9,17 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
   require Reporter.Status
 
-  @spec fun(Reporter.t(), Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
-  def fun(reporter, %Config.Data{}, %Manifest.Toolchain{id: id, dir: toolchain_dir}) do
+  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
+  def fun(%Config.Data{}, %Manifest.Toolchain{id: id, dir: toolchain_dir}) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
-      {report_status, deploy_checksum} =
-        with {:ok, build_checksum} <- build_checksum(toolchain_dir),
-             deploy_checksum = deploy_checksum(toolchain_dir, build_checksum, %{}),
-             {:image_exists, false, deploy_checksum} <-
-               {:image_exists, Docker.image_exists(id, build_checksum), deploy_checksum},
+      {report_status, checksum} =
+        with {:ok, checksum} <- build_checksum(toolchain_dir),
+             {:image_exists, false, checksum} <- {:image_exists, Docker.image_exists(id, checksum), checksum},
              path_tar_gz = Path.join(toolchain_dir, "#{id}.tar.gz"),
-             :ok <- Docker.image_load(path_tar_gz, reporter, job_id) do
-          {Reporter.Status.ok(), deploy_checksum}
+             :ok <- Docker.image_load(path_tar_gz, job_id) do
+          {Reporter.Status.ok(), checksum}
         else
           {:image_exists, true, checksum} ->
             {Reporter.Status.uptodate(), checksum}
@@ -32,18 +30,17 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(reporter, job_id, report_status, deploy_checksum, end_time - start_time)
+      Reporter.job_report(job_id, report_status, checksum, end_time - start_time)
 
       unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: deploy_checksum}
+      %Job.FunResult{checksum: checksum}
     end
   end
 
   def fun(
-        reporter,
         %Config.Data{} = config,
         %Manifest.Component{dir: component_dir, toolchain: %Manifest.Toolchain{dir: toolchain_dir}} = component
       ) do
@@ -59,7 +56,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
              {:ok, toolchain_checksum} <- build_checksum(toolchain_dir),
              deploy_checksum = deploy_checksum(component_dir, build_checksum, upstream_checksums_map),
              component = put_in(component.toolchain.checksum, toolchain_checksum),
-             :ok <- Toolchain.exec_deploy(component, build_checksum, config, job_id, reporter) do
+             :ok <- Toolchain.exec_deploy(component, build_checksum, config, job_id) do
           {Reporter.Status.ok(), deploy_checksum}
         else
           {:error, reason} ->
@@ -73,7 +70,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(reporter, job_id, report_status, deploy_checksum, end_time - start_time)
+      Reporter.job_report(job_id, report_status, deploy_checksum, end_time - start_time)
 
       # unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
       unless match?(Reporter.Status.ok(), report_status) do

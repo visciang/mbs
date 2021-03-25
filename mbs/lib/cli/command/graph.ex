@@ -10,21 +10,17 @@ defmodule MBS.CLI.Command.Graph do
 end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
-  alias MBS.CLI.{Command, Reporter, Utils}
+  alias MBS.CLI.{Command, Utils}
   alias MBS.{Config, Const, Manifest, Workflow}
 
-  @spec run(Command.Graph.t(), Config.Data.t(), Reporter.t()) :: :ok | :error
-  def run(
-        %Command.Graph{type: type, targets: target_ids, output_filename: output_filename},
-        %Config.Data{} = config,
-        reporter
-      ) do
+  @spec run(Command.Graph.t(), Config.Data.t()) :: :ok | :error
+  def run(%Command.Graph{type: type, targets: target_ids, output_filename: output_filename}, %Config.Data{} = config) do
     if dot_command_installed?() do
       File.mkdir_p!(Const.graph_dir())
 
       Manifest.find_all(type)
       |> Utils.transitive_dependencies_closure(target_ids)
-      |> Workflow.workflow(config, reporter, &null_fun/3)
+      |> Workflow.workflow(config, &null_fun/2)
       |> Dask.Dot.export()
       |> Dask.Utils.dot_to_svg(output_filename)
 
@@ -44,7 +40,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
       false
   end
 
-  defp null_fun(_, _, _) do
+  defp null_fun(_, _) do
     fn _, _ -> :ok end
   end
 end

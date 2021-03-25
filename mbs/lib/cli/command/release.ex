@@ -11,14 +11,13 @@ defmodule MBS.CLI.Command.Release do
 end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
-  alias MBS.CLI.{Command, Reporter}
+  alias MBS.CLI.Command
   alias MBS.{Checksum, CLI, Config, Const, Manifest, Utils, Workflow}
 
-  @spec run(Command.Release.t(), Config.Data.t(), Reporter.t()) :: :ok | :error | :timeout
+  @spec run(Command.Release.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(
         %Command.Release{id: id, targets: target_ids, output_dir: output_dir, metadata: metadata},
-        %Config.Data{} = config,
-        reporter
+        %Config.Data{} = config
       ) do
     File.mkdir_p!(output_dir)
 
@@ -33,15 +32,14 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
 
     validate_deploy_files(build_manifests, deploy_manifests)
 
-    build_checksums_map = build_checksums(target_ids, build_manifests, config, reporter)
+    build_checksums_map = build_checksums(target_ids, build_manifests, config)
 
     dask =
       deploy_manifests
       |> Workflow.workflow(
         config,
-        reporter,
-        &Workflow.Job.Release.fun(&1, &2, &3, output_dir, build_checksums_map),
-        &Workflow.Job.OnExit.fun(&1, &2, &3, reporter)
+        &Workflow.Job.Release.fun(&1, &2, output_dir, build_checksums_map),
+        &Workflow.Job.OnExit.fun(&1, &2, &3)
       )
 
     dask_exec =
@@ -120,8 +118,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
     end)
   end
 
-  defp build_checksums(target_ids, build_manifests, config, reporter) do
-    dask = Workflow.workflow(build_manifests, config, reporter, &Workflow.Job.Checksums.fun/3)
+  defp build_checksums(target_ids, build_manifests, config) do
+    dask = Workflow.workflow(build_manifests, config, &Workflow.Job.Checksums.fun/2)
 
     dask_exec =
       try do
