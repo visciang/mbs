@@ -9,7 +9,9 @@ defmodule MBS.Workflow.Job.Release do
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t(), Path.t(), %{String.t() => String.t()}) :: Job.job_fun()
+  @type fun :: (String.t(), Dask.Job.upstream_results() -> :ok)
+
+  @spec fun(Config.Data.t(), Manifest.Type.t(), Path.t(), %{String.t() => String.t()}) :: fun()
   def fun(
         %Config.Data{},
         %Manifest.Toolchain{type: :deploy, dir: toolchain_dir, id: id, checksum: checksum},
@@ -44,28 +46,20 @@ defmodule MBS.Workflow.Job.Release do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum}
+      :ok
     end
   end
 
   def fun(
         %Config.Data{},
-        %Manifest.Component{type: :deploy, id: id, dir: component_dir, files: deploy_targets} = component,
+        %Manifest.Component{type: :deploy, id: id, dir: component_dir, files: deploy_targets},
         release_dir,
         build_checksums
       ) do
-    fn job_id, upstream_results ->
+    fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
       build_checksum = Map.fetch!(build_checksums, id)
-
-      dependencies = Job.Utils.component_dependencies(component)
-      upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
-
-      deploy_upstream_checksums_map = Job.Utils.upstream_results_to_checksums_map(upstream_results)
-      deploy_upstream_deps_checksum = Job.Utils.checksum(component_dir, [], deploy_upstream_checksums_map)
-      deploy_checksum = "#{build_checksum}-#{deploy_upstream_deps_checksum}"
-
       targets_dir = Path.join(release_dir, id)
 
       {report_status, report_desc} =
@@ -90,7 +84,7 @@ defmodule MBS.Workflow.Job.Release do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: deploy_checksum}
+      :ok
     end
   end
 

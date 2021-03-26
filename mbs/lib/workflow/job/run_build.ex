@@ -4,7 +4,7 @@ defmodule MBS.Workflow.Job.RunBuild do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Const, Manifest}
+  alias MBS.{Config, Const, Docker, Manifest}
   alias MBS.Toolchain
   alias MBS.Workflow.Job
 
@@ -40,23 +40,16 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  def fun(
-        %Config.Data{} = config,
-        %Manifest.Component{id: id, dir: component_dir, files: files, targets: targets} = component,
-        force
-      ) do
+  def fun(%Config.Data{} = config, %Manifest.Component{id: id, targets: targets} = component, force) do
     fn job_id, upstream_results ->
       start_time = Reporter.time()
 
-      dependencies = Job.Utils.component_dependencies(component)
-      upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
-      upstream_checksums_map = Job.Utils.upstream_results_to_checksums_map(upstream_results)
-      checksum = Job.Utils.checksum(component_dir, files, upstream_checksums_map)
+      checksum = Job.Utils.build_checksum(component, upstream_results)
 
       {report_status, report_desc} =
         with :cache_miss <- cache_get_targets(Const.cache_dir(), id, checksum, targets, force),
              :ok <- Toolchain.exec_build(component, checksum, config, upstream_results, job_id),
-             :ok <- Job.Utils.assert_targets(targets, checksum),
+             :ok <- assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(Const.cache_dir(), id, checksum, targets) do
           {Reporter.Status.ok(), checksum}
         else
@@ -92,6 +85,25 @@ defmodule MBS.Workflow.Job.RunBuild do
       :cache_miss
     else
       Job.Cache.get_targets(cache_dir, id, checksum, targets)
+    end
+  end
+
+  defp assert_targets([], _checksum), do: :ok
+
+  defp assert_targets(targets, checksum) do
+    missing_targets =
+      Enum.filter(targets, fn
+        %Manifest.Target{type: :file, target: target} ->
+          not File.exists?(target)
+
+        %Manifest.Target{type: :docker, target: target} ->
+          not Docker.image_exists(target, checksum)
+      end)
+
+    if length(missing_targets) != 0 do
+      {:error, "Missing targets #{inspect(missing_targets)}"}
+    else
+      :ok
     end
   end
 end

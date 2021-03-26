@@ -15,14 +15,10 @@ defmodule MBS.Workflow.Job.Checksums do
     end
   end
 
-  def fun(%Config.Data{}, %Manifest.Component{id: id, dir: component_dir, files: files} = component) do
-    fn _job_id, upstream_checksums ->
-      dependencies = Job.Utils.component_dependencies(component)
-
-      upstream_checksums = upstream_checksums |> Map.values() |> merge_maps()
-      deps_upstream_checksums = Job.Utils.filter_upstream_results(upstream_checksums, dependencies)
-      checksum = Job.Utils.checksum(component_dir, files, deps_upstream_checksums)
-
+  def fun(%Config.Data{}, %Manifest.Component{id: id} = component) do
+    fn _job_id, upstream_results ->
+      upstream_checksums = upstream_results |> Map.values() |> merge_maps()
+      checksum = Job.Utils.build_checksum2(component, upstream_checksums)
       Map.put(upstream_checksums, id, checksum)
     end
   end
