@@ -31,7 +31,7 @@ Later on, we will see how `mbs` "builds" `mbs`, as an example of these concepts.
 Soon or later most medium sized organization reach the point where they have to **standardize / normalize the CI/CD workflow** across products, teams etc.
 
 Someone goes to the "million multi-repository jungle" and internal artifact hell versioning / compatibility matrix, while others opt to a single mono-repo or few of them. It's a matter of trade offs, considering the projects organization, teams, products, silos, people locations / offices, etc.
-In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need the glue (a standardized one) to keep things sorted and managable, to make the dev (and ops) life easier / deterministic.
+In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need the glue (a standardized one) to keep things sorted and manageable, to make the dev (and ops) life easier / deterministic.
 
 ### Use case
 
