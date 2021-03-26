@@ -46,7 +46,7 @@ defmodule MBS.CLI.Args do
     IO.puts("")
     IO.puts("\nRun 'mbs COMMAND [SUBCOMMAND] --help' for more information.")
 
-    Utils.halt("", 0)
+    Utils.halt(nil, 0)
   end
 
   def parse(["version" | _args]) do
@@ -66,7 +66,7 @@ defmodule MBS.CLI.Args do
       IO.puts("\nUsage:  mbs #{type} tree --help | [TARGETS...]")
       IO.puts("\nDisplay the dependency tree for the provided targets (default: all targets)")
 
-      Utils.halt("", 0)
+      Utils.halt(nil, 0)
     end
 
     %Command.Tree{type: String.to_atom(type), targets: targets}
@@ -89,7 +89,7 @@ defmodule MBS.CLI.Args do
       IO.puts("\nOptions:")
       IO.puts("  --verbose    Show target details")
 
-      Utils.halt("", 0)
+      Utils.halt(nil, 0)
     end
 
     options = Keyword.merge(defaults, options)
@@ -114,7 +114,7 @@ defmodule MBS.CLI.Args do
       IO.puts("\nOptions:")
       IO.puts("  --output-filename    Output file (default: '#{default_output_filename}')")
 
-      Utils.halt("", 0)
+      Utils.halt(nil, 0)
     end
 
     options = Keyword.merge(defaults, options)
@@ -138,7 +138,7 @@ defmodule MBS.CLI.Args do
       IO.puts("\nOptions:")
       IO.puts("  --logs     Stream jobs log to the console")
       IO.puts("  --force    Skip cache and force a re-run")
-      Utils.halt("", 0)
+      Utils.halt(nil, 0)
     end
 
     if options[:logs] do
@@ -161,7 +161,7 @@ defmodule MBS.CLI.Args do
       IO.puts("\nUsage:  mbs build outdated --help")
       IO.puts("\nShow outdated targets")
 
-      Utils.halt("", 0)
+      Utils.halt(nil, 0)
     end
 
     %Command.Outdated{}
@@ -179,7 +179,7 @@ defmodule MBS.CLI.Args do
     if options[:help] do
       IO.puts("\nUsage:  mbs build shell --help | TARGET")
       IO.puts("\nInteractive toolchain shell")
-      Utils.halt("", 0)
+      Utils.halt(nil, 0)
     end
 
     target =
@@ -213,7 +213,7 @@ defmodule MBS.CLI.Args do
       IO.puts("  --logs          Stream jobs log to the console")
       IO.puts("  --metadata      Extra metadata to include in the release manifest")
       IO.puts("                  ex: --metadata='git_commit=...'")
-      Utils.halt("", 0)
+      Utils.halt(nil, 0)
     end
 
     unless options[:id] do
@@ -247,7 +247,7 @@ defmodule MBS.CLI.Args do
       IO.puts("\nOptions:")
       IO.puts("  --logs     Stream jobs log to the console")
       IO.puts("  --force    Force a re-run")
-      Utils.halt("", 0)
+      Utils.halt(nil, 0)
     end
 
     release_id =
