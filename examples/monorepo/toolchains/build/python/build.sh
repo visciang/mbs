@@ -2,7 +2,8 @@
 
 set -e
 
-TYPE="wheel"
+BUILD_DIR=build
+TYPE=wheel
 
 args()
 {
@@ -49,8 +50,12 @@ case $1 in
                 ;;
             zipapp)
                 pip install -r requirements.txt --upgrade --target ./$MBS_ID/
+                
                 rm -rf ./$MBS_ID/*.dist-info
-                python -m zipapp $MBS_ID -p "/usr/bin/env python"
+
+                rm -rf $BUILD_DIR
+                mkdir -p $BUILD_DIR
+                python -m zipapp $MBS_ID -o $BUILD_DIR/$MBS_ID.pyz -p "/usr/bin/env python"
                 ;;
         esac
         ;;

@@ -8,7 +8,7 @@
             "requirements.txt"
         ],
         "targets": [
-            "python_native_app.pyz"
+            "build/python_native_app.pyz"
         ],
         "dependencies": [
             "python_library"

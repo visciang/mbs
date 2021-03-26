@@ -7,7 +7,7 @@
             "main.c"
         ],
         "targets": [
-            "build/c_native_binary"
+            ".build/c_native_binary"
         ],
         "dependencies": [
             "c-shared-library"
