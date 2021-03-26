@@ -1,0 +1,14 @@
+{
+  "name": "js_app",
+  "version": "0.0.0",
+  "type": "module",
+  "bin": {
+    "js_app": "index.js"
+  },
+  "dependencies": {
+    "js_library": "file:.build/node_modules/js_library"
+  },
+  "bundleDependencies": [
+    "js_library"
+  ]
+}

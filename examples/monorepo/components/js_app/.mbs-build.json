@@ -1,0 +1,18 @@
+{
+    "id": "js_app",
+    "component": {
+        "toolchain": "toolchain-build-js",
+        "files": [
+            "*.js",
+            "package-lock.json",
+            "package.json",
+            ".npmignore"
+        ],
+        "targets": [
+            "node_modules/js_app-0.0.0.tgz"
+        ],
+        "dependencies": [
+            "js_library"
+        ]
+    }
+}

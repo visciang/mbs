@@ -1,0 +1,15 @@
+{
+    "id": "js_library",
+    "component": {
+        "toolchain": "toolchain-build-js",
+        "files": [
+            "*.js",
+            "package-lock.json",
+            "package.json",
+            ".npmignore"
+        ],
+        "targets": [
+            "node_modules/js_library-0.0.0.tgz"
+        ]
+    }
+}
