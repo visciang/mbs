@@ -1,0 +1,10 @@
+.build/
+
+goapath/bin
+goapath/pkg
+
+node_modules/
+
+python*/*.egg-info/
+python*/build/
+python*/dist/
