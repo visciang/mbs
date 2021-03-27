@@ -1,5 +1,5 @@
 {
-    "id": "c_native_binary",
+    "id": "c_shared_sub_library",
     "component": {
         "toolchain": "toolchain-build-cmake",
         "files": [
@@ -7,11 +7,8 @@
             "*.{c,h}"
         ],
         "targets": [
-            ".build/c_native_binary"
-        ],
-        "dependencies": [
-            "c_shared_library",
-            "c_shared_sub_library"
+            "sub_lib.h",
+            ".build/lib_c_shared_sub_library.a"
         ]
     }
 }

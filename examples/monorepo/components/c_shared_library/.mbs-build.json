@@ -9,6 +9,9 @@
         "targets": [
             "lib.h",
             ".build/lib_c_shared_library.a"
+        ],
+        "dependencies": [
+            "c_shared_sub_library"
         ]
     }
 }
