@@ -2,6 +2,8 @@ deploy:
 - deploy state (to deploy only if needed)
 
 execution:
+- pass e json env variable to toolchains run with all the MBS_* vars and metadata
+  (should be a better / more flexible contract)
 - docker-compose support
 - podman / docker executor choice ?
 - System.cmd replacement (occhio agli zombi), ma serve se stacchiamo toolchain exec con docker?
@@ -20,7 +22,6 @@ misc
 - git://... dependencies
 
 cli
-- run --force to skip-cache checks and force a re-run
 - pass secrets in mbs
 - cache command (purge | size | info ... ?)
 - Job logs on files option?
@@ -31,8 +32,9 @@ sandboxing:
 
 support / doc
 - Documentation
+- (npm 7 workspaces) https://dev.to/limal/simplify-your-monorepo-with-npm-7-workspaces-5gmj
 - more examples
-  X Golang
+  - something with a "meta toolchain" (toolchain-shell ?)
   - NodeJS / Deno
   - Ruby
   - Elixir
