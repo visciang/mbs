@@ -53,8 +53,7 @@ case $1 in
                 
                 rm -rf ./$MBS_ID/*.dist-info
 
-                rm -rf $BUILD_DIR
-                mkdir -p $BUILD_DIR
+                rm -rf $BUILD_DIR && mkdir -p $BUILD_DIR
                 python -m zipapp $MBS_ID -o $BUILD_DIR/$MBS_ID.pyz -p "/usr/bin/env python"
                 ;;
         esac

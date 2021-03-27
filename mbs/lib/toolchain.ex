@@ -9,6 +9,8 @@ defmodule MBS.Toolchain do
 
   require Reporter.Status
 
+  @local_dependencies_targets_dir ".deps"
+
   @spec build(Manifest.Toolchain.t()) :: :ok | {:error, term()}
   def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}) do
     Docker.image_build(id, checksum, dir, dockerfile, "#{id}:build")
@@ -36,6 +38,7 @@ defmodule MBS.Toolchain do
         upstream_results,
         job_id
       ) do
+    get_dependencies_targets(component, config, upstream_results)
     env = run_build_env_vars(component, root_dir, checksum, upstream_results)
     exec(component, config, env, job_id)
   end
@@ -85,6 +88,30 @@ defmodule MBS.Toolchain do
     dir_mount = ["-v", "#{root_dir}:#{root_dir}"]
 
     opts ++ work_dir ++ dir_mount
+  end
+
+  defp get_dependencies_targets(
+         %Manifest.Component{dir: dir, dependencies: dependencies},
+         %Config.Data{root_dir: root_dir},
+         upstream_results
+       ) do
+    local_dependencies_targets_dir = Path.join(dir, @local_dependencies_targets_dir)
+    File.rm_rf!(local_dependencies_targets_dir)
+    File.mkdir!(local_dependencies_targets_dir)
+
+    Enum.each(dependencies, fn dep_id ->
+      %Job.FunResult{checksum: dep_checksum} = Map.fetch!(upstream_results, dep_id)
+
+      cache_base_dir = Path.join(root_dir, Const.cache_dir())
+      cache_dependency_dir = Cache.path(cache_base_dir, dep_id, dep_checksum, "")
+
+      if File.exists?(cache_dependency_dir) do
+        component_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
+
+        File.mkdir!(component_dependency_dir)
+        File.cp_r!(cache_dependency_dir, component_dependency_dir)
+      end
+    end)
   end
 
   defp run_build_env_vars(

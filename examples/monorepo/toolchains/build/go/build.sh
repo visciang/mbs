@@ -49,27 +49,25 @@ mkdir -p $GOPATH/src
 export MONOREPO=$GOPATH/src/monorepo.com
 mkdir -p $MONOREPO
 
-MBS_DIR_VARS=$(env | grep -o -E "MBS_DIR_[^=]+" || echo "")
-for MBS_DIR_VAR in $MBS_DIR_VARS; do
-    echo "Copy $MBS_DIR_VAR in build context"
-    tar xzf $(printenv $MBS_DIR_VAR)/*.tgz -C $MONOREPO/
-done
+# Install dependencies
+find .deps/ -name '*.go.tgz' -exec \
+    tar xzf "{}" -C $MONOREPO/ ";"
 
 ln -s $MBS_CWD $MONOREPO/
 
 case $1 in
     build)
-        go build
+        rm -rf .build/ && mkdir .build/
 
         case $TYPE in
             lib)
-                rm -f $MBS_ID.tgz
-                cd ..
-                tar czf /tmp/$MBS_ID.tgz $MBS_ID
-                cd -
-                mv /tmp/$MBS_ID.tgz .
+                go build
+
+                cd .. && tar czf /tmp/$MBS_ID.go.tgz $MBS_ID && cd -
+                mv /tmp/$MBS_ID.go.tgz .build/
                 ;;
             app)
+                go build -o .build/$MBS_ID
                 ;;
         esac
         ;;

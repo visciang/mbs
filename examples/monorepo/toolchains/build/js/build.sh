@@ -5,17 +5,18 @@ set -e
 rm -rf .build/
 mkdir .build/
 
-MBS_DIR_VARS=$(env | grep -o -E "MBS_DIR_[^=]+" || echo "")
-for MBS_DIR_VAR in $MBS_DIR_VARS; do
-    echo "Copy dependency $MBS_DIR_VAR in context"
-    npm install --prefix=.build/ $(printenv $MBS_DIR_VAR)/*.tgz
-done
+# Install dependencies
+find .deps/ -name '*.js.tgz' -exec \
+    npm install --prefix=.build/ "{}" ";"
 
 case $1 in
     build)
         npm ci
         npm pack
-        mv *.tgz node_modules/
+
+        for TGZ in *.tgz; do
+            mv $TGZ node_modules/$(basename $TGZ .tgz).js.tgz
+        done
         ;;
     *)
         echo "bad target: $1"
