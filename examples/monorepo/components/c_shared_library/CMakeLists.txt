@@ -4,4 +4,4 @@ project(c_shared_library)
 
 set(CMAKE_C_FLAGS "-g -O2 -Wall -Werror")
 
-add_library(_c_shared_library SHARED lib.c)
+add_library(_c_shared_library STATIC lib.c)

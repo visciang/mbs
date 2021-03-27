@@ -4,7 +4,7 @@
         "toolchain": "toolchain-build-cmake",
         "files": [
             "CMakeLists.txt",
-            "main.c"
+            "*.{c,h}"
         ],
         "targets": [
             ".build/c_native_binary"

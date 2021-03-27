@@ -4,11 +4,11 @@
         "toolchain": "toolchain-build-cmake",
         "files": [
             "CMakeLists.txt",
-            "lib.{c,h}"
+            "*.{c,h}"
         ],
         "targets": [
             "lib.h",
-            ".build/lib_c_shared_library.so"
+            ".build/lib_c_shared_library.a"
         ]
     }
 }
