@@ -1,5 +1,5 @@
 {
-    "id": "c-shared-library",
+    "id": "c_shared_library",
     "component": {
         "toolchain": "toolchain-build-cmake",
         "files": [

@@ -1,5 +1,5 @@
 {
-    "id": "toolchain-deploy-docker-compose",
+    "id": "toolchain-deploy-docker_compose",
     "toolchain": {
         "dockerfile": "Dockerfile",
         "files": [

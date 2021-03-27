@@ -1,5 +1,5 @@
 {
-    "id": "mbs-toolchain",
+    "id": "toolchain-mbs",
     "toolchain": {
         "dockerfile": "Dockerfile",
         "files": [

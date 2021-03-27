@@ -1,7 +1,7 @@
 {
     "id": "docker_apps_composition",
     "component": {
-        "toolchain": "toolchain-build-docker-compose",
+        "toolchain": "toolchain-build-docker_compose",
         "files": [
             "docker-compose.yml"
         ],

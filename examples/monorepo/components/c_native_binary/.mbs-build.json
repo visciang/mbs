@@ -1,5 +1,5 @@
 {
-    "id": "c-native-binary",
+    "id": "c_native_binary",
     "component": {
         "toolchain": "toolchain-build-cmake",
         "files": [
@@ -10,7 +10,7 @@
             ".build/c_native_binary"
         ],
         "dependencies": [
-            "c-shared-library"
+            "c_shared_library"
         ]
     }
 }
