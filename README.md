@@ -19,7 +19,7 @@ The system scales well, but:
 
 ### Terminology
 - **Toolchain**: defines your "build" / "deploy" recipes, standardized and parameterizable.
-- **Component**: a sofware component, a piece of software with well defined functionalities and boundaries that can be build to a target artifact (via a toolchain). Acomponent could be also a deployable target or not (for example a library that is only consumed by other components)
+- **Component**: a sofware component, a piece of software with well defined functionalities and boundaries that can be build to a target artifact (via a toolchain). A component could be also a deployable target or not (for example a library that is only consumed by other components)
 
 In other words we can think about *toolchains* as "functions" that turns *components* into *artifacts*. If you think about it, also *toolchains* are components, in fact there's a special "bootstrapping" *toolchain*, docker, that is able to turn a *toolchain component* into a toolchain (artifact).
 MBS in a "high order function" that you feed with your mono-repo (a set of components and toolchain components) and gives you back the artifacts of your components built with your toolchain built with docker...
@@ -31,7 +31,7 @@ Later on, we will see how `mbs` "builds" `mbs`, as an example of these concepts.
 Soon or later most medium sized organization reach the point where they have to **standardize / normalize the CI/CD workflow** across products, teams etc.
 
 Someone goes to the "million multi-repository jungle" and internal artifact hell versioning / compatibility matrix, while others opt to a single mono-repo or few of them. It's a matter of trade offs, considering the projects organization, teams, products, silos, people locations / offices, etc.
-In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need the glue (a standardized one) to keep things sorted and managable, to make the dev (and ops) life easier / deterministic.
+In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need the glue (a standardized one) to keep things sorted and manageable, to make the dev (and ops) life easier / deterministic.
 
 ### Use case
 
@@ -85,7 +85,7 @@ The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMA
 
 Environment variable that you can pass to `mbs`:
 
-- `LOG_LEVEL`: set log level. For exmaple `LOG_LEVEL="debug` to turn on debug logs.
+- `LOG_LEVEL`: set log level. For example `LOG_LEVEL="debug` to turn on debug logs.
 - `LOG_COLOR`: enable / disable color. For example `LOG_LEVEL="true"`, `LOG_LEVEL="false"`.
 
 ### Global configuration
