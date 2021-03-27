@@ -96,11 +96,6 @@ Environment variable that you can pass to `mbs`:
 {
     // parallelism: [optional] run parallelism (default: available cores)
     "parallelism": 16,
-    // cache
-    "cache": {
-        // where to store the file artifacts cache (relative path to the repository root)
-        "dir": ".mbs-cache"
-    },
     // timeout: [optional] components build global timeout sec (default: infinity)
     "timeout": 3600
 }
