@@ -17,11 +17,10 @@ defmodule MBS do
       args
       |> Args.parse()
       |> Command.run(config)
-      |> exit_status()
 
     Reporter.stop(workflow_status)
 
-    :ok
+    exit_status(workflow_status)
   end
 
   defp exit_status(workflow_status) do

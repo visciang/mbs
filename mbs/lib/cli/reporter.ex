@@ -16,10 +16,12 @@ defmodule MBS.CLI.Reporter do
   defmodule State do
     @moduledoc false
 
-    defstruct [:start_time, :muted, :logs_enabled]
+    defstruct [:start_time, :success_jobs, :failed_jobs, :muted, :logs_enabled]
 
     @type t :: %__MODULE__{
             start_time: integer(),
+            failed_jobs: [String.t()],
+            success_jobs: [String.t()],
             muted: boolean(),
             logs_enabled: boolean()
           }
@@ -31,7 +33,7 @@ defmodule MBS.CLI.Reporter do
     :ok
   end
 
-  @spec stop(Status.t()) :: :ok
+  @spec stop(:ok | :error | :timeout) :: :ok
   def stop(workflow_status) do
     GenServer.call(@name, {:stop, workflow_status})
   end
@@ -58,7 +60,7 @@ defmodule MBS.CLI.Reporter do
 
   @impl true
   def init(start_time: start_time) do
-    {:ok, %State{start_time: start_time, muted: false, logs_enabled: false}}
+    {:ok, %State{start_time: start_time, muted: false, logs_enabled: false, success_jobs: [], failed_jobs: []}}
   end
 
   @impl true
@@ -83,6 +85,8 @@ defmodule MBS.CLI.Reporter do
 
     if status_info, do: IO.puts("  - #{status_info}")
 
+    state = track_jobs(job_id, status, state)
+
     {:noreply, state}
   end
 
@@ -97,13 +101,15 @@ defmodule MBS.CLI.Reporter do
   end
 
   @impl true
-  def handle_call({:stop, reason}, _from, %State{} = state) do
+  def handle_call({:stop, reason}, _from, %State{success_jobs: success_jobs, failed_jobs: failed_jobs} = state) do
     end_time = time()
+
+    success_jobs_count = length(success_jobs)
 
     log_message =
       case reason do
-        :ok -> IO.ANSI.format([:green, "Successfully completed"])
-        :error -> IO.ANSI.format([:red, "Failed"])
+        :ok -> IO.ANSI.format([:green, "Successfully completed (#{success_jobs_count} jobs)"])
+        :error -> IO.ANSI.format([:red, "Failed jobs:", :normal, Enum.map(Enum.sort(failed_jobs), &"\n- #{&1}"), "\n"])
         :timeout -> IO.ANSI.format([:red, "Timeout"])
       end
 
@@ -112,6 +118,15 @@ defmodule MBS.CLI.Reporter do
     puts("\n#{log_message} (#{duration})", state)
 
     {:stop, :normal, :ok, state}
+  end
+
+  defp track_jobs(job_id, status, state) do
+    case status do
+      Status.error(_reason) -> put_in(state.failed_jobs, [job_id | state.failed_jobs])
+      Status.ok() -> put_in(state.success_jobs, [job_id | state.success_jobs])
+      Status.uptodate() -> put_in(state.success_jobs, [job_id | state.success_jobs])
+      _ -> state
+    end
   end
 
   defp delta_time_string(elapsed) do
