@@ -41,19 +41,14 @@ args()
 
 args $0 "$@"
 
-export GOPATH=/tmp/gopath
+export GOPATH=$(readlink -f -- ../)
 mkdir -p $GOPATH/bin
 mkdir -p $GOPATH/pkg
 mkdir -p $GOPATH/src
 
-export MONOREPO=$GOPATH/src/monorepo.com
-mkdir -p $MONOREPO
-
 # Install dependencies
 find .deps/ -name '*.go.tgz' -exec \
-    tar xzf "{}" -C $MONOREPO/ ";"
-
-ln -s $MBS_CWD $MONOREPO/
+    tar xzf "{}" -C $GOPATH/ ";"
 
 case $1 in
     build)

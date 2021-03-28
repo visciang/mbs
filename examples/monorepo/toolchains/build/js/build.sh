@@ -14,9 +14,8 @@ case $1 in
         npm ci
         npm pack
 
-        for TGZ in *.tgz; do
-            mv $TGZ node_modules/$(basename $TGZ .tgz).js.tgz
-        done
+        find . -maxdepth 1 -name '*.tgz' -exec \
+            sh -c 'mv {} node_modules/$(basename {} .tgz).js.tgz' ";"
         ;;
     *)
         echo "bad target: $1"

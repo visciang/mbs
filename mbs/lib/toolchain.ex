@@ -23,7 +23,7 @@ defmodule MBS.Toolchain do
         %Config.Data{root_dir: root_dir},
         upstream_results
       ) do
-    env = run_build_env_vars(component, root_dir, checksum, upstream_results)
+    env = run_build_env_vars(component, checksum, upstream_results)
     opts = run_opts(root_dir, work_dir) ++ ["--entrypoint", "sh", "--interactive"]
 
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
@@ -31,15 +31,9 @@ defmodule MBS.Toolchain do
 
   @spec exec_build(Manifest.Component.t(), String.t(), Config.Data.t(), Dask.Job.upstream_results(), String.t()) ::
           :ok | {:error, term()}
-  def exec_build(
-        %Manifest.Component{} = component,
-        checksum,
-        %Config.Data{root_dir: root_dir} = config,
-        upstream_results,
-        job_id
-      ) do
+  def exec_build(%Manifest.Component{} = component, checksum, %Config.Data{} = config, upstream_results, job_id) do
     get_dependencies_targets(component, config, upstream_results)
-    env = run_build_env_vars(component, root_dir, checksum, upstream_results)
+    env = run_build_env_vars(component, checksum, upstream_results)
     exec(component, config, env, job_id)
   end
 
@@ -82,12 +76,12 @@ defmodule MBS.Toolchain do
     end)
   end
 
-  defp run_opts(root_dir, work_dir) do
+  defp run_opts(_root_dir, work_dir) do
     opts = ["--rm", "-t"]
-    work_dir = ["-w", "#{work_dir}"]
-    dir_mount = ["-v", "#{root_dir}:#{root_dir}"]
+    work_dir_opts = ["-w", "#{work_dir}"]
+    dir_mount_opts = ["-v", "#{work_dir}:#{work_dir}"]
 
-    opts ++ work_dir ++ dir_mount
+    opts ++ work_dir_opts ++ dir_mount_opts
   end
 
   defp get_dependencies_targets(
@@ -116,12 +110,11 @@ defmodule MBS.Toolchain do
 
   defp run_build_env_vars(
          %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
-         root_dir,
          checksum,
          upstream_results
        ) do
     env =
-      Enum.flat_map(dependencies, fn dep_id ->
+      Enum.map(dependencies, fn dep_id ->
         %Job.FunResult{checksum: dep_checksum} = Map.fetch!(upstream_results, dep_id)
 
         shell_dep_id =
@@ -130,9 +123,7 @@ defmodule MBS.Toolchain do
           |> String.replace(":", "_")
           |> String.replace("-", "_")
 
-        cache_dir = Path.join(root_dir, Const.cache_dir())
-        deps_path = Cache.path(cache_dir, dep_id, dep_checksum, "")
-        [{"MBS_DIR_#{shell_dep_id}", deps_path}, {"MBS_CHECKSUM_#{shell_dep_id}", dep_checksum}]
+        {"MBS_CHECKSUM_#{shell_dep_id}", dep_checksum}
       end)
 
     [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
