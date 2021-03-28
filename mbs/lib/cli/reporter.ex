@@ -50,7 +50,7 @@ defmodule MBS.CLI.Reporter do
 
   @spec job_report(String.t(), Status.t(), nil | String.t(), nil | non_neg_integer()) :: :ok
   def job_report(job_id, status, description, elapsed) do
-    GenServer.cast(@name, %Report{job_id: job_id, status: status, description: description, elapsed: elapsed})
+    GenServer.call(@name, %Report{job_id: job_id, status: status, description: description, elapsed: elapsed})
   end
 
   @spec time :: integer()
@@ -68,7 +68,12 @@ defmodule MBS.CLI.Reporter do
     {:noreply, state}
   end
 
-  def handle_cast(%Report{job_id: job_id, status: status, description: description, elapsed: elapsed}, %State{} = state) do
+  @impl true
+  def handle_call(
+        %Report{job_id: job_id, status: status, description: description, elapsed: elapsed},
+        _from,
+        %State{} = state
+      ) do
     {status_icon, status_info} = status_icon_info(status)
 
     duration = if elapsed != nil, do: " (#{delta_time_string(elapsed)})", else: ""
@@ -87,7 +92,7 @@ defmodule MBS.CLI.Reporter do
 
     state = track_jobs(job_id, status, state)
 
-    {:noreply, state}
+    {:reply, :ok, state}
   end
 
   @impl true
