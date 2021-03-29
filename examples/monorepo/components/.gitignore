@@ -1,11 +1,11 @@
 .build/
 .deps/
 
-goapath/bin
-goapath/pkg
+go_examples/bin
+go_examples/pkg
 
 node_modules/
 
-python*/*.egg-info/
-python*/build/
-python*/dist/
+python*/**/*.egg-info/
+python*/**/build/
+python*/**/dist/
