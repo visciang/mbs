@@ -4,7 +4,7 @@ defmodule MBS.Workflow.Job.RunBuild do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Const, Docker, Manifest}
+  alias MBS.{Config, Const, Docker, Manifest, Utils}
   alias MBS.Toolchain
   alias MBS.Workflow.Job
 
@@ -36,7 +36,7 @@ defmodule MBS.Workflow.Job.RunBuild do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum}
+      %Job.FunResult{checksum: checksum, targets: MapSet.new()}
     end
   end
 
@@ -57,7 +57,7 @@ defmodule MBS.Workflow.Job.RunBuild do
             {Reporter.Status.uptodate(), checksum}
 
           {:error, reason} ->
-            {Reporter.Status.error(reason), nil}
+            {Reporter.Status.error(reason), nil, nil}
         end
 
       end_time = Reporter.time()
@@ -68,8 +68,28 @@ defmodule MBS.Workflow.Job.RunBuild do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum}
+      %Job.FunResult{
+        checksum: checksum,
+        targets: transitive_targets(id, checksum, targets, upstream_results)
+      }
     end
+  end
+
+  defp transitive_targets(id, checksum, targets, upstream_results) do
+    {:ok, expanded_targets} = Job.Cache.expand_targets_path(Const.cache_dir(), id, checksum, targets)
+
+    expanded_targets_set =
+      expanded_targets
+      |> Enum.map(&{id, &1})
+      |> MapSet.new()
+
+    expanded_upstream_targets_set =
+      upstream_results
+      |> Map.values()
+      |> Enum.map(& &1.targets)
+      |> Utils.union_mapsets()
+
+    MapSet.union(expanded_targets_set, expanded_upstream_targets_set)
   end
 
   defp cache_get_toolchain(id, checksum, force) do

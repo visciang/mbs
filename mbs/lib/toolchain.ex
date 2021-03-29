@@ -3,8 +3,8 @@ defmodule MBS.Toolchain do
   Toolchain functions
   """
 
-  alias MBS.{Cache, Config, Const, Docker, Manifest}
   alias MBS.CLI.Reporter
+  alias MBS.{Config, Docker, Manifest, Utils}
   alias MBS.Workflow.Job
 
   require Reporter.Status
@@ -85,7 +85,7 @@ defmodule MBS.Toolchain do
   end
 
   defp get_dependencies_targets(
-         %Manifest.Component{dir: dir, dependencies: dependencies},
+         %Manifest.Component{dir: dir},
          %Config.Data{root_dir: root_dir},
          upstream_results
        ) do
@@ -93,18 +93,24 @@ defmodule MBS.Toolchain do
     File.rm_rf!(local_dependencies_targets_dir)
     File.mkdir!(local_dependencies_targets_dir)
 
-    Enum.each(dependencies, fn dep_id ->
-      %Job.FunResult{checksum: dep_checksum} = Map.fetch!(upstream_results, dep_id)
+    upstream_targets_set =
+      upstream_results
+      |> Map.values()
+      |> Enum.map(& &1.targets)
+      |> Utils.union_mapsets()
 
-      cache_base_dir = Path.join(root_dir, Const.cache_dir())
-      cache_dependency_dir = Cache.path(cache_base_dir, dep_id, dep_checksum, "")
+    Enum.each(upstream_targets_set, fn
+      {dep_id, %Manifest.Target{type: :file, target: target_cache_path}} ->
+        target_cache_path = Path.join(root_dir, target_cache_path)
 
-      if File.exists?(cache_dependency_dir) do
-        component_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
+        dest_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
+        dest_dependency_path = Path.join(dest_dependency_dir, Path.basename(target_cache_path))
 
-        File.mkdir!(component_dependency_dir)
-        File.cp_r!(cache_dependency_dir, component_dependency_dir)
-      end
+        File.mkdir_p!(dest_dependency_dir)
+        File.cp!(target_cache_path, dest_dependency_path)
+
+      {_dep_id, %Manifest.Target{type: :docker}} ->
+        :ok
     end)
   end
 

@@ -267,7 +267,12 @@ A set of predefined environment variables are available in the toolchain run con
 - `MBS_CWD`: component current working directory
 - `MBS_CHECKSUM`: component checksum
 - `MBS_CHECKSUM_<deps_name_normalized>`: one for every deps, the dependency checksum. For example, give a dependency named `my-lib` we will have `MBS_CHECKSUM_MY_LIB`.
-- `MBS_DIR_<deps_name_normalized>`: one for every deps, the path to the directory where we can find the dependency targets. For example, give a dependency named `my-lib` we will have `MBS_DIR_MY_LIB`.
+
+### Dependencies directory
+
+Dependencies target are made available to the toolchain in the components base directory under `.deps/`. The toolchain will see all the targets from the **transive dependency closure** of the component.
+
+For example if a component A depends on a component B (that targets `b1.bin` and `b2.bin`) that depends on a component C (that targets `c1.bin`), then component A toolchains will see under `.deps/A/{b1.bin,b2.bin,c1.bin}`.
 
 ## MBS Development
 

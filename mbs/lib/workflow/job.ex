@@ -3,15 +3,18 @@ defmodule MBS.Workflow.Job do
   Workflow job logic
   """
 
+  alias MBS.Manifest.Target
+
   defmodule FunResult do
     @moduledoc """
     Job function result data
     """
 
-    defstruct [:checksum]
+    defstruct [:checksum, :targets]
 
     @type t :: %__MODULE__{
-            checksum: String.t()
+            checksum: String.t(),
+            targets: nil | MapSet.t({String.t(), Target.t()})
           }
   end
 

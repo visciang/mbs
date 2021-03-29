@@ -18,7 +18,7 @@ defmodule MBS.Manifest.Component do
           toolchain: MBS.Manifest.Toolchain.t(),
           toolchain_opts: [String.t()],
           files: nonempty_list(String.t()) | nonempty_list(MBS.Manifest.Target.t()),
-          targets: nonempty_list(String.t()),
+          targets: nonempty_list(MBS.Manifest.Target.t()),
           dependencies: [String.t()]
         }
 end

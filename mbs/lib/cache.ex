@@ -13,12 +13,12 @@ defmodule MBS.Cache do
     :ok
   end
 
-  @spec get(Path.t(), String.t(), String.t(), String.t()) :: :ok | :error
+  @spec get(Path.t(), String.t(), String.t(), String.t()) :: {:ok, Path.t()} | :error
   def get(cache_dir, name, checksum, target) do
     target_path = path(cache_dir, name, checksum, target)
 
     if File.exists?(target_path) do
-      :ok
+      {:ok, target_path}
     else
       :error
     end

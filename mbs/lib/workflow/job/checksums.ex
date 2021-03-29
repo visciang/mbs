@@ -3,7 +3,7 @@ defmodule MBS.Workflow.Job.Checksums do
   Workflow job logic for "checksums" command
   """
 
-  alias MBS.{Config, Manifest}
+  alias MBS.{Config, Manifest, Utils}
   alias MBS.Workflow.Job
 
   @type fun :: (String.t(), Dask.Job.upstream_results() -> %{String.t() => String.t()})
@@ -17,13 +17,9 @@ defmodule MBS.Workflow.Job.Checksums do
 
   def fun(%Config.Data{}, %Manifest.Component{id: id} = component) do
     fn _job_id, upstream_results ->
-      upstream_checksums = upstream_results |> Map.values() |> merge_maps()
+      upstream_checksums = upstream_results |> Map.values() |> Utils.merge_maps()
       checksum = Job.Utils.build_checksum2(component, upstream_checksums)
       Map.put(upstream_checksums, id, checksum)
     end
-  end
-
-  defp merge_maps(maps) do
-    Enum.reduce(maps, fn map, map_merge -> Map.merge(map_merge, map) end)
   end
 end

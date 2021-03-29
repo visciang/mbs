@@ -10,8 +10,7 @@
             ".build/c_native_binary"
         ],
         "dependencies": [
-            "c_shared_library",
-            "c_shared_sub_library"
+            "c_shared_library"
         ]
     }
 }

@@ -39,7 +39,7 @@ defmodule MBS.Workflow.Job.Cache do
     found_all_targets =
       Enum.all?(targets, fn
         %Target{type: :file, target: target} ->
-          Cache.get(cache_dir, id, checksum, target) == :ok
+          match?({:ok, _}, Cache.get(cache_dir, id, checksum, target))
 
         %Target{type: :docker, target: target} ->
           Docker.image_exists(target, checksum)
@@ -49,6 +49,30 @@ defmodule MBS.Workflow.Job.Cache do
       :cached
     else
       :cache_miss
+    end
+  end
+
+  @spec expand_targets_path(Path.t(), String.t(), String.t(), [Target.t()]) :: :error | {:ok, [Target.t()]}
+  def expand_targets_path(cache_dir, id, checksum, targets) do
+    targets
+    |> Enum.reduce_while([], fn
+      %Target{type: :file, target: target} = t, expanded_targets ->
+        case Cache.get(cache_dir, id, checksum, target) do
+          {:ok, target_cache_path} ->
+            t = put_in(t.target, target_cache_path)
+            {:cont, [t | expanded_targets]}
+
+          _ ->
+            {:halt, :error}
+        end
+
+      %Target{type: :docker, target: target} = t, expanded_targets ->
+        t = put_in(t.target, "#{target}:#{checksum}")
+        {:cont, [t | expanded_targets]}
+    end)
+    |> case do
+      :error -> :error
+      expanded_targets -> {:ok, expanded_targets}
     end
   end
 

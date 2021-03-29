@@ -13,4 +13,14 @@ defmodule MBS.Utils do
 
     System.halt(exit_status)
   end
+
+  @spec merge_maps([map()]) :: map()
+  def merge_maps(maps) do
+    Enum.reduce(maps, fn map, map_merge -> Map.merge(map_merge, map) end)
+  end
+
+  @spec union_mapsets([MapSet.t()]) :: MapSet.t()
+  def union_mapsets(mapsets) do
+    Enum.reduce(mapsets, fn mapset, mapsets_union -> MapSet.union(mapsets_union, mapset) end)
+  end
 end
