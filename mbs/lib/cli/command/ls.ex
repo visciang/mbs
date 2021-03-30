@@ -53,6 +53,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
       Enum.each(component.dependencies, &IO.puts("    - #{&1}"))
     end
 
+    if component.docker_opts != [] do
+      IO.puts("  docker_opts:")
+      Enum.each(component.docker_opts, &IO.puts("    - #{&1}"))
+    end
+
     IO.puts("")
   end
 
@@ -68,6 +73,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     Enum.each(toolchain.steps, &IO.puts("    - #{&1}"))
     IO.puts("  files:")
     toolchain.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
+
+    if toolchain.docker_opts != [] do
+      IO.puts("  docker_opts:")
+      Enum.each(toolchain.docker_opts, &IO.puts("    - #{&1}"))
+    end
 
     IO.puts("")
   end

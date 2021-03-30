@@ -46,10 +46,10 @@ defmodule MBS.Manifest do
   end
 
   defp add_defaults(manifest, manifest_path) do
-    manifest =
-      manifest
-      |> Map.put("dir", Path.dirname(Path.expand(manifest_path)))
-      |> Map.put_new("timeout", :infinity)
+    manifest = put_in(manifest["dir"], Path.dirname(Path.expand(manifest_path)))
+    manifest = Map.put_new(manifest, "timeout", :infinity)
+
+    manifest = put_in(manifest["docker_opts"], manifest["docker_opts"] || [])
 
     cond do
       Path.basename(manifest_path) in [Const.manifest_build_filename(), Const.manifest_deploy_filename()] ->
@@ -73,7 +73,8 @@ defmodule MBS.Manifest do
          "id" => id,
          "dir" => dir,
          "timeout" => timeout,
-         "component" => component
+         "component" => component,
+         "docker_opts" => docker_opts
        }) do
     %Component{
       type: type,
@@ -84,7 +85,8 @@ defmodule MBS.Manifest do
       toolchain_opts: component["toolchain_opts"],
       files: files(type, dir, component["files"]),
       targets: targets(dir, component["targets"]),
-      dependencies: component["dependencies"]
+      dependencies: component["dependencies"],
+      docker_opts: docker_opts
     }
   end
 
@@ -93,7 +95,8 @@ defmodule MBS.Manifest do
          "id" => id,
          "dir" => dir,
          "timeout" => timeout,
-         "toolchain" => toolchain
+         "toolchain" => toolchain,
+         "docker_opts" => docker_opts
        }) do
     files_ = files(:build, dir, [toolchain["dockerfile"] | toolchain["files"]])
 
@@ -105,12 +108,13 @@ defmodule MBS.Manifest do
       checksum: Checksum.files_checksum(files_, dir),
       dockerfile: Path.join(dir, toolchain["dockerfile"]),
       files: files_,
-      steps: toolchain["steps"]
+      steps: toolchain["steps"],
+      docker_opts: docker_opts
     }
   end
 
   defp files(:build, dir, file_globs) do
-    file_globs = [manifest_name(:build) | file_globs]
+    file_globs = [manifest_name(:build), manifest_name(:deploy) | file_globs]
     {file_exclude_glob, file_include_glob} = Enum.split_with(file_globs, &String.starts_with?(&1, "!"))
 
     files_include_match =

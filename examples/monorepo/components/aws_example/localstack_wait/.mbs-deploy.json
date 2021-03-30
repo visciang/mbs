@@ -1,0 +1,19 @@
+{
+    "id": "localstack_wait",
+    "component": {
+        "toolchain": "toolchain-meta-sh",
+        "toolchain_opts": [
+            "./wait_localstack.sh"
+        ],
+        "files": [
+            ".build/wait_localstack.sh"
+        ],
+        "dependencies": [
+            "localstack"
+        ]
+    },
+    "docker_opts": [
+        "--net",
+        "host"
+    ]
+}

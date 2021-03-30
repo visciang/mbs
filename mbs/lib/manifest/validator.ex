@@ -22,6 +22,7 @@ defmodule MBS.Manifest.Validator do
     Enum.each(manifests, fn manifest ->
       validate_id(manifest)
       validate_timeout(manifest)
+      validate_docker_opts(manifest)
       validate_type(manifest)
     end)
   end
@@ -50,6 +51,12 @@ defmodule MBS.Manifest.Validator do
       Utils.halt(message)
     end
   end
+
+  defp validate_docker_opts(%{"docker_opts" => _, "dir" => dir} = docker) do
+    validate_list_of_strings(docker, ["docker_opts"], dir)
+  end
+
+  defp validate_docker_opts(_), do: :ok
 
   defp validate_type(%{"__schema__" => "toolchain", "dir" => dir} = type) do
     toolchain = type["toolchain"]

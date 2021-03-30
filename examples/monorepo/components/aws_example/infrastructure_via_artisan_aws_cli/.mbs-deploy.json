@@ -1,0 +1,19 @@
+{
+    "id": "infrastructure_via_artisan_aws_cli",
+    "component": {
+        "toolchain": "toolchain-deploy-awscli",
+        "toolchain_opts": [
+            "./deploy.sh"
+        ],
+        "files": [
+            ".build/deploy.sh"
+        ],
+        "dependencies": [
+            "localstack_wait"
+        ]
+    },
+    "docker_opts": [
+        "--net",
+        "host"
+    ]
+}

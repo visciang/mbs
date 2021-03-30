@@ -30,7 +30,6 @@ args()
     done
 }
 args $0 "$@"
-echo "OK"
 
 case $1 in
     deploy)

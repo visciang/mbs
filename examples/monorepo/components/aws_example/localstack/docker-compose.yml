@@ -1,0 +1,12 @@
+version: "3.8"
+
+services:
+  localstack:
+    image: localstack/localstack:0.12.9
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      - SERVICES=s3
+    volumes:
+      - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"

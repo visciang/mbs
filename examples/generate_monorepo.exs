@@ -90,7 +90,7 @@ File.write!("build.sh", script)
 File.chmod!("build.sh", 0o400 + 0o100)
 
 dockerfile = ~s(
-  FROM alpine:3.12.4
+  FROM alpine:3.13.2
   ADD build.sh /build.sh
   ENTRYPOINT [ "sh", "/build.sh" ]
 )

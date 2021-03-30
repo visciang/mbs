@@ -1,0 +1,15 @@
+{
+    "id": "infrastructure_via_artisan_aws_cli",
+    "component": {
+        "toolchain": "toolchain-meta-sh",
+        "toolchain_opts": [
+            "rm -rf .build/ && mkdir .build/ && cp deploy.sh .build/"
+        ],
+        "files": [
+            "deploy.sh"
+        ],
+        "targets": [
+            ".build/deploy.sh"
+        ]
+    }
+}

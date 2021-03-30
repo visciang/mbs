@@ -1,7 +1,7 @@
 {
     "id": "mbs",
     "component": {
-        "toolchain": "mbs-toolchain",
+        "toolchain": "toolchain-mbs",
         "toolchain_opts": ["--type", "escript", "--credo"],
         "files": [
             "build.sh",

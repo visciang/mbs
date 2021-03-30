@@ -1,0 +1,12 @@
+{
+    "id": "localstack",
+    "component": {
+        "toolchain": "toolchain-build-docker_compose",
+        "files": [
+            "docker-compose.yml"
+        ],
+        "targets": [
+            ".build/docker-compose.yml"
+        ]
+    }
+}

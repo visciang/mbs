@@ -8,7 +8,7 @@ end
 defmodule MBS.Manifest.Component do
   @moduledoc false
 
-  defstruct [:type, :id, :dir, :timeout, :toolchain, :toolchain_opts, :files, :targets, :dependencies]
+  defstruct [:type, :id, :dir, :timeout, :toolchain, :toolchain_opts, :files, :targets, :dependencies, :docker_opts]
 
   @type t :: %__MODULE__{
           type: MBS.Manifest.Type.type(),
@@ -19,14 +19,15 @@ defmodule MBS.Manifest.Component do
           toolchain_opts: [String.t()],
           files: nonempty_list(String.t()) | nonempty_list(MBS.Manifest.Target.t()),
           targets: nonempty_list(MBS.Manifest.Target.t()),
-          dependencies: [String.t()]
+          dependencies: [String.t()],
+          docker_opts: [String.t()]
         }
 end
 
 defmodule MBS.Manifest.Toolchain do
   @moduledoc false
 
-  defstruct [:type, :id, :dir, :timeout, :checksum, :dockerfile, :files, :steps]
+  defstruct [:type, :id, :dir, :timeout, :checksum, :dockerfile, :files, :steps, :docker_opts]
 
   @type t :: %__MODULE__{
           type: MBS.Manifest.Type.type(),
@@ -36,7 +37,8 @@ defmodule MBS.Manifest.Toolchain do
           checksum: String.t(),
           dockerfile: String.t(),
           files: nonempty_list(String.t()),
-          steps: nonempty_list(String.t())
+          steps: nonempty_list(String.t()),
+          docker_opts: [String.t()]
         }
 end
 

@@ -1,0 +1,12 @@
+{
+    "id": "toolchain-deploy-awscli",
+    "toolchain": {
+        "dockerfile": "Dockerfile",
+        "files": [
+            "deploy.sh"
+        ],
+        "steps": [
+            "deploy"
+        ]
+    }
+}

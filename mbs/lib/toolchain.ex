@@ -12,19 +12,19 @@ defmodule MBS.Toolchain do
   @local_dependencies_targets_dir ".deps"
 
   @spec build(Manifest.Toolchain.t()) :: :ok | {:error, term()}
-  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile}) do
-    Docker.image_build(id, checksum, dir, dockerfile, "#{id}:build")
+  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile, docker_opts: docker_opts}) do
+    Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")
   end
 
   @spec shell_cmd(Manifest.Component.t(), String.t(), Config.Data.t(), Dask.Job.upstream_results()) :: String.t()
   def shell_cmd(
-        %Manifest.Component{dir: work_dir, toolchain: toolchain} = component,
+        %Manifest.Component{dir: work_dir, toolchain: toolchain, docker_opts: docker_opts} = component,
         checksum,
         %Config.Data{root_dir: root_dir},
         upstream_results
       ) do
     env = run_build_env_vars(component, checksum, upstream_results)
-    opts = run_opts(root_dir, work_dir) ++ ["--entrypoint", "sh", "--interactive"]
+    opts = run_opts(docker_opts, root_dir, work_dir) ++ ["--entrypoint", "sh", "--interactive"]
 
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
   end
@@ -45,13 +45,18 @@ defmodule MBS.Toolchain do
   end
 
   defp exec(
-         %Manifest.Component{dir: work_dir, toolchain: toolchain, toolchain_opts: toolchain_opts},
+         %Manifest.Component{
+           dir: work_dir,
+           toolchain: toolchain,
+           toolchain_opts: toolchain_opts,
+           docker_opts: docker_opts
+         },
          %Config.Data{root_dir: root_dir},
          env,
          job_id
        ) do
     toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
-    opts = run_opts(root_dir, work_dir)
+    opts = run_opts(docker_opts, root_dir, work_dir)
 
     Enum.reduce_while(toolchain.steps, nil, fn toolchain_step, _ ->
       reporter_id = "#{job_id}:#{toolchain_step}"
@@ -76,8 +81,8 @@ defmodule MBS.Toolchain do
     end)
   end
 
-  defp run_opts(_root_dir, work_dir) do
-    opts = ["--rm", "-t"]
+  defp run_opts(docker_opts, _root_dir, work_dir) do
+    opts = ["--rm", "-t" | docker_opts]
     work_dir_opts = ["-w", "#{work_dir}"]
     dir_mount_opts = ["-v", "#{work_dir}:#{work_dir}"]
 

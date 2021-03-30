@@ -1,0 +1,15 @@
+{
+    "id": "localstack_wait",
+    "component": {
+        "toolchain": "toolchain-meta-sh",
+        "toolchain_opts": [
+            "rm -rf .build/ && mkdir .build/ && cp wait_localstack.sh .build/"
+        ],
+        "files": [
+            "wait_localstack.sh"
+        ],
+        "targets": [
+            ".build/wait_localstack.sh"
+        ]
+    }
+}

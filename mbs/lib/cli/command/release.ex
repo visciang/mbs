@@ -21,14 +21,16 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
       ) do
     File.mkdir_p!(output_dir)
 
-    build_manifests =
-      Manifest.find_all(:build)
-      |> CLI.Utils.transitive_dependencies_closure(target_ids)
-
     deploy_manifests =
       Manifest.find_all(:deploy)
       |> filter_used_toolchains()
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
+
+    build_targets_id = Enum.map(deploy_manifests, & &1.id)
+
+    build_manifests =
+      Manifest.find_all(:build)
+      |> CLI.Utils.transitive_dependencies_closure(build_targets_id)
 
     validate_deploy_files(build_manifests, deploy_manifests)
 
@@ -118,7 +120,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
     end)
   end
 
-  defp build_checksums(target_ids, build_manifests, config) do
+  defp build_checksums(_target_ids, build_manifests, config) do
     dask = Workflow.workflow(build_manifests, config, &Workflow.Job.Checksums.fun/2)
 
     dask_exec =
@@ -133,12 +135,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
     |> Dask.await()
     |> case do
       {:ok, checksums_map} ->
-        if target_ids == [] do
-          Map.values(checksums_map)
-        else
-          Enum.map(target_ids, &Map.fetch!(checksums_map, &1))
-        end
-        |> merge_maps()
+        checksums_map |> Map.values() |> merge_maps()
 
       err ->
         Utils.halt("Failed build checksums compute\n#{inspect(err)}")

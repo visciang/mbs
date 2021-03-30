@@ -1,0 +1,9 @@
+{
+    "id": "localstack",
+    "component": {
+        "toolchain": "toolchain-deploy-docker_compose",
+        "files": [
+            ".build/docker-compose.yml"
+        ]
+    }
+}
