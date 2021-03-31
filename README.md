@@ -46,7 +46,7 @@ Remember that, like every tool, `mbs` / mono-repos / etc. are just patterns and 
 TODO:
 extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / baur / please / hearthly / waypoint / gitlab / "pipelines in general"
 
-## The build -> release -> deploy flow
+## The [build] -> [release] -> [deploy] -> [destroy!] flow
 
 TODO: few words about CI / CD. The real CI / CD (merge on master -> deploy production). More "waterfall" deploy cycles with "environments".
 
@@ -74,6 +74,7 @@ The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMA
 - **build shell**:       Interactive toolchain shell
 - **build tree**:        Display a dependency tree
 - **release**:           Make a deployable release
+- **deploy destroy**     Destroy a release deploy
 - **deploy graph**:      Generate dependency graph
 - **deploy ls**:         List available targets
 - **deploy run**:        Run a release deploy
@@ -128,6 +129,11 @@ Environment variable that you can pass to `mbs`:
             "test",
             "build"
         ]
+        // [optional] toolchain destroy steps
+        // This is tipically used when defining a "deploy" toolchain
+        "destroy_steps": [
+            "destroy"
+        ]
     }
 }
 ```
@@ -143,7 +149,8 @@ Environment variable that you can pass to `mbs`:
     "component": {
         // toolchain used to build the component
         "toolchain": "toolchain-abc",
-        // toolchain run options (passed to every toolchain "step" commands)
+        // [optional] toolchain run options (passed to every toolchain "step" commands)
+        // MBS_* environment variable expansion supported
         "toolchain_opts": ["--type", "app"],
         // build "input" files (glob expression allowed)
         // these are the files "watched" for changes
@@ -159,13 +166,15 @@ Environment variable that you can pass to `mbs`:
         "targets": [
             "xyz-target.bin"
         ],
-        // build "dependencies", components this build depends on.
+        // [optional] build "dependencies", components this build depends on.
         // This is the element that define the build graph.
         // These dependencies will run before the current component and their target
         // will be available to this component
         "dependencies": [
             "xyz-library"
-        ]
+        ],
+        // [optional] specific "docker run" options to add when running the toolchain
+        "docker_opts": ["--net", "host"]
     }
 }
 ```
@@ -181,7 +190,8 @@ Environment variable that you can pass to `mbs`:
     "component": {
         // toolchain used to deploy the component's target
         "toolchain": "toolchain-abc",
-        // toolchain run options (passed to every toolchain "step" commands)
+        // [optional] toolchain run options (passed to every toolchain "step" commands)
+        // MBS_* environment variable expansion supported
         "toolchain_opts": ["--type", "app"],
         // toolchain deployed artifacts (this should be a subset of targets in the same component .mbs-build.json manifest)
         "files": [
@@ -193,7 +203,9 @@ Environment variable that you can pass to `mbs`:
         "dependencies": [
             "xyz-infrastructure"
         ]
-    }
+    },
+    // [optional] specific "docker build" options to add when running toolchain build
+    "docker_opts": []
 }
 ```
 
@@ -267,6 +279,8 @@ A set of predefined environment variables are available in the toolchain run con
 - `MBS_CWD`: component current working directory
 - `MBS_CHECKSUM`: component checksum
 - `MBS_CHECKSUM_<deps_name_normalized>`: one for every deps, the dependency checksum. For example, give a dependency named `my-lib` we will have `MBS_CHECKSUM_MY_LIB`.
+
+Note: this variables can be referenced in the "toolchain_opts" list.
 
 ### Dependencies directory
 

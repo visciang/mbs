@@ -1,3 +1,4 @@
 FROM amazon/aws-cli:2.1.32
-ADD deploy.sh /deploy.sh
-ENTRYPOINT [ "/deploy.sh" ]
+RUN yum install -y util-linux
+ADD toolchain.sh /toolchain.sh
+ENTRYPOINT [ "/toolchain.sh" ]

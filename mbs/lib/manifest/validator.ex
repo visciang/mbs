@@ -78,6 +78,7 @@ defmodule MBS.Manifest.Validator do
 
     validate_list_of_strings(toolchain, ["files"], dir)
     validate_list_of_strings(toolchain, ["steps"], dir)
+    validate_list_of_strings(toolchain, ["destroy_steps"], dir)
   end
 
   defp validate_type(%{"__schema__" => "component", "dir" => dir} = type) do

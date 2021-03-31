@@ -64,7 +64,8 @@ defmodule MBS.Manifest do
         end
 
       Path.basename(manifest_path) == Const.manifest_toolchain_filename() ->
-        Map.put(manifest, "__schema__", "toolchain")
+        manifest = Map.put(manifest, "__schema__", "toolchain")
+        put_in(manifest["toolchain"]["destroy_steps"], manifest["toolchain"]["destroy_steps"] || [])
     end
   end
 
@@ -109,6 +110,7 @@ defmodule MBS.Manifest do
       dockerfile: Path.join(dir, toolchain["dockerfile"]),
       files: files_,
       steps: toolchain["steps"],
+      destroy_steps: toolchain["destroy_steps"],
       docker_opts: docker_opts
     }
   end

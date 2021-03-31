@@ -34,14 +34,22 @@ defmodule MBS.Toolchain do
   def exec_build(%Manifest.Component{} = component, checksum, %Config.Data{} = config, upstream_results, job_id) do
     get_dependencies_targets(component, config, upstream_results)
     env = run_build_env_vars(component, checksum, upstream_results)
-    exec(component, config, env, job_id)
+    exec(component, config, env, job_id, component.toolchain.steps)
   end
 
   @spec exec_deploy(Manifest.Component.t(), String.t(), Config.Data.t(), String.t()) ::
           :ok | {:error, term()}
   def exec_deploy(%Manifest.Component{} = component, checksum, %Config.Data{} = config, job_id) do
     env = run_deploy_env_vars(component, checksum)
-    exec(component, config, env, job_id)
+    exec(component, config, env, job_id, component.toolchain.steps)
+  end
+
+  @spec exec_destroy(Manifest.Component.t(), String.t(), Config.Data.t(), String.t()) ::
+          :ok | {:error, term()}
+  def exec_destroy(%Manifest.Component{} = component, checksum, %Config.Data{} = config, job_id) do
+    env = run_deploy_env_vars(component, checksum)
+    component = put_in(component.toolchain.steps, ["destroy"])
+    exec(component, config, env, job_id, component.toolchain.destroy_steps)
   end
 
   defp exec(
@@ -53,12 +61,13 @@ defmodule MBS.Toolchain do
          },
          %Config.Data{root_dir: root_dir},
          env,
-         job_id
+         job_id,
+         toolchain_steps
        ) do
     toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
     opts = run_opts(docker_opts, root_dir, work_dir)
 
-    Enum.reduce_while(toolchain.steps, nil, fn toolchain_step, _ ->
+    Enum.reduce_while(toolchain_steps, nil, fn toolchain_step, _ ->
       reporter_id = "#{job_id}:#{toolchain_step}"
       start_time = Reporter.time()
 

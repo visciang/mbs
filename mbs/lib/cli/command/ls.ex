@@ -71,6 +71,12 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     IO.puts("    #{toolchain.dockerfile}")
     IO.puts("  steps:")
     Enum.each(toolchain.steps, &IO.puts("    - #{&1}"))
+
+    if toolchain.destroy_steps != [] do
+      IO.puts("  destroy_steps:")
+      Enum.each(toolchain.destroy_steps, &IO.puts("    - #{&1}"))
+    end
+
     IO.puts("  files:")
     toolchain.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
 

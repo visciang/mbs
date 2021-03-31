@@ -8,10 +8,12 @@ defmodule MBS.CLI.Args do
 
   @type t ::
           %Command.Graph{}
+          | %Command.Destroy{}
           | %Command.Ls{}
           | %Command.Outdated{}
           | %Command.Release{}
           | %Command.RunBuild{}
+          | %Command.RunDeploy{}
           | %Command.Shell{}
           | %Command.Tree{}
           | %Command.Version{}
@@ -38,6 +40,7 @@ defmodule MBS.CLI.Args do
     IO.puts("  ---------------------------------------------")
     IO.puts("  release           Make a deployable release")
     IO.puts("  ---------------------------------------------")
+    IO.puts("  deploy destroy    Destroy a release deploy")
     IO.puts("  deploy graph      Generate dependency graph")
     IO.puts("  deploy ls         List available targets")
     IO.puts("  deploy run        Run a release deploy")
@@ -264,6 +267,41 @@ defmodule MBS.CLI.Args do
     end
 
     %Command.RunDeploy{release_id: release_id, force: options[:force]}
+  end
+
+  def parse(["deploy", "destroy" | args]) do
+    {options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    if options[:help] do
+      IO.puts("\nUsage:  mbs deploy destroy --help | [OPTIONS] RELEASE-ID")
+      IO.puts("\Destroy a release deploy")
+      IO.puts("\nRelease id:")
+      IO.puts("  The release identifier (ref. 'mbs release --id=RELEASE-ID')")
+      IO.puts("\nOptions:")
+      IO.puts("  --logs     Stream jobs log to the console")
+      Utils.halt(nil, 0)
+    end
+
+    release_id =
+      case targets do
+        [release_id] ->
+          release_id
+
+        _ ->
+          Utils.halt("Expected exactly one release-id")
+      end
+
+    if options[:logs] do
+      Reporter.logs(options[:logs])
+    end
+
+    %Command.Destroy{release_id: release_id}
   end
 
   def parse([type, "--help"]) when type == "build" or type == "deploy" do

@@ -27,7 +27,7 @@ end
 defmodule MBS.Manifest.Toolchain do
   @moduledoc false
 
-  defstruct [:type, :id, :dir, :timeout, :checksum, :dockerfile, :files, :steps, :docker_opts]
+  defstruct [:type, :id, :dir, :timeout, :checksum, :dockerfile, :files, :steps, :destroy_steps, :docker_opts]
 
   @type t :: %__MODULE__{
           type: MBS.Manifest.Type.type(),
@@ -38,6 +38,7 @@ defmodule MBS.Manifest.Toolchain do
           dockerfile: String.t(),
           files: nonempty_list(String.t()),
           steps: nonempty_list(String.t()),
+          destroy_steps: [String.t()],
           docker_opts: [String.t()]
         }
 end

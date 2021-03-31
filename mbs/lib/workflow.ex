@@ -9,13 +9,15 @@ defmodule MBS.Workflow do
           [Manifest.Type.t()],
           Config.Data.t(),
           (Config.Data.t(), Manifest.Type.t() -> Dask.Job.fun()),
-          Dask.Job.on_exit()
+          Dask.Job.on_exit(),
+          :upward | :downward
         ) :: Dask.t()
   def workflow(
         manifests,
         %Config.Data{timeout: global_timeout_sec} = config,
         job_fun,
-        job_on_exit \\ fn _, _, _ -> :ok end
+        job_on_exit \\ &default_job_on_exit/3,
+        direction \\ :upward
       ) do
     workflow =
       Enum.reduce(manifests, Dask.new(), fn %{timeout: local_timeout_sec} = manifest, workflow ->
@@ -30,7 +32,15 @@ defmodule MBS.Workflow do
     Enum.reduce(manifests, workflow, fn
       %Manifest.Component{} = component, workflow ->
         try do
-          Dask.depends_on(workflow, component.id, [component.toolchain.id | component.dependencies])
+          case direction do
+            :upward ->
+              # run dependencies first
+              Dask.depends_on(workflow, component.id, [component.toolchain.id | component.dependencies])
+
+            :downward ->
+              # run dependants first
+              Dask.depends_on(workflow, [component.toolchain.id | component.dependencies], component.id)
+          end
         rescue
           error in [Dask.Error] ->
             Utils.halt("Error in#{component.dir}:\n  #{error.message}")
@@ -40,4 +50,6 @@ defmodule MBS.Workflow do
         workflow
     end)
   end
+
+  def default_job_on_exit(_, _, _), do: :ok
 end

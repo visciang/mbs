@@ -3,13 +3,13 @@
     "component": {
         "toolchain": "toolchain-meta-sh",
         "toolchain_opts": [
-            "rm -rf .build/ && mkdir .build/ && cp deploy.sh .build/"
+            "rm -rf .build/ && mkdir .build/ && cp run.sh .build/"
         ],
         "files": [
-            "deploy.sh"
+            "run.sh"
         ],
         "targets": [
-            ".build/deploy.sh"
+            ".build/run.sh"
         ]
     }
 }

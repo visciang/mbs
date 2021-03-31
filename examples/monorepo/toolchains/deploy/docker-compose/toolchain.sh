@@ -29,12 +29,21 @@ args()
         shift
     done
 }
+
 args $0 "$@"
 
 case $1 in
     deploy)
         if [ $LOAD_ONLY == 0 ]; then
             docker-compose up -d
+        else
+            # nothing to do
+            echo "PASS"
+        fi
+        ;;
+    destroy)
+        if [ $LOAD_ONLY == 0 ]; then
+            docker-compose down --volumes --remove-orphans
         else
             # nothing to do
             echo "PASS"

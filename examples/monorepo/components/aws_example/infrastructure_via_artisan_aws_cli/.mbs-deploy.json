@@ -3,17 +3,16 @@
     "component": {
         "toolchain": "toolchain-deploy-awscli",
         "toolchain_opts": [
-            "./deploy.sh"
+            "./run.sh"
         ],
         "files": [
-            ".build/deploy.sh"
+            ".build/run.sh"
         ],
         "dependencies": [
             "localstack_wait"
         ]
     },
     "docker_opts": [
-        "--net",
-        "host"
+        "--net", "host"
     ]
 }

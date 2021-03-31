@@ -78,7 +78,8 @@ defmodule MBS.Workflow.Job.RunDeploy do
     end
   end
 
-  defp build_checksum(dir) do
+  @spec build_checksum(Path.t()) :: {:ok, String.t()} | {:error, String.t()}
+  def build_checksum(dir) do
     metadata_path = Path.join(dir, Const.release_metadata())
 
     if File.exists?(metadata_path) do

@@ -3,10 +3,13 @@
     "toolchain": {
         "dockerfile": "Dockerfile",
         "files": [
-            "deploy.sh"
+            "toolchain.sh"
         ],
         "steps": [
             "deploy"
+        ],
+        "destroy_steps": [
+            "destroy"
         ]
     }
 }
