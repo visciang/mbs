@@ -54,11 +54,16 @@ TODO: few words about CI / CD. The real CI / CD (merge on master -> deploy produ
 
 To start playing with some toy examples, let's build first `mbs` (run `./ci.sh`, the only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`!
 
+```sh
+./ci.sh
+source mbs.sh
+```
+
 For example run `mbs --help` and `mbs build ls`, it will list also some examples included in the repository under `examples/monorepo/`.
 
 TODO: a quick tour based on the example/
-TODO: A word about building `mbs` in `mbs`
 
+TODO: A word about building `mbs` in `mbs`
 
 ## CLI interface
 
