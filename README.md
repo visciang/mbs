@@ -6,16 +6,21 @@ A **Meta Build System** to organizate / build / release / deploy a large ~~micro
 
 Docker **containerization** technology is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
 
-With MBS you can easly define the toolchains to build the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services.
+With MBS you can easly define the toolchains to build / deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services.
 
-This will give you highly **parallelized** and fast builds for free that you can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
+This will give you highly **parallelized** and fast builds for free that can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
 
-The user experience we aim to is to give you a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a ~~micro~~ service oriented solution.
+The user experience we aim to is to give you a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a service oriented solution.
 
-TODO explain that:
-The system scales well, but:
-... vertical build scalability (maybe evaluate orizontal scalability later on, later, later)
-... the git repo should fit in the dev machine
+**TODO** explain that:
+the system scales well, but: vertical build scalability, the git repo should fit in the dev machine
+
+### Motivation
+
+Soon or later most medium sized organization reach the point where they have to **standardize and normalize the CI / CD workflow** across products, teams etc.
+
+Someone goes to the "million multi-repository jungle" and internal artifact hell versioning / compatibility matrix, while others opt to a single mono-repo or few of them. It's a matter of trade offs, considering the projects organization, teams, products, silos, people locations / offices, etc.
+In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need the glue (a standardized one) to keep things sorted and manageable, to make the dev (and ops) life easier / deterministic.
 
 ### Terminology
 - **Toolchain**: defines your "build" / "deploy" recipes, standardized and parameterizable.
@@ -25,13 +30,6 @@ In other words we can think about *toolchains* as "functions" that turns *compon
 MBS in a "high order function" that you feed with your mono-repo (a set of components and toolchain components) and gives you back the artifacts of your components built with your toolchain built with docker...
 
 Later on, we will see how `mbs` "builds" `mbs`, as an example of these concepts.
-
-### Motivation
-
-Soon or later most medium sized organization reach the point where they have to **standardize / normalize the CI/CD workflow** across products, teams etc.
-
-Someone goes to the "million multi-repository jungle" and internal artifact hell versioning / compatibility matrix, while others opt to a single mono-repo or few of them. It's a matter of trade offs, considering the projects organization, teams, products, silos, people locations / offices, etc.
-In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need the glue (a standardized one) to keep things sorted and manageable, to make the dev (and ops) life easier / deterministic.
 
 ### Use case
 
@@ -48,7 +46,7 @@ extra reference to monorepo or other similar tools/solutions: cmake / ninja / do
 
 ## The [build] -> [release] -> [deploy] -> [destroy!] flow
 
-TODO: few words about CI / CD. The real CI / CD (merge on master -> deploy production). More "waterfall" deploy cycles with "environments".
+![image info](./docs/schema.png)
 
 ## Getting Started
 
