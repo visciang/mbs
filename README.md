@@ -78,7 +78,9 @@ The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMA
 - **build run**:         Run a target build
 - **build shell**:       Interactive toolchain shell
 - **build tree**:        Display a dependency tree
-- **release**:           Make a deployable release
+- **release ls**:        List available releases
+- **release make**:      Make a deployable release
+- **release rm**:        Delete a release
 - **deploy destroy**     Destroy a release deploy
 - **deploy graph**:      Generate dependency graph
 - **deploy ls**:         List available targets
