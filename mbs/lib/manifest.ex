@@ -10,7 +10,7 @@ defmodule MBS.Manifest do
   def find_all(type, in_dir \\ ".", exclude_mbs_private_dirs \\ true) do
     exclude_dirs = if exclude_mbs_private_dirs, do: Const.mbs_dirs(), else: []
 
-    Path.join(in_dir, "**/#{manifest_name(type)}")
+    Path.join([in_dir, "**", "#{manifest_name(type)}"])
     |> Path.wildcard(match_dot: true)
     |> reject_files_in_dirs(exclude_dirs)
     |> Enum.map(fn manifest_path ->
@@ -23,8 +23,11 @@ defmodule MBS.Manifest do
     |> add_toolchain_data()
   end
 
-  defp manifest_name(:build), do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_build_filename()}}"
-  defp manifest_name(:deploy), do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_deploy_filename()}}"
+  defp manifest_name(:build),
+    do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_build_filename()}}"
+
+  defp manifest_name(:deploy),
+    do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_deploy_filename()}}"
 
   defp reject_files_in_dirs(paths, dirs) do
     Enum.reject(paths, fn path ->

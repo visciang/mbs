@@ -89,7 +89,7 @@ defmodule MBS.Workflow.Job.Release do
   end
 
   defp release_targets_metadata(id, checksum, output_dir) do
-    release_metadata_path = Path.join(output_dir, Const.release_metadata())
+    release_metadata_path = Path.join(output_dir, Const.release_metadata_filename())
 
     release_metadata = %{
       id: id,

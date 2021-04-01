@@ -1,24 +1,25 @@
-defmodule MBS.CLI.Command.Release do
+defmodule MBS.CLI.Command.MakeRelease do
   @moduledoc false
   defstruct [:targets, :id, :output_dir, :metadata]
 
   @type t :: %__MODULE__{
           targets: [String.t()],
           id: String.t(),
-          output_dir: Path.t(),
           metadata: nil | String.t()
         }
 end
 
-defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
+defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
   alias MBS.CLI.Command
-  alias MBS.{Checksum, CLI, Config, Const, Manifest, Utils, Workflow}
+  alias MBS.{CLI, Config, Const, Manifest, ReleaseManifest, Utils, Workflow}
 
-  @spec run(Command.Release.t(), Config.Data.t()) :: :ok | :error | :timeout
+  @spec run(Command.MakeRelease.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(
-        %Command.Release{id: id, targets: target_ids, output_dir: output_dir, metadata: metadata},
+        %Command.MakeRelease{id: id, targets: target_ids, metadata: metadata},
         %Config.Data{} = config
       ) do
+    output_dir = Path.join(Const.releases_dir(), id)
+
     File.mkdir_p!(output_dir)
 
     deploy_manifests =
@@ -62,7 +63,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
       end
 
     if res == :ok do
-      write_release_manifest(deploy_manifests, id, output_dir, metadata)
+      ReleaseManifest.write_release_manifest(deploy_manifests, id, metadata)
     end
 
     res
@@ -74,31 +75,6 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Release do
     manifests
     |> Enum.filter(&match?(%Manifest.Component{}, &1))
     |> Enum.flat_map(&[&1, &1.toolchain])
-  end
-
-  defp write_release_manifest(manifests, id, output_dir, metadata) do
-    release_manifest = %Manifest.Release{
-      id: id,
-      checksum: release_checksum(manifests, output_dir),
-      metadata: metadata
-    }
-
-    File.write!(
-      Path.join(output_dir, Const.release_metadata()),
-      release_manifest |> Map.from_struct() |> Jason.encode!(pretty: true)
-    )
-  end
-
-  defp release_checksum(manifests, output_dir) do
-    manifests
-    |> Enum.map(fn %{id: id} ->
-      Path.join([output_dir, id, Const.release_metadata()])
-      |> File.read!()
-      |> Jason.decode!()
-      |> Map.fetch!("checksum")
-    end)
-    |> Enum.join()
-    |> Checksum.checksum()
   end
 
   defp validate_deploy_files(build_manifests, deploy_manifests) do

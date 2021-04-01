@@ -9,12 +9,11 @@ end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Destroy do
   alias MBS.CLI.Command
-  alias MBS.{CLI, Config, Const, Manifest, Utils, Workflow}
+  alias MBS.{Config, Manifest, ReleaseManifest, Utils, Workflow}
 
   @spec run(Command.Destroy.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(%Command.Destroy{release_id: release_id}, %Config.Data{} = config) do
-    release_dir = Path.join(Const.releases_dir(), release_id)
-    release = CLI.Utils.find_release(release_dir)
+    {release, release_dir} = ReleaseManifest.get_release(release_id)
 
     IO.puts("\nDestroying deploy release '#{release.id}' (#{release.checksum})\n")
 

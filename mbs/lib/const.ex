@@ -15,14 +15,17 @@ defmodule MBS.Const do
   @spec manifest_toolchain_filename :: String.t()
   def manifest_toolchain_filename, do: ".mbs-toolchain.json"
 
+  @spec manifest_release_filename :: Path.t()
+  def manifest_release_filename, do: "mbs-release.json"
+
+  @spec release_metadata_filename :: Path.t()
+  def release_metadata_filename, do: "metadata.json"
+
   @spec cache_dir :: Path.t()
   def cache_dir, do: ".mbs-cache"
 
   @spec releases_dir :: Path.t()
   def releases_dir, do: ".mbs-releases"
-
-  @spec release_metadata :: Path.t()
-  def release_metadata, do: "metadata.json"
 
   @spec graph_dir :: Path.t()
   def graph_dir, do: ".mbs-graph"

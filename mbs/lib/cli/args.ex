@@ -10,8 +10,9 @@ defmodule MBS.CLI.Args do
           %Command.Graph{}
           | %Command.Destroy{}
           | %Command.Ls{}
+          | %Command.LsRelease{}
+          | %Command.MakeRelease{}
           | %Command.Outdated{}
-          | %Command.Release{}
           | %Command.RunBuild{}
           | %Command.RunDeploy{}
           | %Command.Shell{}
@@ -38,7 +39,9 @@ defmodule MBS.CLI.Args do
     IO.puts("  build shell       Interactive toolchain shell")
     IO.puts("  build tree        Display a dependency tree")
     IO.puts("  ---------------------------------------------")
-    IO.puts("  release           Make a deployable release")
+    IO.puts("  release ls        List available releases")
+    IO.puts("  release make      Make a deployable release")
+    IO.puts("  release rm        Delete a release")
     IO.puts("  ---------------------------------------------")
     IO.puts("  deploy destroy    Destroy a release deploy")
     IO.puts("  deploy graph      Generate dependency graph")
@@ -197,7 +200,31 @@ defmodule MBS.CLI.Args do
     %Command.Shell{target: target, docker_cmd: options[:docker_cmd]}
   end
 
-  def parse(["release" | args]) do
+  def parse(["release", "ls" | args]) do
+    defaults = [verbose: false]
+
+    {options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    if options[:help] do
+      IO.puts("\nUsage:  mbs release ls --help | [OPTIONS] [TARGETS...]")
+      IO.puts("\nList available releases (default: all targets)")
+      IO.puts("\nOptions:")
+      IO.puts("  --verbose    Show release details")
+
+      Utils.halt(nil, 0)
+    end
+
+    options = Keyword.merge(defaults, options)
+    %Command.LsRelease{verbose: options[:verbose], targets: targets}
+  end
+
+  def parse(["release", "make" | args]) do
     {options, targets} =
       try do
         OptionParser.parse!(args,
@@ -209,7 +236,7 @@ defmodule MBS.CLI.Args do
       end
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs release --help | [OPTIONS] [TARGETS...]")
+      IO.puts("\nUsage:  mbs release make --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nMake a release (default: all targets) - output dir '#{Const.releases_dir()}/<id>/')")
       IO.puts("\nOptions:")
       IO.puts("  --id            release identifier")
@@ -227,10 +254,39 @@ defmodule MBS.CLI.Args do
       Reporter.logs(options[:logs])
     end
 
-    defaults = [output_dir: Path.join(Const.releases_dir(), options[:id])]
-    options = Keyword.merge(defaults, options)
+    %Command.MakeRelease{
+      id: options[:id],
+      targets: targets,
+      metadata: options[:metadata]
+    }
+  end
 
-    %Command.Release{id: options[:id], targets: targets, output_dir: options[:output_dir], metadata: options[:metadata]}
+  def parse(["release", "rm" | args]) do
+    {options, targets} =
+      try do
+        OptionParser.parse!(args, strict: [help: :boolean])
+      rescue
+        e in [OptionParser.ParseError] ->
+          Utils.halt(e.message)
+      end
+
+    if options[:help] do
+      IO.puts("\nUsage:  mbs release rm --help | TARGET")
+      IO.puts("\nDelete a release")
+
+      Utils.halt(nil, 0)
+    end
+
+    target =
+      case targets do
+        [target] ->
+          target
+
+        _ ->
+          Utils.halt("Expected exactly one target")
+      end
+
+    %Command.RmRelease{target: target}
   end
 
   def parse(["deploy", "run" | args]) do
@@ -304,7 +360,7 @@ defmodule MBS.CLI.Args do
     %Command.Destroy{release_id: release_id}
   end
 
-  def parse([type, "--help"]) when type == "build" or type == "deploy" do
+  def parse([type, "--help"]) when type == "build" or type == "deploy" or type == "release" do
     parse(["--help"])
   end
 
