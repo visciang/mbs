@@ -1,0 +1,13 @@
+{
+    "id": "infrastructure_via_terraform",
+    "component": {
+        "toolchain": "toolchain-build-terraform",
+        "files": [
+            ".terraform.lock.hcl",
+            "main.tf"
+        ],
+        "targets": [
+            ".build/terraform.tgz"
+        ]
+    }
+}

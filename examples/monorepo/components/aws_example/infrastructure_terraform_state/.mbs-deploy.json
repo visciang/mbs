@@ -1,0 +1,18 @@
+{
+    "id": "infrastructure_terraform_state",
+    "component": {
+        "toolchain": "toolchain-deploy-awscli",
+        "toolchain_opts": [
+            "./run.sh"
+        ],
+        "files": [
+            ".build/run.sh"
+        ],
+        "dependencies": [
+            "localstack_wait"
+        ]
+    },
+    "docker_opts": [
+        "--net", "host"
+    ]
+}

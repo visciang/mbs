@@ -9,3 +9,7 @@ node_modules/
 python*/**/*.egg-info/
 python*/**/build/
 python*/**/dist/
+
+.terraform*
+!.terraform.lock.hcl
+terraform.tfstate*

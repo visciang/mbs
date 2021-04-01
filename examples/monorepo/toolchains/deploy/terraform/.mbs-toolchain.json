@@ -1,0 +1,17 @@
+{
+    "id": "toolchain-deploy-terraform",
+    "toolchain": {
+        "dockerfile": "Dockerfile",
+        "files": [
+            "toolchain.sh"
+        ],
+        "steps": [
+            "apply_plan",
+            "apply"
+        ],
+        "destroy_steps": [
+            "destroy_plan",
+            "destroy"
+        ]
+    }
+}

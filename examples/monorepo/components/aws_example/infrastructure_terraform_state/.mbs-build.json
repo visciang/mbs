@@ -1,0 +1,15 @@
+{
+    "id": "infrastructure_terraform_state",
+    "component": {
+        "toolchain": "toolchain-meta-sh",
+        "toolchain_opts": [
+            "rm -rf .build/ && mkdir .build/ && cp run.sh .build/"
+        ],
+        "files": [
+            "run.sh"
+        ],
+        "targets": [
+            ".build/run.sh"
+        ]
+    }
+}

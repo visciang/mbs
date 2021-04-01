@@ -1,0 +1,17 @@
+{
+    "id": "infrastructure_via_terraform",
+    "component": {
+        "toolchain": "toolchain-deploy-terraform",
+        "files": [
+            ".build/terraform.tgz"
+        ],
+        "dependencies": [
+            "infrastructure_terraform_state"
+        ]
+    },
+    "docker_opts": [
+        "--net", "host",
+        "-e", "AWS_ACCESS_KEY_ID=test",
+        "-e", "AWS_SECRET_ACCESS_KEY=test"
+    ]
+}
