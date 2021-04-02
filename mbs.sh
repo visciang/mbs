@@ -8,9 +8,9 @@ LOG_COLOR=true
 BASEDIR=$(dirname "$0")
 ABS_BASEDIR=$(readlink -f -- "$BASEDIR")
 
-set MBS_CACHE_VOLUME "mbs-cache"
-set MBS_RELEASE_VOLUME "mbs-releases"
-set MBS_GRAPH_VOLUME "$ABS_BASEDIR/.mbs-graph"
+MBS_CACHE_VOLUME="mbs-cache"
+MBS_RELEASE_VOLUME="mbs-releases"
+MBS_GRAPH_VOLUME="$ABS_BASEDIR/.mbs-graph"
 
 alias mbs="\
     docker run --init --rm -ti \
