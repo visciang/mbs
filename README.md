@@ -87,6 +87,24 @@ The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMA
 
 ## Configuration
 
+### MBS cache and release persistency
+
+MBS caches build artificats and releases artifacts in two specific directory (inside the mbs container).
+
+- Cache: `/.mbs-cache`
+- Releases: `/.mbs-releases`
+- Graph: `/.mbs-graph`
+
+These directory should be mounted when running mbs otherwise you will loose the generated artificats between executions.
+
+The best approach is to "volume mount" these directories, for example to a host directory (bind mount) or to a docker volume (volume mount).
+More info in [MBS wrapper script](###MBS-wrapper-script).
+
+This approach is flexible enough to "share" the cache data between all the developers and the CI. It's enough to map the host dir to a "shared disk" (for example with S3FS-FUSE to share via aws S3, NFS, cifs, ...).
+
+In a basic and safe setup, the cache should be shared in "read-only" mode to the developers and "read-write" to the CI.
+This way the developers will see and re-use the artifact build by the CI while keeping a the simplicity / conflict-less approach of a single logical writer.
+
 ### Environment variables
 
 Environment variable that you can pass to `mbs`:
@@ -315,5 +333,7 @@ alias mbs="\
         mbs:full
 "
 ```
+
+### MBS wrapper script
 
 It's definetely better to use a wrapper script like [mbs.sh](./mbs.sh) in this repository, the script should be include and committed in your repository. The script can also be "sourced": `source mbs.sh`.

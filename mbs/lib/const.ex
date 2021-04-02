@@ -22,13 +22,13 @@ defmodule MBS.Const do
   def release_metadata_filename, do: "metadata.json"
 
   @spec cache_dir :: Path.t()
-  def cache_dir, do: ".mbs-cache"
+  def cache_dir, do: "/.mbs-cache"
 
   @spec releases_dir :: Path.t()
-  def releases_dir, do: ".mbs-releases"
+  def releases_dir, do: "/.mbs-releases"
 
   @spec graph_dir :: Path.t()
-  def graph_dir, do: ".mbs-graph"
+  def graph_dir, do: "/.mbs-graph"
 
   @spec mbs_dirs :: [Path.t()]
   def mbs_dirs, do: [cache_dir(), releases_dir(), graph_dir()]
