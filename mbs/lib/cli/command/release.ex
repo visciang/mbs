@@ -69,6 +69,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     res
   end
 
+  @spec filter_used_toolchains([Manifest.Type.t()]) :: [Manifest.Type.t()]
   defp filter_used_toolchains(manifests) do
     # we collect all the toolchains (as part of Manifest.find_all(:deploy))
     # but some of them are not used to run any component deploy
@@ -77,6 +78,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     |> Enum.flat_map(&[&1, &1.toolchain])
   end
 
+  @spec validate_deploy_files([Manifest.Type.t()], [Manifest.Type.t()]) :: :ok
   defp validate_deploy_files(build_manifests, deploy_manifests) do
     build_manifest_targets_map =
       build_manifests
@@ -96,6 +98,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     end)
   end
 
+  @spec build_checksums([String.t()], [Manifest.Type.t()], Config.Data.t()) :: %{String.t() => String.t()}
   defp build_checksums(_target_ids, build_manifests, config) do
     dask = Workflow.workflow(build_manifests, config, &Workflow.Job.Checksums.fun/2)
 
@@ -111,14 +114,10 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     |> Dask.await()
     |> case do
       {:ok, checksums_map} ->
-        checksums_map |> Map.values() |> merge_maps()
+        checksums_map |> Map.values() |> Utils.merge_maps()
 
       err ->
         Utils.halt("Failed build checksums compute\n#{inspect(err)}")
     end
-  end
-
-  defp merge_maps(maps) do
-    Enum.reduce(maps, fn map, map_merge -> Map.merge(map_merge, map) end)
   end
 end

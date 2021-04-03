@@ -64,6 +64,7 @@ defmodule MBS.ReleaseManifest do
     :ok
   end
 
+  @spec release_checksum([Manifest.Type.t()], Path.t()) :: String.t()
   defp release_checksum(manifests, release_dir) do
     manifests
     |> Enum.map(fn %{id: id} ->
@@ -76,6 +77,7 @@ defmodule MBS.ReleaseManifest do
     |> Checksum.checksum()
   end
 
+  @spec decode(Path.t()) :: map()
   defp decode(manifest_path) do
     manifest_path
     |> File.read!()
@@ -89,6 +91,7 @@ defmodule MBS.ReleaseManifest do
     end
   end
 
+  @spec to_struct(map) :: MBS.ReleaseManifest.Release.t()
   defp to_struct(%{"id" => id, "checksum" => checksum, "metadata" => metadata}) do
     %Release{id: id, checksum: checksum, metadata: metadata}
   end

@@ -23,6 +23,7 @@ defmodule MBS do
     exit_status(workflow_status)
   end
 
+  @spec exit_status(:ok | :error | :timeout) :: :ok
   defp exit_status(workflow_status) do
     case workflow_status do
       :ok ->

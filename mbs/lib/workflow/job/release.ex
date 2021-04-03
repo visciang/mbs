@@ -88,6 +88,7 @@ defmodule MBS.Workflow.Job.Release do
     end
   end
 
+  @spec release_targets_metadata(String.t(), String.t(), Path.t()) :: :ok
   defp release_targets_metadata(id, checksum, output_dir) do
     release_metadata_path = Path.join(output_dir, Const.release_metadata_filename())
 
@@ -99,6 +100,7 @@ defmodule MBS.Workflow.Job.Release do
     File.write!(release_metadata_path, Jason.encode!(release_metadata, pretty: true))
   end
 
+  @spec release_copy_mbs_toolchain_manifest(Path.t(), Path.t()) :: :ok
   defp release_copy_mbs_toolchain_manifest(src_dir, output_dir) do
     File.cp!(
       Path.join(src_dir, Const.manifest_toolchain_filename()),
@@ -106,6 +108,7 @@ defmodule MBS.Workflow.Job.Release do
     )
   end
 
+  @spec release_copy_mbs_deploy_manifest(Path.t(), Path.t()) :: :ok
   defp release_copy_mbs_deploy_manifest(src_dir, output_dir) do
     File.cp!(
       Path.join(src_dir, Const.manifest_deploy_filename()),

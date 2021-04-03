@@ -8,9 +8,9 @@ Docker **containerization** technology is used both to run `mbs` and to define y
 
 With MBS you can easly define the toolchains to build / deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services.
 
-This will give you highly **parallelized** and fast builds for free that can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
+This will give you **parallelized** fast builds for free that can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
 
-The user experience we aim to is to give you a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a service oriented solution.
+The user experience we aim to is a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a service oriented solution.
 
 **TODO** explain that:
 the system scales well, but: vertical build scalability, the git repo should fit in the dev machine
@@ -42,7 +42,9 @@ Remember that, like every tool, `mbs` / mono-repos / etc. are just patterns and 
 ### A bit of history
 
 TODO:
-extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / baur / please / hearthly / waypoint / gitlab / "pipelines in general"
+extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / baur / please / hearthly / waypoint / gitlab / "pipelines in general".
+
+TODO: describe the language oriented approach used by some tools (NPM workspaces, Elixir umbrella, GO, Rust cargo workspaces, ...), there the driver (obviously) is the language in mbs is the domain where you can develop together different things.
 
 ## The [build] -> [release] -> [deploy] -> [destroy!] flow
 
@@ -103,7 +105,7 @@ More info in [MBS wrapper script](###MBS-wrapper-script).
 This approach is flexible enough to "share" the cache data between all the developers and the CI. It's enough to map the host dir to a "shared disk" (for example with S3FS-FUSE to share via aws S3, NFS, cifs, ...).
 
 In a basic and safe setup, the cache should be shared in "read-only" mode to the developers and "read-write" to the CI.
-This way the developers will see and re-use the artifact build by the CI while keeping a the simplicity / conflict-less approach of a single logical writer.
+This way the developers will see and re-use the artifact build by the CI while keeping a the simplicity / conflict-less approach of a single writer.
 
 ### Environment variables
 

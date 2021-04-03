@@ -23,12 +23,14 @@ defmodule MBS.Manifest do
     |> add_toolchain_data()
   end
 
+  @spec manifest_name(Type.type()) :: String.t()
   defp manifest_name(:build),
     do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_build_filename()}}"
 
   defp manifest_name(:deploy),
     do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_deploy_filename()}}"
 
+  @spec reject_files_in_dirs([Path.t()], [Path.t()]) :: [Path.t()]
   defp reject_files_in_dirs(paths, dirs) do
     Enum.reject(paths, fn path ->
       dirs
@@ -37,6 +39,7 @@ defmodule MBS.Manifest do
     end)
   end
 
+  @spec decode(Path.t()) :: map()
   defp decode(manifest_path) do
     manifest_path
     |> File.read!()
@@ -50,6 +53,7 @@ defmodule MBS.Manifest do
     end
   end
 
+  @spec add_defaults(map(), Path.t()) :: map()
   defp add_defaults(manifest, manifest_path) do
     manifest = put_in(manifest["dir"], Path.dirname(Path.expand(manifest_path)))
     manifest = Map.put_new(manifest, "timeout", :infinity)
@@ -74,6 +78,7 @@ defmodule MBS.Manifest do
     end
   end
 
+  @spec to_struct(Type.type(), map()) :: Type.t()
   defp to_struct(type, %{
          "__schema__" => "component",
          "id" => id,
@@ -120,6 +125,7 @@ defmodule MBS.Manifest do
     }
   end
 
+  @spec files(Type.type(), Path.t(), [String.t()]) :: [Path.t()]
   defp files(:build, dir, file_globs) do
     file_globs = [manifest_name(:build), manifest_name(:deploy) | file_globs]
     {file_exclude_glob, file_include_glob} = Enum.split_with(file_globs, &String.starts_with?(&1, "!"))
@@ -144,6 +150,7 @@ defmodule MBS.Manifest do
     targets(dir, files)
   end
 
+  @spec targets(Path.t(), [String.t()]) :: [Target.t()]
   defp targets(dir, targets) do
     targets
     |> Enum.map(fn
@@ -159,6 +166,7 @@ defmodule MBS.Manifest do
     |> Enum.uniq()
   end
 
+  @spec add_toolchain_data([Type.t()]) :: [Type.t()]
   defp add_toolchain_data(manifests) do
     toolchains = Enum.filter(manifests, &match?(%Toolchain{}, &1))
     get_toolchain = Map.new(toolchains, &{&1.id, &1})

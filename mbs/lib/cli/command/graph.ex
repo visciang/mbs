@@ -32,6 +32,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
     end
   end
 
+  @spec dot_command_installed? :: boolean()
   defp dot_command_installed? do
     System.cmd("dot", ["-V"], stderr_to_stdout: true)
     true

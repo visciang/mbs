@@ -20,6 +20,11 @@ defmodule MBS.CLI.Utils do
     |> Enum.uniq()
   end
 
+  @spec do_transitive_dependencies_closure(
+          Manifest.Type.t(),
+          %{String.t() => Manifest.Type.t()},
+          MapSet.t(Manifest.Type.t())
+        ) :: MapSet.t(Manifest.Type.t())
   defp do_transitive_dependencies_closure(target_manifest, manifests_map, visited_manifests \\ MapSet.new()) do
     if MapSet.member?(visited_manifests, target_manifest) do
       visited_manifests

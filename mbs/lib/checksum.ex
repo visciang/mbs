@@ -11,7 +11,7 @@ defmodule MBS.Checksum do
     |> checksum()
   end
 
-  @spec checksum(String.t() | Enumerable.t()) :: binary
+  @spec checksum(String.t() | Enumerable.t()) :: String.t()
   def checksum(data) when is_binary(data) do
     :crypto.hash(:sha256, [data])
     |> Base.encode32(padding: false)
@@ -27,6 +27,7 @@ defmodule MBS.Checksum do
     |> Base.encode32(padding: false)
   end
 
+  @spec file_checksum(Path.t(), Path.t()) :: String.t()
   defp file_checksum(filename, relative_to_dir) do
     relative_to_dir_filename = Path.relative_to(filename, relative_to_dir)
     checksum(Stream.concat([relative_to_dir_filename], File.stream!(filename, [], 2048)))

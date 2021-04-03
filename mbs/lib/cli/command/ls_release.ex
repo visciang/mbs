@@ -24,6 +24,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
     :ok
   end
 
+  @spec print_ls(ReleaseManifest.Release.t(), boolean()) :: :ok
   defp print_ls(%ReleaseManifest.Release{} = release, true) do
     IO.puts(IO.ANSI.format([:bright, "#{release.id}", :normal, ":"]))
     IO.puts("  checksum:")

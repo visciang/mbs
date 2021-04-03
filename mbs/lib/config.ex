@@ -22,6 +22,7 @@ defmodule MBS.Config do
   @moduledoc """
   Global config
   """
+
   require Logger
 
   alias MBS.Config.Data
@@ -44,6 +45,7 @@ defmodule MBS.Config do
     |> to_struct()
   end
 
+  @spec decode(String.t()) :: map()
   defp decode(conf_data) do
     conf_data
     |> Jason.decode()
@@ -56,6 +58,7 @@ defmodule MBS.Config do
     end
   end
 
+  @spec add_defaults(map()) :: map()
   defp add_defaults(conf) do
     conf =
       if conf["parallelism"] == nil do
@@ -74,24 +77,32 @@ defmodule MBS.Config do
     conf
   end
 
+  @spec validate(map()) :: map()
   defp validate(conf) do
     validate_parallelism(conf["parallelism"])
     validate_timeout(conf["timeout"])
     conf
   end
 
+  @spec validate_parallelism(non_neg_integer()) :: :ok
   defp validate_parallelism(parallelism) do
     unless is_integer(parallelism) and parallelism > 0 do
       Utils.halt("Bad parallelism in #{Const.config_file()}")
     end
+
+    :ok
   end
 
+  @spec validate_timeout(timeout()) :: :ok
   defp validate_timeout(timeout) do
     unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
       Utils.halt("Bad timeout in #{Const.config_file()}")
     end
+
+    :ok
   end
 
+  @spec to_struct(map()) :: Data.t()
   defp to_struct(conf) do
     %Data{
       parallelism: conf["parallelism"],

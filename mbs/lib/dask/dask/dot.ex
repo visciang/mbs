@@ -12,6 +12,7 @@ defmodule Dask.Dot do
     ["strict digraph {\n", Enum.flat_map(Map.values(jobs), &job_edge/1), "}\n"]
   end
 
+  @spec job_edge(Job.t()) :: [String.t()]
   defp job_edge(%Job{} = job) do
     if MapSet.size(job.downstream_jobs) == 0 do
       [~s/#{inspect(job.id)}\n/]

@@ -75,6 +75,8 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
+  @spec transitive_targets(String.t(), String.t(), [Manifest.Target.t()], Dask.Job.upstream_results()) ::
+          MapSet.t(Manifest.Target.t())
   defp transitive_targets(id, checksum, targets, upstream_results) do
     {:ok, expanded_targets} = Job.Cache.expand_targets_path(Const.cache_dir(), id, checksum, targets)
 
@@ -92,6 +94,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     MapSet.union(expanded_targets_set, expanded_upstream_targets_set)
   end
 
+  @spec cache_get_toolchain(String.t(), String.t(), boolean()) :: :cache_miss | :cached
   defp cache_get_toolchain(id, checksum, force) do
     if force do
       :cache_miss
@@ -100,6 +103,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
+  @spec cache_get_targets(Path.t(), String.t(), String.t(), [Manifest.Target.t()], boolean()) :: :cache_miss | :cached
   defp cache_get_targets(cache_dir, id, checksum, targets, force) do
     if force do
       :cache_miss
@@ -108,6 +112,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
+  @spec assert_targets([Manifest.Target.t()], String.t()) :: :ok | {:error, String.t()}
   defp assert_targets([], _checksum), do: :ok
 
   defp assert_targets(targets, checksum) do

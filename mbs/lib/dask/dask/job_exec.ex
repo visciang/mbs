@@ -30,6 +30,7 @@ defmodule Dask.JobExec do
     end
   end
 
+  @spec exec_job_fun(Job.t(), pid(), Job.upstream_results(), Job.id()) :: Job.job_exec_result()
   defp exec_job_fun(%Job{} = job, limiter, upstream_jobs_status, job_id) do
     if Enum.all?(Map.values(upstream_jobs_status), &match?({:job_ok, _}, &1)) do
       try do
@@ -50,6 +51,8 @@ defmodule Dask.JobExec do
     end
   end
 
+  @spec wait_upstream_job_task(Job.t(), pid(), MapSet.t(pid()), MapSet.t(pid()), Job.upstream_results()) ::
+          Job.job_exec_result()
   defp wait_upstream_job_task(
          job,
          limiter,
@@ -65,6 +68,7 @@ defmodule Dask.JobExec do
     end
   end
 
+  @spec timed((() -> any()), timeout()) :: {any(), float()}
   defp timed(fun, timeout) do
     start_time = System.monotonic_time(:microsecond)
 

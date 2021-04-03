@@ -25,6 +25,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     :ok
   end
 
+  @spec print_ls(Manifest.Component.t(), Manifest.Type.type(), boolean()) :: :ok
   defp print_ls(%Manifest.Component{} = component, type, true) do
     IO.puts(IO.ANSI.format([:bright, "#{component.id}", :normal, "  (component)", ":"]))
     IO.puts("  dir:")

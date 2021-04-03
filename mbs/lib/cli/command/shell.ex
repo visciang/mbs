@@ -51,6 +51,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
     end
   end
 
+  @spec target_component_direct_dependencies([Manifest.Type.t()], String.t()) :: [String.t()]
   defp target_component_direct_dependencies(manifests, id) do
     case Enum.find(manifests, &(&1.id == id)) do
       %Manifest.Component{} = component ->

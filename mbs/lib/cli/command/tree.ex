@@ -31,6 +31,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
     :ok
   end
 
+  @spec print_tree([String.t()], %{String.t() => Manifest.Type.t()}, IO.chardata()) :: :ok
   defp print_tree(names, manifests_map, indent) do
     names_length = length(names)
 

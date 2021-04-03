@@ -9,6 +9,9 @@ defmodule MBS.Toolchain do
 
   require Reporter.Status
 
+  @type opts :: [String.t()]
+  @type env_list :: [{String.t(), String.t()}]
+
   @local_dependencies_targets_dir ".deps"
 
   @spec build(Manifest.Toolchain.t()) :: :ok | {:error, term()}
@@ -52,6 +55,8 @@ defmodule MBS.Toolchain do
     exec(component, env, job_id, component.toolchain.destroy_steps, run_opts)
   end
 
+  @spec exec(Manifest.Component.t(), env_list(), String.t(), [String.t()], opts()) ::
+          :ok | {:error, String.t()}
   defp exec(
          %Manifest.Component{
            toolchain: toolchain,
@@ -87,6 +92,7 @@ defmodule MBS.Toolchain do
     end)
   end
 
+  @spec run_opts(Manifest.Component.t()) :: opts()
   defp run_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}) do
     opts = ["--rm", "-t" | docker_opts]
     work_dir_opts = ["-w", "#{work_dir}"]
@@ -95,7 +101,8 @@ defmodule MBS.Toolchain do
     opts ++ work_dir_opts ++ dir_mount_opts
   end
 
-  defp run_deploy_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}) do
+  @spec run_deploy_opts(Manifest.Component.t()) :: opts()
+  def run_deploy_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}) do
     opts = ["--rm", "-t" | docker_opts]
     work_dir_opts = ["-w", "#{work_dir}"]
 
@@ -110,6 +117,7 @@ defmodule MBS.Toolchain do
     opts ++ work_dir_opts ++ dir_mount_opts
   end
 
+  @spec get_dependencies_targets(Manifest.Component.t(), Dask.Job.upstream_results()) :: :ok
   defp get_dependencies_targets(%Manifest.Component{dir: dir}, upstream_results) do
     local_dependencies_targets_dir = Path.join(dir, @local_dependencies_targets_dir)
     File.rm_rf!(local_dependencies_targets_dir)
@@ -134,6 +142,7 @@ defmodule MBS.Toolchain do
     end)
   end
 
+  @spec run_build_env_vars(Manifest.Component.t(), String.t(), Dask.Job.upstream_results()) :: env_list()
   defp run_build_env_vars(
          %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
          checksum,
@@ -155,10 +164,12 @@ defmodule MBS.Toolchain do
     [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
   end
 
+  @spec run_deploy_env_vars(Manifest.Component.t(), String.t()) :: env_list()
   defp run_deploy_env_vars(%Manifest.Component{id: id, dir: dir}, checksum) do
     [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum}]
   end
 
+  @spec toolchain_opts_env_subs([String.t()], env_list()) :: [String.t()]
   defp toolchain_opts_env_subs(toolchain_opts, env) do
     Enum.map(toolchain_opts, fn toolchain_opt ->
       Enum.reduce(env, toolchain_opt, fn {env_name, env_value}, toolchain_opt ->

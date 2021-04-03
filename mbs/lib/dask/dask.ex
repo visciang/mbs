@@ -78,6 +78,7 @@ defmodule Dask do
     res
   end
 
+  @spec build_workflow_graph(Dask.t()) :: {:digraph.graph(), Job.t()}
   defp build_workflow_graph(%M{jobs: jobs}) do
     graph = :digraph.new([:acyclic])
 
@@ -119,6 +120,7 @@ defmodule Dask do
     {graph, end_job}
   end
 
+  @spec add_edge(:digraph.graph(), Job.t(), Job.t()) :: :ok
   defp add_edge(graph, %Job{} = upstream_job, %Job{} = downstream_job) do
     case :digraph.add_edge(graph, upstream_job, downstream_job) do
       {:error, {:bad_edge, path}} ->
@@ -140,6 +142,7 @@ defmodule Dask do
     end
   end
 
+  @spec exec_async_workflow(:digraph.graph(), Job.t(), Limiter.max_concurrency()) :: Dask.Exec.t()
   defp exec_async_workflow(graph, %Job{} = end_job, max_concurrency) do
     %Exec{graph: graph, task: Task.async(fn -> Exec.exec(graph, end_job, max_concurrency) end)}
   end

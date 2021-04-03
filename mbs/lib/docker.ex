@@ -4,6 +4,8 @@ defmodule MBS.Docker do
   alias MBS.CLI.Reporter
   require MBS.CLI.Reporter.Status
 
+  @type env_list :: [{String.t(), String.t()}]
+
   @cmd_arg_dind ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
 
   @spec image_id(String.t(), String.t()) :: {:ok, nil | String.t()} | {:error, term()}
@@ -98,7 +100,7 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec image_run(String.t(), String.t(), [String.t()], [{String.t(), String.t()}], [String.t()], String.t()) ::
+  @spec image_run(String.t(), String.t(), [String.t()], env_list(), [String.t()], String.t()) ::
           :ok | {:error, {term(), pos_integer()}}
   def image_run(repository, tag, opts, env, command, job_id) do
     cmd_args = ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"] ++ command
@@ -117,16 +119,18 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec image_run_cmd(String.t(), String.t(), [String.t()], [{String.t(), String.t()}]) :: String.t()
+  @spec image_run_cmd(String.t(), String.t(), [String.t()], env_list()) :: String.t()
   def image_run_cmd(repository, tag, opts, env) do
     (["docker", "run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"])
     |> Enum.join(" ")
   end
 
+  @spec docker_env(env_list()) :: [String.t()]
   defp docker_env(env) do
     Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
   end
 
+  @spec gunzip(Path.t(), Path.t()) :: :ok
   defp gunzip(src, dest) do
     src
     |> File.stream!([:compressed], 2048)

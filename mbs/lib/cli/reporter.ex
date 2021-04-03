@@ -68,6 +68,7 @@ defmodule MBS.CLI.Reporter do
   end
 
   @impl true
+  @spec init(start_time: integer()) :: {:ok, MBS.CLI.Reporter.State.t()}
   def init(start_time: start_time) do
     :ets.new(@name, [:named_table])
     :ets.insert(@name, [{:muted, false}, {:logs_enabled, false}])
@@ -134,6 +135,7 @@ defmodule MBS.CLI.Reporter do
     {:stop, :normal, :ok, state}
   end
 
+  @spec track_jobs(String.t(), Status.t(), State.t()) :: State.t()
   defp track_jobs(job_id, status, state) do
     case status do
       Status.error(_reason) -> put_in(state.failed_jobs, [job_id | state.failed_jobs])
@@ -143,10 +145,12 @@ defmodule MBS.CLI.Reporter do
     end
   end
 
+  @spec delta_time_string(number()) :: String.t()
   defp delta_time_string(elapsed) do
     Dask.Utils.seconds_to_compound_duration(elapsed * @time_unit_scale)
   end
 
+  @spec status_icon_info(Status.t()) :: {IO.chardata(), nil | IO.chardata()}
   defp status_icon_info(status) do
     case status do
       Status.ok() -> {IO.ANSI.format([:green, "✔"]), nil}
@@ -158,9 +162,12 @@ defmodule MBS.CLI.Reporter do
     end
   end
 
+  @spec puts(IO.chardata()) :: :ok
   defp puts(message) do
     unless :ets.lookup_element(@name, :muted, 2) do
       IO.puts(message)
     end
+
+    :ok
   end
 end

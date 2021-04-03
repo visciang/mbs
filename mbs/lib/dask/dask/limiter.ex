@@ -19,6 +19,12 @@ defmodule Dask.Limiter do
     @moduledoc false
 
     defstruct [:max_concurrency, :running_jobs, :waiting_list]
+
+    @type t :: %__MODULE__{
+            max_concurrency: non_neg_integer(),
+            running_jobs: %{GenServer.server() => reference()},
+            waiting_list: [{term(), GenServer.from()}]
+          }
   end
 
   @spec start_link(max_concurrency()) :: GenServer.on_start()
@@ -45,6 +51,7 @@ defmodule Dask.Limiter do
   end
 
   @impl true
+  @spec init([non_neg_integer()]) :: {:ok, State.t()}
   def init([max_concurrency]) do
     {:ok, %State{max_concurrency: max_concurrency, running_jobs: %{}, waiting_list: []}}
   end

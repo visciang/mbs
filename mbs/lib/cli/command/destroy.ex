@@ -28,11 +28,13 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Destroy do
     end
   end
 
+  @spec load_toolchains(Config.Data.t(), [Manifest.Type.t()]) :: Dask.await_result()
   defp load_toolchains(%Config.Data{} = config, manifests) do
     manifests_toolchains = Enum.filter(manifests, &match?(%Manifest.Toolchain{}, &1))
     run_destroy(config, manifests_toolchains)
   end
 
+  @spec run_destroy(Config.Data.t(), [Manifest.Type.t()]) :: Dask.await_result()
   defp run_destroy(%Config.Data{} = config, manifests) do
     dask =
       Workflow.workflow(
