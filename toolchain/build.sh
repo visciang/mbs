@@ -2,19 +2,13 @@
 
 set -e
 
-COMPILE_OPTS="--warnings-as-errors"
 DIALYZER=0
 DIALYZER_OPTS=""
-CREDO=0
-CREDO_OPTS="--all --strict"
-COVERALLS=0
-TYPE="app"
 
 args()
 {
     options=$(
-        getopt --long dialyzer --long dialyzer-opts: --long credo --long credo-opts: \
-        --long coveralls --long type: --long compile-opts: -- "$@"
+        getopt --long dialyzer --long dialyzer-opts: -- "$@"
     )
     if [ $? != 0 ]; then
         echo "Incorrect option provided"
@@ -31,20 +25,6 @@ args()
         --dialyzer-opts)
             shift;
             DIALYZER_OPTS=$1
-            ;;
-        --credo)
-            CREDO=1
-            ;;
-        --credo-opts)
-            shift;
-            CREDO_OPTS=$1
-            ;;
-        --coveralls)
-            COVERALLS=1
-            ;;
-        --type)
-            shift;
-            TYPE=$1
             ;;
         --compile-opts)
             shift;
@@ -66,11 +46,12 @@ case $1 in
         mix deps.get
         ;;
     compile)
-        mix compile $COMPILE_OPTS
+        mix compile --warnings-as-errors
         ;;
-    lint)
+    lint_fmt)
         mix format --check-formatted
-
+        ;;
+    lint_xref_cycles)
         CYCLES=$(mix xref graph --format=cycles)
 
         if [ "$CYCLES" != "No cycles found" ]; then
@@ -78,34 +59,20 @@ case $1 in
             echo "$CYCLES"
             exit 1
         fi
-
-        if [ $CREDO == 1 ]; then
-            mix credo $CREDO_OPTS
-        fi
-
+        ;;
+    lint_credo)
+        mix credo --all --strict
+        ;;
+    lint_dialyzer)
         if [ $DIALYZER == 1 ]; then
             mix dialyzer $DIALYZER_OPTS
         fi
         ;;
     test)
-        mix test
-        if [ $COVERALLS == 1 ]; then
-            mix coveralls
-        fi
+        mix coveralls
         ;;
     build)
-        case $TYPE in
-            app)
-                MIX_ENV=prod mix release --overwrite
-                ;;
-            escript)
-                MIX_ENV=prod mix escript.build
-                ;;
-            *)
-                echo "Unknown build type: $TYPE"
-                exit 1
-                ;;
-        esac
+        MIX_ENV=prod mix escript.build
         ;;
     *)
         echo "bad target: $1"

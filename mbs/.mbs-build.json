@@ -2,7 +2,6 @@
     "id": "mbs",
     "component": {
         "toolchain": "toolchain-mbs",
-        "toolchain_opts": ["--type", "escript", "--credo"],
         "files": [
             ".formatter.exs",
             "mix.{exs,lock}",

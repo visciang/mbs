@@ -84,9 +84,10 @@ case $1 in
     compile)
         mix compile $COMPILE_OPTS
         ;;
-    lint)
+    lint_fmt)
         mix format --check-formatted
-
+        ;;
+    lint_xref_cycles)
         CYCLES=$(mix xref graph --format=cycles)
 
         if [ "$CYCLES" != "No cycles found" ]; then
@@ -94,17 +95,19 @@ case $1 in
             echo "$CYCLES"
             exit 1
         fi
-
+        ;;
+    lint_credo)
         if [ $CREDO == 1 ]; then
             mix credo $CREDO_OPTS
         fi
-
+        ;;
+    lint_dialyzer)
         if [ $DIALYZER == 1 ]; then
             mix dialyzer $DIALYZER_OPTS
         fi
         ;;
     test)
-        if [ $COVERALLS == 1 ]; then
+        if [ $COVERALLS == "1" ]; then
             mix coveralls
         else
             mix test
