@@ -96,7 +96,7 @@ case $1 in
     build)
         case $TYPE in
             app)
-                MIX_ENV=prod mix release
+                MIX_ENV=prod mix release --overwrite
                 ;;
             escript)
                 MIX_ENV=prod mix escript.build

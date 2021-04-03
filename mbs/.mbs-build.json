@@ -4,7 +4,6 @@
         "toolchain": "toolchain-mbs",
         "toolchain_opts": ["--type", "escript", "--credo"],
         "files": [
-            "build.sh",
             ".formatter.exs",
             "mix.{exs,lock}",
             "{lib,test}/**/*.{ex,exs}",
