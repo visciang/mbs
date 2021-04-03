@@ -1,0 +1,18 @@
+{
+    "id": "ex_sublib",
+    "component": {
+        "toolchain": "toolchain-build-elixir",
+        "toolchain_opts": [
+            "--type", "lib"
+        ],
+        "files": [
+            ".formatter.exs",
+            "lib/**/*.ex",
+            "mix.exs",
+            "mix.lock"
+        ],
+        "targets": [
+            "_build/ex_sublib.ex.tgz"
+        ]
+    }
+}

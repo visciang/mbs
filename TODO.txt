@@ -1,3 +1,7 @@
+cache:
+- possibility to cache a toolchain step (for example to cache deps)
+- custom containter cache dir?
+
 deploy:
 - deploy state (to deploy only if needed, we should multi environment deployments)
 
@@ -39,13 +43,9 @@ support / doc
     - Ruby
     - Elixir
     - Rust
+    https://medium.com/underdog-io-engineering/vendoring-python-dependencies-with-pip-b9eb6078b9c0
   DEPLOY:
-    - terraform (via localstack) https://spin.atomicobject.com/2020/02/03/localstack-terraform-circleci/
     - fly
-
-cache:
-- custom containter cache dir?
-- possibility to cache a toolchain step (for example to cache deps)
 
 plugins
   - remote cache (docker / files) => push only if --push flag provided

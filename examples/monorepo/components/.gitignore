@@ -1,6 +1,9 @@
 .build/
 .deps/
 
+elixir_examples/**/_build/
+elixir_examples/**/deps/
+
 go_examples/bin
 go_examples/pkg
 

@@ -13,7 +13,7 @@ case $1 in
         terraform validate
         ;;
     build)
-        tar --exclude='.build/' -czf .build/terraform.tgz .
+        tar --exclude='.build' -czf .build/terraform.tgz .
         ;;
     *)
         echo "bad target: $1"

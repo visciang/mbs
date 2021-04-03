@@ -1,0 +1,21 @@
+{
+    "id": "ex_app",
+    "component": {
+        "toolchain": "toolchain-build-elixir",
+        "toolchain_opts": [
+            "--type", "app"
+        ],
+        "files": [
+            ".formatter.exs",
+            "lib/**/*.ex",
+            "mix.exs",
+            "mix.lock"
+        ],
+        "targets": [
+            "_build/ex_app.ex.tgz"
+        ],
+        "dependencies": [
+            "ex_lib"
+        ]
+    }
+}
