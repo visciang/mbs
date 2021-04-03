@@ -40,7 +40,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  def fun(%Config.Data{} = config, %Manifest.Component{id: id, targets: targets} = component, force) do
+  def fun(%Config.Data{}, %Manifest.Component{id: id, targets: targets} = component, force) do
     fn job_id, upstream_results ->
       start_time = Reporter.time()
 
@@ -48,7 +48,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       {report_status, report_desc} =
         with :cache_miss <- cache_get_targets(Const.cache_dir(), id, checksum, targets, force),
-             :ok <- Toolchain.exec_build(component, checksum, config, upstream_results, job_id),
+             :ok <- Toolchain.exec_build(component, checksum, upstream_results, job_id),
              :ok <- assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(Const.cache_dir(), id, checksum, targets) do
           {Reporter.Status.ok(), checksum}

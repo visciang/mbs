@@ -6,6 +6,9 @@ case $1 in
     init)
         terraform init -backend=false -input=false
         ;;
+    fmt)
+        terraform fmt -check -diff
+        ;;
     validate)
         terraform validate
         ;;

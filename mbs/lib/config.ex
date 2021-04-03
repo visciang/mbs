@@ -10,10 +10,9 @@ defmodule MBS.Config.Data do
           }
   end
 
-  defstruct [:root_dir, :parallelism, :timeout]
+  defstruct [:parallelism, :timeout]
 
   @type t :: %__MODULE__{
-          root_dir: Path.t(),
           parallelism: non_neg_integer(),
           timeout: timeout()
         }
@@ -58,8 +57,6 @@ defmodule MBS.Config do
   end
 
   defp add_defaults(conf) do
-    conf = put_in(conf["root_dir"], mbs_root_dir())
-
     conf =
       if conf["parallelism"] == nil do
         put_in(conf["parallelism"], :erlang.system_info(:logical_processors))
@@ -77,27 +74,10 @@ defmodule MBS.Config do
     conf
   end
 
-  defp mbs_root_dir do
-    case System.get_env("MBS_ROOT") do
-      nil ->
-        Utils.halt("Missing MBS_ROOT environment variable")
-
-      root_dir ->
-        root_dir
-    end
-  end
-
   defp validate(conf) do
-    validate_root_dir(conf["root_dir"])
     validate_parallelism(conf["parallelism"])
     validate_timeout(conf["timeout"])
     conf
-  end
-
-  defp validate_root_dir(root_dir) do
-    unless is_binary(root_dir) and File.exists?(root_dir) do
-      Utils.halt("Bad root_dir in #{Const.config_file()}")
-    end
   end
 
   defp validate_parallelism(parallelism) do
@@ -114,7 +94,6 @@ defmodule MBS.Config do
 
   defp to_struct(conf) do
     %Data{
-      root_dir: conf["root_dir"],
       parallelism: conf["parallelism"],
       timeout: conf["timeout"]
     }

@@ -3,14 +3,14 @@ defmodule MBS do
   Meta Build System
   """
 
-  alias MBS.Config
-  alias MBS.Utils
+  alias MBS.{Config, Env, Utils}
   alias MBS.CLI.{Args, Command, Reporter}
 
   @spec main([String.t()]) :: :ok
   def main(args) do
     :ok = Reporter.start_link()
 
+    Env.validate!()
     config = Config.load()
 
     workflow_status =

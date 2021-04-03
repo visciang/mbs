@@ -31,7 +31,9 @@ defmodule MBS.Manifest do
 
   defp reject_files_in_dirs(paths, dirs) do
     Enum.reject(paths, fn path ->
-      Enum.any?(dirs, &String.starts_with?(path, &1))
+      dirs
+      |> Enum.map(&Path.basename/1)
+      |> Enum.any?(fn dir -> dir in Path.split(path) end)
     end)
   end
 

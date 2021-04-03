@@ -4,7 +4,7 @@ defmodule MBS.Toolchain do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Docker, Manifest, Utils}
+  alias MBS.{Const, Docker, Manifest, Utils}
   alias MBS.Workflow.Job
 
   require Reporter.Status
@@ -16,56 +16,53 @@ defmodule MBS.Toolchain do
     Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")
   end
 
-  @spec shell_cmd(Manifest.Component.t(), String.t(), Config.Data.t(), Dask.Job.upstream_results()) :: String.t()
+  @spec shell_cmd(Manifest.Component.t(), String.t(), Dask.Job.upstream_results()) :: String.t()
   def shell_cmd(
-        %Manifest.Component{dir: work_dir, toolchain: toolchain, docker_opts: docker_opts} = component,
+        %Manifest.Component{toolchain: toolchain} = component,
         checksum,
-        %Config.Data{root_dir: root_dir},
         upstream_results
       ) do
     env = run_build_env_vars(component, checksum, upstream_results)
-    opts = run_opts(docker_opts, root_dir, work_dir) ++ ["--entrypoint", "sh", "--interactive"]
+    opts = run_opts(component) ++ ["--entrypoint", "sh", "--interactive"]
 
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
   end
 
-  @spec exec_build(Manifest.Component.t(), String.t(), Config.Data.t(), Dask.Job.upstream_results(), String.t()) ::
+  @spec exec_build(Manifest.Component.t(), String.t(), Dask.Job.upstream_results(), String.t()) ::
           :ok | {:error, term()}
-  def exec_build(%Manifest.Component{} = component, checksum, %Config.Data{} = config, upstream_results, job_id) do
-    get_dependencies_targets(component, config, upstream_results)
+  def exec_build(%Manifest.Component{} = component, checksum, upstream_results, job_id) do
+    get_dependencies_targets(component, upstream_results)
     env = run_build_env_vars(component, checksum, upstream_results)
-    exec(component, config, env, job_id, component.toolchain.steps)
+    run_opts = run_opts(component)
+    exec(component, env, job_id, component.toolchain.steps, run_opts)
   end
 
-  @spec exec_deploy(Manifest.Component.t(), String.t(), Config.Data.t(), String.t()) ::
-          :ok | {:error, term()}
-  def exec_deploy(%Manifest.Component{} = component, checksum, %Config.Data{} = config, job_id) do
+  @spec exec_deploy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, term()}
+  def exec_deploy(%Manifest.Component{} = component, checksum, job_id) do
     env = run_deploy_env_vars(component, checksum)
-    exec(component, config, env, job_id, component.toolchain.steps)
+    run_opts = run_deploy_opts(component)
+    exec(component, env, job_id, component.toolchain.steps, run_opts)
   end
 
-  @spec exec_destroy(Manifest.Component.t(), String.t(), Config.Data.t(), String.t()) ::
-          :ok | {:error, term()}
-  def exec_destroy(%Manifest.Component{} = component, checksum, %Config.Data{} = config, job_id) do
+  @spec exec_destroy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, term()}
+  def exec_destroy(%Manifest.Component{} = component, checksum, job_id) do
     env = run_deploy_env_vars(component, checksum)
     component = put_in(component.toolchain.steps, ["destroy"])
-    exec(component, config, env, job_id, component.toolchain.destroy_steps)
+    run_opts = run_deploy_opts(component)
+    exec(component, env, job_id, component.toolchain.destroy_steps, run_opts)
   end
 
   defp exec(
          %Manifest.Component{
-           dir: work_dir,
            toolchain: toolchain,
-           toolchain_opts: toolchain_opts,
-           docker_opts: docker_opts
+           toolchain_opts: toolchain_opts
          },
-         %Config.Data{root_dir: root_dir},
          env,
          job_id,
-         toolchain_steps
+         toolchain_steps,
+         run_opts
        ) do
     toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
-    opts = run_opts(docker_opts, root_dir, work_dir)
 
     Enum.reduce_while(toolchain_steps, nil, fn toolchain_step, _ ->
       reporter_id = "#{job_id}:#{toolchain_step}"
@@ -74,7 +71,7 @@ defmodule MBS.Toolchain do
       case Docker.image_run(
              toolchain.id,
              toolchain.checksum,
-             opts,
+             run_opts,
              env,
              [toolchain_step | toolchain_opts],
              reporter_id
@@ -90,7 +87,7 @@ defmodule MBS.Toolchain do
     end)
   end
 
-  defp run_opts(docker_opts, _root_dir, work_dir) do
+  defp run_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}) do
     opts = ["--rm", "-t" | docker_opts]
     work_dir_opts = ["-w", "#{work_dir}"]
     dir_mount_opts = ["-v", "#{work_dir}:#{work_dir}"]
@@ -98,11 +95,22 @@ defmodule MBS.Toolchain do
     opts ++ work_dir_opts ++ dir_mount_opts
   end
 
-  defp get_dependencies_targets(
-         %Manifest.Component{dir: dir},
-         %Config.Data{root_dir: root_dir},
-         upstream_results
-       ) do
+  defp run_deploy_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}) do
+    opts = ["--rm", "-t" | docker_opts]
+    work_dir_opts = ["-w", "#{work_dir}"]
+
+    # NOTE: mbs container will run the toolchain in "docker-in-docker"
+    # A Docker container in a Docker container uses the parent HOST's Docker daemon and hence,
+    # any volumes that are mounted in the "docker-in-docker" case is still referenced from the HOST,
+    # and not from the Container.
+    # That's why we mount the original host docker volume  (env variable $MBS_RELEASE_VOLUME)
+    mbs_release_volume = System.fetch_env!("MBS_RELEASE_VOLUME")
+    dir_mount_opts = ["-v", "#{mbs_release_volume}:#{Const.releases_dir()}"]
+
+    opts ++ work_dir_opts ++ dir_mount_opts
+  end
+
+  defp get_dependencies_targets(%Manifest.Component{dir: dir}, upstream_results) do
     local_dependencies_targets_dir = Path.join(dir, @local_dependencies_targets_dir)
     File.rm_rf!(local_dependencies_targets_dir)
     File.mkdir!(local_dependencies_targets_dir)
@@ -115,8 +123,6 @@ defmodule MBS.Toolchain do
 
     Enum.each(upstream_targets_set, fn
       {dep_id, %Manifest.Target{type: :file, target: target_cache_path}} ->
-        target_cache_path = Path.join(root_dir, target_cache_path)
-
         dest_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
         dest_dependency_path = Path.join(dest_dependency_dir, Path.basename(target_cache_path))
 

@@ -15,7 +15,7 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
   end
 
   def fun(
-        %Config.Data{} = config,
+        %Config.Data{},
         %Manifest.Component{dir: component_dir, toolchain: %Manifest.Toolchain{dir: toolchain_dir}} = component
       ) do
     fn job_id, _upstream_results ->
@@ -25,7 +25,7 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
         with {:ok, build_checksum} <- Job.RunDeploy.build_checksum(component_dir),
              {:ok, toolchain_checksum} <- Job.RunDeploy.build_checksum(toolchain_dir),
              component = put_in(component.toolchain.checksum, toolchain_checksum),
-             :ok <- Toolchain.exec_destroy(component, build_checksum, config, job_id) do
+             :ok <- Toolchain.exec_destroy(component, build_checksum, job_id) do
           Reporter.Status.ok()
         else
           {:error, reason} ->

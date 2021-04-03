@@ -7,6 +7,7 @@
         ],
         "steps": [
             "init",
+            "fmt",
             "validate",
             "build"
         ]
