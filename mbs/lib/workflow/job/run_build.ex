@@ -78,7 +78,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec transitive_targets(String.t(), String.t(), [Manifest.Target.t()], Dask.Job.upstream_results()) ::
+  @spec transitive_targets(String.t(), String.t(), [Manifest.Target.t()], %{String.t() => Job.FunResult.t()}) ::
           MapSet.t(Manifest.Target.t())
   defp transitive_targets(id, checksum, targets, upstream_results) do
     {:ok, expanded_targets} = Job.Cache.expand_targets_path(Const.cache_dir(), id, checksum, targets)
@@ -135,7 +135,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec get_dependencies_targets(Manifest.Component.t(), Dask.Job.upstream_results()) :: :ok
+  @spec get_dependencies_targets(Manifest.Component.t(), %{String.t() => Job.FunResult.t()}) :: :ok
   defp get_dependencies_targets(%Manifest.Component{dir: dir}, upstream_results) do
     local_dependencies_targets_dir = Path.join(dir, @local_dependencies_targets_dir)
     File.rm_rf!(local_dependencies_targets_dir)
