@@ -4,9 +4,9 @@ defmodule MBS.ReleaseManifest do
   """
 
   alias MBS.{Checksum, Const, Manifest, Utils}
-  alias MBS.ReleaseManifest.Release
+  alias MBS.ReleaseManifest.Type
 
-  @spec find_all :: [Release.t()]
+  @spec find_all :: [Type.t()]
   def find_all do
     Path.join([Const.releases_dir(), "**", "#{Const.manifest_release_filename()}"])
     |> Path.wildcard(match_dot: true)
@@ -21,7 +21,7 @@ defmodule MBS.ReleaseManifest do
     |> Enum.map(&decode/1)
   end
 
-  @spec get_release(String.t()) :: {Release.t(), Path.t()}
+  @spec get_release(String.t()) :: {Type.t(), Path.t()}
   def get_release(release_id) do
     release_dir = Path.join(Const.releases_dir(), release_id)
     release_manifest_path = Path.join(release_dir, Const.manifest_release_filename())
@@ -37,7 +37,7 @@ defmodule MBS.ReleaseManifest do
       |> Jason.decode!()
 
     {
-      %Release{
+      %Type{
         id: Map.fetch!(release_metadata_map, "id"),
         checksum: Map.fetch!(release_metadata_map, "checksum"),
         metadata: Map.fetch!(release_metadata_map, "metadata")
@@ -50,7 +50,7 @@ defmodule MBS.ReleaseManifest do
   def write_release_manifest(manifests, release_id, metadata) do
     release_dir = Path.join(Const.releases_dir(), release_id)
 
-    release_manifest = %Release{
+    release_manifest = %Type{
       id: release_id,
       checksum: release_checksum(manifests, release_dir),
       metadata: metadata
@@ -91,8 +91,8 @@ defmodule MBS.ReleaseManifest do
     end
   end
 
-  @spec to_struct(map) :: MBS.ReleaseManifest.Release.t()
+  @spec to_struct(map) :: MBS.ReleaseManifest.Type.t()
   defp to_struct(%{"id" => id, "checksum" => checksum, "metadata" => metadata}) do
-    %Release{id: id, checksum: checksum, metadata: metadata}
+    %Type{id: id, checksum: checksum, metadata: metadata}
   end
 end

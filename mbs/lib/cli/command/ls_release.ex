@@ -24,8 +24,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
     :ok
   end
 
-  @spec print_ls(ReleaseManifest.Release.t(), boolean()) :: :ok
-  defp print_ls(%ReleaseManifest.Release{} = release, true) do
+  @spec print_ls(ReleaseManifest.Type.t(), boolean()) :: :ok
+  defp print_ls(%ReleaseManifest.Type{} = release, true) do
     IO.puts(IO.ANSI.format([:bright, "#{release.id}", :normal, ":"]))
     IO.puts("  checksum:")
     IO.puts("    #{release.checksum}")
@@ -44,7 +44,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
     IO.puts("")
   end
 
-  defp print_ls(%ReleaseManifest.Release{} = release, false) do
+  defp print_ls(%ReleaseManifest.Type{} = release, false) do
     IO.puts(IO.ANSI.format([:bright, "#{release.id}"]))
   end
 end
