@@ -46,8 +46,8 @@ defmodule MBS.ReleaseManifest do
     }
   end
 
-  @spec write_release_manifest([Manifest.Type.t()], String.t(), nil | String.t()) :: :ok
-  def write_release_manifest(manifests, release_id, metadata) do
+  @spec write([Manifest.Type.t()], String.t(), nil | String.t()) :: :ok
+  def write(manifests, release_id, metadata) do
     release_dir = Path.join(Const.releases_dir(), release_id)
 
     release_manifest = %Type{

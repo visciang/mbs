@@ -149,8 +149,9 @@ defmodule MBS.Workflow.Job.RunBuild do
 
     Enum.each(upstream_targets_set, fn
       {dep_id, %Manifest.Target{type: :file, target: target_cache_path}} ->
+        target_filename = Path.basename(target_cache_path)
         dest_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
-        dest_dependency_path = Path.join(dest_dependency_dir, Path.basename(target_cache_path))
+        dest_dependency_path = Path.join(dest_dependency_dir, target_filename)
 
         File.mkdir_p!(dest_dependency_dir)
         File.cp!(target_cache_path, dest_dependency_path)

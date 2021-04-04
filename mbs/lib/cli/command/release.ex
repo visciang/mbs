@@ -63,7 +63,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
       end
 
     if res == :ok do
-      ReleaseManifest.write_release_manifest(deploy_manifests, id, metadata)
+      ReleaseManifest.write(deploy_manifests, id, metadata)
     end
 
     res
