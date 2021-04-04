@@ -4,15 +4,13 @@ defmodule MBS.Toolchain do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Const, Docker, Manifest, Utils}
+  alias MBS.{Const, Docker, Manifest}
   alias MBS.Workflow.Job
 
   require Reporter.Status
 
   @type opts :: [String.t()]
   @type env_list :: [{String.t(), String.t()}]
-
-  @local_dependencies_targets_dir ".deps"
 
   @spec build(Manifest.Toolchain.t()) :: :ok | {:error, term()}
   def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile, docker_opts: docker_opts}) do
@@ -34,7 +32,6 @@ defmodule MBS.Toolchain do
   @spec exec_build(Manifest.Component.t(), String.t(), Dask.Job.upstream_results(), String.t()) ::
           :ok | {:error, term()}
   def exec_build(%Manifest.Component{} = component, checksum, upstream_results, job_id) do
-    get_dependencies_targets(component, upstream_results)
     env = run_build_env_vars(component, checksum, upstream_results)
     run_opts = run_opts(component)
     exec(component, env, job_id, component.toolchain.steps, run_opts)
@@ -115,31 +112,6 @@ defmodule MBS.Toolchain do
     dir_mount_opts = ["-v", "#{mbs_release_volume}:#{Const.releases_dir()}"]
 
     opts ++ work_dir_opts ++ dir_mount_opts
-  end
-
-  @spec get_dependencies_targets(Manifest.Component.t(), Dask.Job.upstream_results()) :: :ok
-  defp get_dependencies_targets(%Manifest.Component{dir: dir}, upstream_results) do
-    local_dependencies_targets_dir = Path.join(dir, @local_dependencies_targets_dir)
-    File.rm_rf!(local_dependencies_targets_dir)
-    File.mkdir!(local_dependencies_targets_dir)
-
-    upstream_targets_set =
-      upstream_results
-      |> Map.values()
-      |> Enum.map(& &1.targets)
-      |> Utils.union_mapsets()
-
-    Enum.each(upstream_targets_set, fn
-      {dep_id, %Manifest.Target{type: :file, target: target_cache_path}} ->
-        dest_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
-        dest_dependency_path = Path.join(dest_dependency_dir, Path.basename(target_cache_path))
-
-        File.mkdir_p!(dest_dependency_dir)
-        File.cp!(target_cache_path, dest_dependency_path)
-
-      {_dep_id, %Manifest.Target{type: :docker}} ->
-        :ok
-    end)
   end
 
   @spec run_build_env_vars(Manifest.Component.t(), String.t(), Dask.Job.upstream_results()) :: env_list()
