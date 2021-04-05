@@ -4,7 +4,7 @@ defmodule MBS.CLI.Command.RunBuild do
 
   @type t :: %__MODULE__{
           targets: [String.t()],
-          force: nil | boolean()
+          force: boolean()
         }
 end
 

@@ -4,13 +4,11 @@ defmodule MBS.Workflow.Job.RunBuild do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Const, Docker, Manifest, Utils}
+  alias MBS.{Config, Const, DependencyManifest, Docker, Manifest, Utils}
   alias MBS.Toolchain
   alias MBS.Workflow.Job
 
   require Reporter.Status
-
-  @local_dependencies_targets_dir ".deps"
 
   @spec fun(Config.Data.t(), Manifest.Type.t(), boolean()) :: Job.job_fun()
   def fun(%Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain, force) do
@@ -49,11 +47,11 @@ defmodule MBS.Workflow.Job.RunBuild do
       checksum = Job.Utils.build_checksum(component, upstream_results)
 
       {report_status, report_desc} =
-        with :cache_miss <- cache_get_targets(Const.cache_dir(), id, checksum, targets, force),
-             :ok <- get_dependencies_targets(component, upstream_results),
-             :ok <- Toolchain.exec_build(component, checksum, upstream_results, job_id),
+        with :cache_miss <- cache_get_targets(id, checksum, targets, force),
+             changed_deps <- get_changed_dependencies_targets(component, upstream_results, force),
+             :ok <- Toolchain.exec_build(component, checksum, upstream_results, changed_deps, job_id),
              :ok <- assert_targets(targets, checksum),
-             :ok <- Job.Cache.put_targets(Const.cache_dir(), id, checksum, targets) do
+             :ok <- Job.Cache.put_targets(id, checksum, targets) do
           {Reporter.Status.ok(), checksum}
         else
           :cached ->
@@ -81,7 +79,7 @@ defmodule MBS.Workflow.Job.RunBuild do
   @spec transitive_targets(String.t(), String.t(), [Manifest.Target.t()], %{String.t() => Job.FunResult.t()}) ::
           MapSet.t(Manifest.Target.t())
   defp transitive_targets(id, checksum, targets, upstream_results) do
-    {:ok, expanded_targets} = Job.Cache.expand_targets_path(Const.cache_dir(), id, checksum, targets)
+    {:ok, expanded_targets} = Job.Cache.expand_targets_path(id, checksum, targets)
 
     expanded_targets_set =
       expanded_targets
@@ -106,12 +104,12 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec cache_get_targets(Path.t(), String.t(), String.t(), [Manifest.Target.t()], boolean()) :: :cache_miss | :cached
-  defp cache_get_targets(cache_dir, id, checksum, targets, force) do
+  @spec cache_get_targets(String.t(), String.t(), [Manifest.Target.t()], boolean()) :: :cache_miss | :cached
+  defp cache_get_targets(id, checksum, targets, force) do
     if force do
       :cache_miss
     else
-      Job.Cache.get_targets(cache_dir, id, checksum, targets)
+      Job.Cache.get_targets(id, checksum, targets)
     end
   end
 
@@ -135,11 +133,11 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec get_dependencies_targets(Manifest.Component.t(), %{String.t() => Job.FunResult.t()}) :: :ok
-  defp get_dependencies_targets(%Manifest.Component{dir: dir}, upstream_results) do
-    local_dependencies_targets_dir = Path.join(dir, @local_dependencies_targets_dir)
-    File.rm_rf!(local_dependencies_targets_dir)
-    File.mkdir!(local_dependencies_targets_dir)
+  @spec get_changed_dependencies_targets(Manifest.Component.t(), %{String.t() => Job.FunResult.t()}, boolean()) ::
+          [{Path.t(), DependencyManifest.Type.t()}]
+  defp get_changed_dependencies_targets(%Manifest.Component{dir: dir, toolchain: toolchain}, upstream_results, force) do
+    local_dependencies_targets_dir = Path.join(dir, Const.local_dependencies_targets_dir())
+    File.mkdir_p!(local_dependencies_targets_dir)
 
     upstream_targets_set =
       upstream_results
@@ -147,17 +145,59 @@ defmodule MBS.Workflow.Job.RunBuild do
       |> Enum.map(& &1.targets)
       |> Utils.union_mapsets()
 
-    Enum.each(upstream_targets_set, fn
-      {dep_id, %Manifest.Target{type: :file, target: target_cache_path}} ->
-        target_filename = Path.basename(target_cache_path)
-        dest_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
-        dest_dependency_path = Path.join(dest_dependency_dir, target_filename)
+    res_deps_changed =
+      Enum.reduce(upstream_targets_set, [], fn
+        {dep_id, %Manifest.Target{type: :file, target: target_cache_path}}, acc ->
+          target_checksum = target_cache_path |> Path.dirname() |> Path.basename()
+          target_filename = Path.basename(target_cache_path)
 
-        File.mkdir_p!(dest_dependency_dir)
-        File.cp!(target_cache_path, dest_dependency_path)
+          dest_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
+          dest_dependency_path = Path.join(dest_dependency_dir, target_filename)
 
-      {_dep_id, %Manifest.Target{type: :docker}} ->
-        :ok
-    end)
+          dependency_manifest_path = Path.join(dest_dependency_dir, Const.manifest_dependency_filename())
+
+          if force or dependency_changed?(dependency_manifest_path, target_checksum) do
+            File.mkdir_p!(dest_dependency_dir)
+            File.cp!(target_cache_path, dest_dependency_path)
+
+            item = {
+              dependency_manifest_path,
+              %DependencyManifest.Type{id: dep_id, checksum: target_checksum}
+            }
+
+            [item | acc]
+          else
+            acc
+          end
+
+        {_dep_id, %Manifest.Target{type: :docker}}, acc ->
+          acc
+      end)
+
+    toolchain_manifest_path = Path.join(local_dependencies_targets_dir, Const.manifest_dependency_filename())
+
+    res_toolchain_changed =
+      if dependency_changed?(toolchain_manifest_path, toolchain.checksum) do
+        [
+          {
+            toolchain_manifest_path,
+            %DependencyManifest.Type{id: toolchain.id, checksum: toolchain.checksum}
+          }
+        ]
+      else
+        []
+      end
+
+    res_toolchain_changed ++ res_deps_changed
+  end
+
+  @spec dependency_changed?(Path.t(), String.t()) :: boolean()
+  defp dependency_changed?(path, checksum) do
+    if File.exists?(path) do
+      dependency_manifest = DependencyManifest.load(path)
+      dependency_manifest.checksum != checksum
+    else
+      true
+    end
   end
 end

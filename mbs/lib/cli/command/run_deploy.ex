@@ -4,7 +4,7 @@ defmodule MBS.CLI.Command.RunDeploy do
 
   @type t :: %__MODULE__{
           release_id: String.t(),
-          force: nil | boolean()
+          force: boolean()
         }
 end
 

@@ -2,14 +2,14 @@
 
 set -e
 
-rm -rf .build/
-mkdir .build/
-
-# Install dependencies
-find .deps/ -name '*.js.tgz' -exec \
-    npm install --prefix=.build/ "{}" ";"
-
 case $1 in
+    deps_change)
+        rm -rf .build/
+        mkdir .build/
+
+        find .deps/ -name '*.js.tgz' -exec \
+            npm install --prefix=.build/ "{}" ";"
+        ;;
     build)
         npm ci
         npm pack

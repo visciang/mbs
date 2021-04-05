@@ -5,8 +5,9 @@
         "files": [
             "build.sh"
         ],
+        "deps_change_step": "deps_change",
         "steps": [
-            "deps",
+            "deps.get",
             "compile",
             "lint_fmt",
             "lint_xref_cycles",

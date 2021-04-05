@@ -91,21 +91,21 @@ The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMA
 
 ### MBS cache and release persistency
 
-MBS caches build artificats and releases artifacts in two specific directory (inside the mbs container).
+MBS caches **build artificats** and **releases artifacts** in two specific directory (inside the mbs container).
 
 - Cache: `/.mbs-cache`
 - Releases: `/.mbs-releases`
 - Graph: `/.mbs-graph`
 
-These directory should be mounted when running mbs otherwise you will loose the generated artificats between executions.
+These directories should be mounted when running mbs otherwise you will loose the generated artificats between executions (no caching!).
 
-The best approach is to "volume mount" these directories, for example to a host directory (bind mount) or to a docker volume (volume mount).
+The best approach is to "mount" these directories, for example to a host directory (bind mount) or to a docker volume (volume mount).
 More info in [MBS wrapper script](###MBS-wrapper-script).
 
 This approach is flexible enough to "share" the cache data between all the developers and the CI. It's enough to map the host dir to a "shared disk" (for example with S3FS-FUSE to share via aws S3, NFS, cifs, ...).
 
 In a basic and safe setup, the cache should be shared in "read-only" mode to the developers and "read-write" to the CI.
-This way the developers will see and re-use the artifact build by the CI while keeping a the simplicity / conflict-less approach of a single writer.
+Following this approach the developers will see and re-use the artifacts build by the CI while keeping the simplicity / conflict-less approach of a single cache writer.
 
 ### Environment variables
 
@@ -144,6 +144,8 @@ Environment variable that you can pass to `mbs`:
         "files": [
             "build.sh"
         ],
+        // [optional] step executed if and only if a dependency (transitively) change
+        "deps_change_step": "deps_change",
         // toolchains steps
         // the toolchain will be executed calling the toolchain docker image with
         // the following steps as command, sequentially
@@ -305,13 +307,23 @@ A set of predefined environment variables are available in the toolchain run con
 - `MBS_CHECKSUM`: component checksum
 - `MBS_CHECKSUM_<deps_name_normalized>`: one for every deps, the dependency checksum. For example, give a dependency named `my-lib` we will have `MBS_CHECKSUM_MY_LIB`.
 
-Note: this variables can be referenced in the "toolchain_opts" list.
+Note: these variables can be referenced in the "toolchain_opts" list.
 
 ### Dependencies directory
 
 Dependencies target are made available to the toolchain in the components base directory under `.deps/`. The toolchain will see all the targets from the **transive dependency closure** of the component.
 
 For example if a component A depends on a component B (that targets `b1.bin` and `b2.bin`) that depends on a component C (that targets `c1.bin`), then component A toolchains will see under `.deps/A/{b1.bin,b2.bin,c1.bin}`.
+
+### Dependencies change
+
+Given a component C dependent on another component D, if we detect a change in D then C is also re-built. In C's toolchain, as the first steps we normally install the component dependencies (public and internal dependencies).
+
+Internal dependencies are normally copied / installed so that they are visible in the component's build context and can be consumed in the build process.
+
+Now, if we execute this step unconditionally every time we run a component's build, we would install all the internal dependencies and maybe re-trigger their build wasting time. This re-build normally happens when we (or the language) share packages in source form and not compiled form, or when the language builder looks at timestamps (not checksums) to re-build its targets.
+
+This problem is addressed with the "deps_change_step" in the toolchain manifest, it will be executed as the very first step if and only if a dependency change. For example if you change a component source file and no dependency is changed, only the toolchain steps will be executed.
 
 ## MBS Development
 

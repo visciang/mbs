@@ -151,7 +151,7 @@ defmodule MBS.CLI.Args do
       Reporter.logs(options[:logs])
     end
 
-    %Command.RunBuild{targets: targets, force: options[:force]}
+    %Command.RunBuild{targets: targets, force: options[:force] || false}
   end
 
   def parse(["build", "outdated" | args]) do
@@ -322,7 +322,7 @@ defmodule MBS.CLI.Args do
       Reporter.logs(options[:logs])
     end
 
-    %Command.RunDeploy{release_id: release_id, force: options[:force]}
+    %Command.RunDeploy{release_id: release_id, force: options[:force] || false}
   end
 
   def parse(["deploy", "destroy" | args]) do

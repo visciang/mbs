@@ -25,7 +25,7 @@ defmodule MBS.Workflow.Job.Release do
       target = %Manifest.Target{type: :docker, target: id}
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(Const.cache_dir(), id, checksum, [target], targets_dir) do
+        case Job.Cache.copy_targets(id, checksum, [target], targets_dir) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 
@@ -63,7 +63,7 @@ defmodule MBS.Workflow.Job.Release do
       targets_dir = Path.join(release_dir, id)
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(Const.cache_dir(), id, build_checksum, deploy_targets, targets_dir) do
+        case Job.Cache.copy_targets(id, build_checksum, deploy_targets, targets_dir) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 

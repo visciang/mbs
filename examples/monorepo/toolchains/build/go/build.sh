@@ -48,7 +48,7 @@ mkdir -p $GOPATH/src
 
 # Install dependencies
 find .deps/ -name '*.go.tgz' -exec \
-    tar xzf "{}" -C $GOPATH/ ";"
+    tar -xzf "{}" -C $GOPATH/ ";"
 
 case $1 in
     build)

@@ -119,6 +119,7 @@ defmodule MBS.Manifest do
       checksum: Checksum.files_checksum(files_, dir),
       dockerfile: Path.join(dir, toolchain["dockerfile"]),
       files: files_,
+      deps_change_step: toolchain["deps_change_step"],
       steps: toolchain["steps"],
       destroy_steps: toolchain["destroy_steps"],
       docker_opts: docker_opts

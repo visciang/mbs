@@ -5,6 +5,7 @@
         "files": [
             "build.sh"
         ],
+        "deps_change_step": "deps_change",
         "steps": [
             "build"
         ]

@@ -28,6 +28,7 @@ mbs-*.tar
 .mbs-cache/
 .mbs-graph/
 .mbs-releases/
+.deps/
 
 **/.elixir_ls
 **/.plts/

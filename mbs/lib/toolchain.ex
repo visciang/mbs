@@ -4,7 +4,7 @@ defmodule MBS.Toolchain do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Const, Docker, Manifest}
+  alias MBS.{Const, DependencyManifest, Docker, Manifest}
   alias MBS.Workflow.Job
 
   require Reporter.Status
@@ -17,7 +17,7 @@ defmodule MBS.Toolchain do
     Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")
   end
 
-  @spec shell_cmd(Manifest.Component.t(), String.t(), Dask.Job.upstream_results()) :: String.t()
+  @spec shell_cmd(Manifest.Component.t(), String.t(), %{String.t() => Job.FunResult.t()}) :: String.t()
   def shell_cmd(
         %Manifest.Component{toolchain: toolchain} = component,
         checksum,
@@ -29,22 +29,42 @@ defmodule MBS.Toolchain do
     Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
   end
 
-  @spec exec_build(Manifest.Component.t(), String.t(), Dask.Job.upstream_results(), String.t()) ::
-          :ok | {:error, term()}
-  def exec_build(%Manifest.Component{} = component, checksum, upstream_results, job_id) do
+  @spec exec_build(
+          Manifest.Component.t(),
+          String.t(),
+          %{String.t() => Job.FunResult.t()},
+          [{Path.t(), DependencyManifest.Type.t()}],
+          String.t()
+        ) :: :ok | {:error, String.t()}
+  def exec_build(%Manifest.Component{} = component, checksum, upstream_results, changed_deps, job_id) do
     env = run_build_env_vars(component, checksum, upstream_results)
     run_opts = run_opts(component)
-    exec(component, env, job_id, component.toolchain.steps, run_opts)
+
+    deps_change_steps =
+      if changed_deps != [] and component.toolchain.deps_change_step do
+        [component.toolchain.deps_change_step]
+      else
+        []
+      end
+
+    with :ok <- exec(component, env, job_id, deps_change_steps, run_opts),
+         :ok <- exec(component, env, job_id, component.toolchain.steps, run_opts) do
+      Enum.each(changed_deps, fn {path, type} ->
+        DependencyManifest.write(path, type)
+      end)
+    else
+      error -> error
+    end
   end
 
-  @spec exec_deploy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, term()}
+  @spec exec_deploy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
   def exec_deploy(%Manifest.Component{} = component, checksum, job_id) do
     env = run_deploy_env_vars(component, checksum)
     run_opts = run_deploy_opts(component)
     exec(component, env, job_id, component.toolchain.steps, run_opts)
   end
 
-  @spec exec_destroy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, term()}
+  @spec exec_destroy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
   def exec_destroy(%Manifest.Component{} = component, checksum, job_id) do
     env = run_deploy_env_vars(component, checksum)
     component = put_in(component.toolchain.steps, ["destroy"])
@@ -52,13 +72,9 @@ defmodule MBS.Toolchain do
     exec(component, env, job_id, component.toolchain.destroy_steps, run_opts)
   end
 
-  @spec exec(Manifest.Component.t(), env_list(), String.t(), [String.t()], opts()) ::
-          :ok | {:error, String.t()}
+  @spec exec(Manifest.Component.t(), env_list(), String.t(), [String.t()], opts()) :: :ok | {:error, String.t()}
   defp exec(
-         %Manifest.Component{
-           toolchain: toolchain,
-           toolchain_opts: toolchain_opts
-         },
+         %Manifest.Component{toolchain: toolchain, toolchain_opts: toolchain_opts},
          env,
          job_id,
          toolchain_steps,
@@ -66,7 +82,7 @@ defmodule MBS.Toolchain do
        ) do
     toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
 
-    Enum.reduce_while(toolchain_steps, nil, fn toolchain_step, _ ->
+    Enum.reduce_while(toolchain_steps, :ok, fn toolchain_step, _ ->
       reporter_id = "#{job_id}:#{toolchain_step}"
       start_time = Reporter.time()
 
@@ -104,17 +120,19 @@ defmodule MBS.Toolchain do
     work_dir_opts = ["-w", "#{work_dir}"]
 
     # NOTE: mbs container will run the toolchain in "docker-in-docker"
-    # A Docker container in a Docker container uses the parent HOST's Docker daemon and hence,
-    # any volumes that are mounted in the "docker-in-docker" case is still referenced from the HOST,
-    # and not from the Container.
-    # That's why we mount the original host docker volume  (env variable $MBS_RELEASE_VOLUME)
+    # A Docker container in a Docker container uses the parent HOST's
+    # Docker daemon and hence,  any volumes that are mounted in the
+    # "docker-in-docker" case is still referenced from the HOST, and
+    # not from the Container.
+    # That's why we mount the original host docker volume via the
+    # evnironment variable MBS_RELEASE_VOLUME
     mbs_release_volume = System.fetch_env!("MBS_RELEASE_VOLUME")
     dir_mount_opts = ["-v", "#{mbs_release_volume}:#{Const.releases_dir()}"]
 
     opts ++ work_dir_opts ++ dir_mount_opts
   end
 
-  @spec run_build_env_vars(Manifest.Component.t(), String.t(), Dask.Job.upstream_results()) :: env_list()
+  @spec run_build_env_vars(Manifest.Component.t(), String.t(), %{String.t() => Job.FunResult.t()}) :: env_list()
   defp run_build_env_vars(
          %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
          checksum,

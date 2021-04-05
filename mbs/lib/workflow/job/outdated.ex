@@ -4,7 +4,7 @@ defmodule MBS.Workflow.Job.Outdated do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Const, Manifest}
+  alias MBS.{Config, Manifest}
   alias MBS.Workflow.Job
 
   require Reporter.Status
@@ -24,7 +24,7 @@ defmodule MBS.Workflow.Job.Outdated do
     fn job_id, upstream_results ->
       checksum = Job.Utils.build_checksum(component, upstream_results)
 
-      unless Job.Cache.hit_targets(Const.cache_dir(), id, checksum, targets) do
+      unless Job.Cache.hit_targets(id, checksum, targets) do
         Reporter.job_report(job_id, Reporter.Status.outdated(), checksum, nil)
       end
 

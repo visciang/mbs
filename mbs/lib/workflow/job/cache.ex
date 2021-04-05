@@ -4,7 +4,7 @@ defmodule MBS.Workflow.Job.Cache do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Cache, Docker}
+  alias MBS.{Cache, Const, Docker}
   alias MBS.Manifest.Target
 
   require MBS.CLI.Reporter.Status
@@ -14,11 +14,11 @@ defmodule MBS.Workflow.Job.Cache do
     Docker.image_exists(id, checksum)
   end
 
-  @spec hit_targets(Path.t(), String.t(), String.t(), [String.t()]) :: boolean
-  def hit_targets(cache_dir, id, checksum, targets) do
+  @spec hit_targets(String.t(), String.t(), [String.t()]) :: boolean
+  def hit_targets(id, checksum, targets) do
     Enum.all?(targets, fn
       %Target{type: :file, target: target} ->
-        Cache.hit(cache_dir, id, checksum, target)
+        Cache.hit(Const.cache_dir(), id, checksum, target)
 
       %Target{type: :docker, target: target} ->
         Docker.image_exists(target, checksum)
@@ -34,12 +34,12 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  @spec get_targets(Path.t(), String.t(), String.t(), [String.t()]) :: :cache_miss | :cached
-  def get_targets(cache_dir, id, checksum, targets) do
+  @spec get_targets(String.t(), String.t(), [String.t()]) :: :cache_miss | :cached
+  def get_targets(id, checksum, targets) do
     found_all_targets =
       Enum.all?(targets, fn
         %Target{type: :file, target: target} ->
-          match?({:ok, _}, Cache.get(cache_dir, id, checksum, target))
+          match?({:ok, _}, Cache.get(Const.cache_dir(), id, checksum, target))
 
         %Target{type: :docker, target: target} ->
           Docker.image_exists(target, checksum)
@@ -52,12 +52,12 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  @spec expand_targets_path(Path.t(), String.t(), String.t(), [Target.t()]) :: :error | {:ok, [Target.t()]}
-  def expand_targets_path(cache_dir, id, checksum, targets) do
+  @spec expand_targets_path(String.t(), String.t(), [Target.t()]) :: :error | {:ok, [Target.t()]}
+  def expand_targets_path(id, checksum, targets) do
     targets
     |> Enum.reduce_while([], fn
       %Target{type: :file, target: target} = t, expanded_targets ->
-        case Cache.get(cache_dir, id, checksum, target) do
+        case Cache.get(Const.cache_dir(), id, checksum, target) do
           {:ok, target_cache_path} ->
             t = put_in(t.target, target_cache_path)
             {:cont, [t | expanded_targets]}
@@ -76,11 +76,11 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  @spec put_targets(Path.t(), String.t(), String.t(), [String.t()]) :: :ok
-  def put_targets(cache_dir, id, checksum, targets) do
+  @spec put_targets(String.t(), String.t(), [String.t()]) :: :ok
+  def put_targets(id, checksum, targets) do
     Enum.each(targets, fn
       %Target{type: :file, target: target} ->
-        Cache.put(cache_dir, id, checksum, target)
+        Cache.put(Const.cache_dir(), id, checksum, target)
 
       %Target{type: :docker, target: _target} ->
         :ok
@@ -94,14 +94,14 @@ defmodule MBS.Workflow.Job.Cache do
     :ok
   end
 
-  @spec copy_targets(Path.t(), String.t(), String.t(), [Target.t()], Path.t()) :: :ok | {:error, term()}
-  def copy_targets(cache_dir, id, checksum, targets, output_dir) do
+  @spec copy_targets(String.t(), String.t(), [Target.t()], Path.t()) :: :ok | {:error, term()}
+  def copy_targets(id, checksum, targets, output_dir) do
     File.mkdir_p!(output_dir)
 
     Enum.reduce_while(targets, :ok, fn
       %Target{type: :file, target: target}, _ ->
-        if Cache.hit(cache_dir, id, checksum, target) do
-          cache_target_path = Cache.path(cache_dir, id, checksum, target)
+        if Cache.hit(Const.cache_dir(), id, checksum, target) do
+          cache_target_path = Cache.path(Const.cache_dir(), id, checksum, target)
           release_target_path = Path.join(output_dir, Path.basename(target))
 
           Reporter.job_report(

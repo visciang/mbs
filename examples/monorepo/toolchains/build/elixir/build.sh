@@ -59,7 +59,7 @@ args()
     done
 }
 
-mbs_dep_get()
+mbs_deps_change()
 {
     find .deps/ -name '*.ex.tgz' -exec sh -c \
         '
@@ -77,8 +77,10 @@ mbs_dep_get()
 args $0 "$@"
 
 case $1 in
-    deps)
-        mbs_dep_get
+    deps_change)
+        mbs_deps_change
+        ;;
+    deps.get)
         mix deps.get
         ;;
     compile)
