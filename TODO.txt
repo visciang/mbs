@@ -1,9 +1,8 @@
 cache:
 - possibility to cache a toolchain step (for example to cache deps)
-- custom containter cache dir?
 
 deploy:
-- deploy state (to deploy only if needed, we should multi environment deployments)
+- deploy state (to deploy only if needed, we should support multi environment deployments)
 
 execution:
 - pass e json env variable to toolchains run with all the MBS_* vars and metadata
@@ -14,10 +13,9 @@ execution:
   --init anche su toolchain "docker run"?
 
 manifest:
-- .mbs-config.json sezione file_profiles
-- lookup .mbs-config.json from the current directory up (like asdf)
 - currently we apply a recursive glob discover of manifests, introduce a components manifest to explicitly list them (usefull also to add/remove a component from the run)
   it scales well in big repository with lot's of untracked file (-> node_modules)
+- .mbs-config.json sezione file_profiles
 - Config option use .gitignore to filter job.files
 
 misc
@@ -41,7 +39,6 @@ support / doc
   BUILD:
     - NodeJS / Deno
     - Ruby
-    - Elixir
     - Rust
     https://medium.com/underdog-io-engineering/vendoring-python-dependencies-with-pip-b9eb6078b9c0
   DEPLOY:
