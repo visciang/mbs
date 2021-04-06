@@ -7,13 +7,14 @@ defmodule MBS.Manifest.Validator do
 
   @name_regex "^[a-zA-Z0-9_-]+$"
 
-  @spec validate([map()]) :: [map()]
-  def validate(manifests) do
+  @spec validate([map()], [String.t()]) :: [map()]
+  def validate(manifests, files_profile) do
     validate_schema(manifests)
 
     ids = MapSet.new(manifests, & &1["id"])
     validate_unique_id(manifests, ids)
     validate_components(manifests, ids)
+    validate_files_profile(manifests, MapSet.new(files_profile))
 
     manifests
   end
@@ -115,8 +116,21 @@ defmodule MBS.Manifest.Validator do
       Utils.halt(message)
     end
 
+    unless component["files"] != nil or component["files_profile"] != nil do
+      message = error_message(dir, "One of file/files_profile should be defined")
+      Utils.halt(message)
+    end
+
+    unless component["files_profile"] == nil or is_binary(component["files_profile"]) do
+      message = error_message(dir, "Bad files_profile type")
+      Utils.halt(message)
+    end
+
+    if component["files"] do
+      validate_list_of_strings(component, ["files"], dir)
+    end
+
     validate_list_of_strings(component, ["toolchain_opts"], dir)
-    validate_list_of_strings(component, ["files"], dir)
     validate_list_of_strings(component, ["targets"], dir)
     validate_list_of_strings(component, ["dependencies"], dir)
   end
@@ -174,6 +188,19 @@ defmodule MBS.Manifest.Validator do
 
       unless MapSet.member?(toolchains_ids, component["toolchain"]) do
         message = error_message(dir, "Unknown toolchain #{inspect(component["toolchain"])}")
+        Utils.halt(message)
+      end
+    end)
+  end
+
+  @spec validate_files_profile([map()], MapSet.t(String.t())) :: :ok
+  defp validate_files_profile(manifests, available_files_profile) do
+    Enum.each(manifests, fn manifest ->
+      dir = manifest["dir"]
+      files_profile = manifest[manifest["__schema__"]]["files_profile"]
+
+      unless files_profile == nil or MapSet.member?(available_files_profile, files_profile) do
+        message = error_message(dir, "Unknown files_profile #{files_profile}")
         Utils.halt(message)
       end
     end)

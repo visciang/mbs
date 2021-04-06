@@ -18,7 +18,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
     if dot_command_installed?() do
       File.mkdir_p!(Const.graph_dir())
 
-      Manifest.find_all(type)
+      Manifest.find_all(type, config)
       |> Utils.transitive_dependencies_closure(target_ids)
       |> Workflow.workflow(config, &null_fun/2)
       |> Dask.Dot.export()

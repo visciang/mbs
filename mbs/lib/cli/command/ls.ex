@@ -14,10 +14,10 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   alias MBS.{Config, Manifest}
 
   @spec run(Command.Ls.t(), Config.Data.t()) :: :ok
-  def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{}) do
+  def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{} = config) do
     IO.puts("")
 
-    Manifest.find_all(type)
+    Manifest.find_all(type, config)
     |> Enum.filter(&Utils.filter_manifest_by_id(&1.id, target_ids))
     |> Enum.sort_by(& &1.id)
     |> Enum.each(&print_ls(&1, type, verbose))

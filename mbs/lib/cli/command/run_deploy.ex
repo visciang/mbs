@@ -19,7 +19,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunDeploy do
     IO.puts("\nRunning release '#{release.id}' deploy (#{release.checksum})\n")
 
     dask =
-      Manifest.find_all(:deploy, release_dir)
+      Manifest.find_all(:deploy, config, release_dir)
       |> Workflow.workflow(config, &Workflow.Job.RunDeploy.fun(&1, &2, force), &Workflow.Job.OnExit.fun/3)
 
     dask_exec =

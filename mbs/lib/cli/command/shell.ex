@@ -14,7 +14,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
 
   @spec run(Command.Shell.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config) do
-    manifests = Manifest.find_all(:build)
+    manifests = Manifest.find_all(:build, config)
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)
 
     CLI.Command.run(%Command.RunBuild{targets: target_direct_dependencies}, config)
@@ -23,7 +23,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config) do
     Reporter.mute(true)
 
-    manifests = Manifest.find_all(:build)
+    manifests = Manifest.find_all(:build, config)
 
     dask =
       manifests

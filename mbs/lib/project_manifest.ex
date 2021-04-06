@@ -7,8 +7,8 @@ defmodule MBS.ProjectManifest do
 
   alias MBS.{Const, Manifest, Utils}
 
-  @spec load(Manifest.Type.type(), Path.t()) :: [Path.t()]
-  def load(type, manifest_path) do
+  @spec load(Path.t(), Manifest.Type.type()) :: [Path.t()]
+  def load(manifest_path, type) do
     dir = Path.dirname(manifest_path)
 
     manifest_path

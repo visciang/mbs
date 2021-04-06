@@ -10,11 +10,14 @@ defmodule MBS.Config.Data do
           }
   end
 
-  defstruct [:parallelism, :timeout]
+  defstruct [:parallelism, :timeout, :files_profile]
+
+  @type files_profiles :: %{String.t() => [String.t()]}
 
   @type t :: %__MODULE__{
           parallelism: non_neg_integer(),
-          timeout: timeout()
+          timeout: timeout(),
+          files_profile: files_profiles()
         }
 end
 
@@ -74,6 +77,13 @@ defmodule MBS.Config do
         conf
       end
 
+    conf =
+      if conf["files_profile"] == nil do
+        put_in(conf["files_profile"], %{})
+      else
+        conf
+      end
+
     conf
   end
 
@@ -81,6 +91,7 @@ defmodule MBS.Config do
   defp validate(conf) do
     validate_parallelism(conf["parallelism"])
     validate_timeout(conf["timeout"])
+    validate_files_profile(conf["files_profile"])
     conf
   end
 
@@ -102,11 +113,25 @@ defmodule MBS.Config do
     :ok
   end
 
+  @spec validate_timeout(map()) :: :ok
+  defp validate_files_profile(files_profile) do
+    unless is_map(files_profile) do
+      Utils.halt("Bad files_profile in #{Const.config_file()}")
+    end
+
+    Enum.each(files_profile, fn {profile_id, files} ->
+      unless Enum.all?(files, &is_binary/1) do
+        Utils.halt("Bad #{profile_id} files_profile value in #{Const.config_file()}")
+      end
+    end)
+  end
+
   @spec to_struct(map()) :: Data.t()
   defp to_struct(conf) do
     %Data{
       parallelism: conf["parallelism"],
-      timeout: conf["timeout"]
+      timeout: conf["timeout"],
+      files_profile: conf["files_profile"]
     }
   end
 end

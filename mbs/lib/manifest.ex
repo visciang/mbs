@@ -3,21 +3,23 @@ defmodule MBS.Manifest do
   MBS manifest functions
   """
 
-  alias MBS.{Checksum, Const, ProjectManifest, Utils}
+  alias MBS.{Checksum, Config, Const, ProjectManifest, Utils}
   alias MBS.Manifest.{Component, Target, Toolchain, Type, Validator}
 
-  @spec find_all(Type.type(), Path.t()) :: [Type.t()]
-  def find_all(type, in_dir \\ ".") do
+  @spec find_all(Type.type(), Config.Data.t(), Path.t()) :: [Type.t()]
+  def find_all(type, %Config.Data{files_profile: files_profile}, in_dir \\ ".") do
     project_manifest_path = Path.join(in_dir, Const.manifest_project_filename())
+    available_files_profiles = Map.keys(files_profile)
 
-    ProjectManifest.load(type, project_manifest_path)
+    project_manifest_path
+    |> ProjectManifest.load(type)
     |> Enum.map(fn manifest_path ->
       manifest_path
       |> decode()
       |> add_defaults(manifest_path)
     end)
-    |> Validator.validate()
-    |> Enum.map(&to_struct(type, &1))
+    |> Validator.validate(available_files_profiles)
+    |> Enum.map(&to_struct(type, &1, files_profile))
     |> add_toolchain_data()
   end
 
@@ -64,30 +66,34 @@ defmodule MBS.Manifest do
   defp add_defaults_build(manifest) do
     manifest = Map.put(manifest, "__schema__", "component")
 
-    if manifest["component"] do
-      manifest = put_in(manifest["component"]["toolchain_opts"], manifest["component"]["toolchain_opts"] || [])
-      manifest = put_in(manifest["component"]["targets"], manifest["component"]["targets"] || [])
-      put_in(manifest["component"]["dependencies"], manifest["component"]["dependencies"] || [])
-    else
-      manifest
-    end
+    manifest = put_in(manifest["component"]["toolchain_opts"], manifest["component"]["toolchain_opts"] || [])
+    manifest = put_in(manifest["component"]["targets"], manifest["component"]["targets"] || [])
+    manifest = put_in(manifest["component"]["files"], manifest["component"]["files"] || [])
+    put_in(manifest["component"]["dependencies"], manifest["component"]["dependencies"] || [])
   end
 
   @spec add_defaults_toolchain(map()) :: map()
   defp add_defaults_toolchain(manifest) do
     manifest = Map.put(manifest, "__schema__", "toolchain")
+    manifest = put_in(manifest["toolchain"]["files"], manifest["toolchain"]["files"] || [])
     put_in(manifest["toolchain"]["destroy_steps"], manifest["toolchain"]["destroy_steps"] || [])
   end
 
-  @spec to_struct(Type.type(), map()) :: Type.t()
-  defp to_struct(type, %{
-         "__schema__" => "component",
-         "id" => id,
-         "dir" => dir,
-         "timeout" => timeout,
-         "component" => component,
-         "docker_opts" => docker_opts
-       }) do
+  @spec to_struct(Type.type(), map(), Config.Data.files_profiles()) :: Type.t()
+  defp to_struct(
+         type,
+         %{
+           "__schema__" => "component",
+           "id" => id,
+           "dir" => dir,
+           "timeout" => timeout,
+           "component" => component,
+           "docker_opts" => docker_opts
+         },
+         files_profile
+       ) do
+    f_prof = Map.get(files_profile, component["files_profile"], [])
+
     %Component{
       type: type,
       id: id,
@@ -95,22 +101,27 @@ defmodule MBS.Manifest do
       timeout: timeout,
       toolchain: component["toolchain"],
       toolchain_opts: component["toolchain_opts"],
-      files: files(type, dir, component["files"]),
+      files: files(type, dir, f_prof ++ component["files"]),
       targets: targets(dir, component["targets"]),
       dependencies: component["dependencies"],
       docker_opts: docker_opts
     }
   end
 
-  defp to_struct(type, %{
-         "__schema__" => "toolchain",
-         "id" => id,
-         "dir" => dir,
-         "timeout" => timeout,
-         "toolchain" => toolchain,
-         "docker_opts" => docker_opts
-       }) do
-    files_ = files(:build, dir, [toolchain["dockerfile"] | toolchain["files"]])
+  defp to_struct(
+         type,
+         %{
+           "__schema__" => "toolchain",
+           "id" => id,
+           "dir" => dir,
+           "timeout" => timeout,
+           "toolchain" => toolchain,
+           "docker_opts" => docker_opts
+         },
+         files_profile
+       ) do
+    f_prof = Map.get(files_profile, toolchain["files_profile"], [])
+    files_ = files(:build, dir, [toolchain["dockerfile"]] ++ f_prof ++ toolchain["files"])
 
     %Toolchain{
       type: type,

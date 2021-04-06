@@ -1,2 +1,10 @@
 {
+    "files_profile": {
+        "elixir": [
+            ".formatter.exs",
+            "mix.{exs,lock}",
+            "config/*.exs",
+            "{apps,lib,test}/**/*.{ex,exs}"
+        ]
+    }
 }

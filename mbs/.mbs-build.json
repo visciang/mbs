@@ -2,12 +2,7 @@
     "id": "mbs",
     "component": {
         "toolchain": "toolchain-mbs",
-        "files": [
-            ".formatter.exs",
-            "mix.{exs,lock}",
-            "{lib,test}/**/*.{ex,exs}",
-            "!test/mbs/sample/**/*"
-        ],
+        "files_profile": "elixir",
         "targets": [
             "mbs"
         ]

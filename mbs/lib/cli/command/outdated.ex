@@ -12,7 +12,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Outdated do
   @spec run(Command.Outdated.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(%Command.Outdated{}, %Config.Data{} = config) do
     dask =
-      Manifest.find_all(:build)
+      Manifest.find_all(:build, config)
       |> Workflow.workflow(config, &Workflow.Job.Outdated.fun/2)
 
     dask_exec =

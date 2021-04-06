@@ -5,16 +5,12 @@ deploy:
 - deploy state (to deploy only if needed, we should support multi environment deployments)
 
 execution:
+- docker-compose support
 - pass e json env variable to toolchains run with all the MBS_* vars and metadata
   (should be a better / more flexible contract)
-- docker-compose support
 - podman / docker executor choice ?
 - System.cmd replacement (occhio agli zombi), ma serve se stacchiamo toolchain exec con docker?
   --init anche su toolchain "docker run"?
-
-manifest:
-- .mbs-config.json sezione file_profiles
-- Config option use .gitignore to filter job.files
 
 misc
 - docker image namespacing

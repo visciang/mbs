@@ -15,7 +15,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
   @spec run(Command.RunBuild.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(%Command.RunBuild{targets: target_ids, force: force}, %Config.Data{} = config) do
     dask =
-      Manifest.find_all(:build)
+      Manifest.find_all(:build, config)
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
       |> Workflow.workflow(
         config,

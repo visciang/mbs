@@ -23,14 +23,14 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     File.mkdir_p!(output_dir)
 
     deploy_manifests =
-      Manifest.find_all(:deploy)
+      Manifest.find_all(:deploy, config)
       |> filter_used_toolchains()
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
 
     build_targets_id = Enum.map(deploy_manifests, & &1.id)
 
     build_manifests =
-      Manifest.find_all(:build)
+      Manifest.find_all(:build, config)
       |> CLI.Utils.transitive_dependencies_closure(build_targets_id)
 
     validate_deploy_files(build_manifests, deploy_manifests)

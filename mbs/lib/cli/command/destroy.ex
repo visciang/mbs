@@ -17,7 +17,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Destroy do
 
     IO.puts("\nDestroying deploy release '#{release.id}' (#{release.checksum})\n")
 
-    manifests = Manifest.find_all(:deploy, release_dir)
+    manifests = Manifest.find_all(:deploy, config, release_dir)
 
     with {:ok, _} <- load_toolchains(config, manifests),
          {:ok, _} <- run_destroy(config, manifests) do

@@ -150,7 +150,20 @@ MBS execution global configuration parameters.
     "parallelism": 16,
     // [optional] timeout: components run global timeout sec
     // [default] infinity
-    "timeout": 3600
+    "timeout": 3600,
+    // [optional] files_profile: a set of predefined files profile
+    "files_profile": {
+        "elixir": [
+            ".formatter.exs",
+            "mix.{exs,lock}",
+            "config/*.exs",
+            "{apps,lib,test}/**/*.{ex,exs}"
+        ],
+        "c": [
+            "**/*.{c,h}",
+            "CMakeLists.txt",
+        ]
+    }
 }
 ```
 
@@ -166,12 +179,15 @@ MBS execution global configuration parameters.
     "toolchain": {
         // dockerfile: toolchain dockerfile
         "dockerfile": "Dockerfile",
+        // [at least one of] files | files_profile
         // files: build "input" files (glob expression allowed)
         // these are the files "watched" for changes,
         // define this list very carefully
+        // files_profile: the config file profile to use
         "files": [
             "build.sh"
         ],
+        "files_profile": "...",
         // [optional] deps_change_step: step executed if and only if
         // a dependency (transitively) change
         "deps_change_step": "deps_change",
@@ -210,14 +226,17 @@ MBS execution global configuration parameters.
         // passed to every toolchain "step" commands
         // MBS_* environment variable expansion supported
         "toolchain_opts": ["--type", "app"],
+        // [at least one of] files | files_profile
         // files: build "input" files (glob expression allowed)
         // these are the files "watched" for changes,
         // define this list very carefully
+        // files_profile: the config file profile to use
         "files": [
             "**/*.c",
             // glob negation via "!"
             "!example/**/*"
         ],
+        "files_profile": "...",
         // targets: build output targets
         // supported target are files (via file:// scheme or no scheme)
         // and docker images (docker://)
@@ -275,6 +294,28 @@ MBS execution global configuration parameters.
     "docker_opts": []
 }
 ```
+
+## Files and files_profile rules
+
+The global config key "files_profile" defines a **set of predefined files profile**
+that can be referenced in the single components to avoid duplication.
+
+In the component's manifest it's possible to specify both a file_profile and a files list. In this case files rules will override the one in file_profiles.
+
+For example, give the following component's manifest:
+
+```js
+{
+    "id": "an_elixir_component"
+    "files_profile": "elixir",
+    "files": [
+        "!**/*.tmp.ex"
+    ]
+}
+```
+
+mbs will track and watch files collected from the elixir profile rules but nothing that could match
+files like "*.tmp.ex".
 
 ## Toolchains development
 
