@@ -111,18 +111,45 @@ Following this approach the developers will see and re-use the artifacts build b
 
 Environment variable that you can pass to `mbs`:
 
-- `LOG_LEVEL`: set log level. For example `LOG_LEVEL="debug` to turn on debug logs.
+- `LOG_LEVEL`: set log level. For example `LOG_LEVEL="debug"` to turn on debug logs.
 - `LOG_COLOR`: enable / disable color. For example `LOG_LEVEL="true"`, `LOG_LEVEL="false"`.
 
+### Project
+
+The project file should be placed in the repository root folder.
+It lists all the components and toolchains folders. 
+
+The approach of mbs is to have an explicit component's inclusion and it doesn't support auto-discovery. Auto-discovery (via wildcard globs search) works well in small repository, but is heavy on the FS when you work on repositories with lots of (git untracked) files.
+
+Even more, being explicit, you can put in or out a component just adding or removing the component directory from the project file.
+
+`.mbs-project.json`
+
+```js
+{
+    "dirs": [
+        "components/a",
+        "components/b",
+        "components/c",
+        "toolchains/x",
+        "toolchains/y",
+    ]
+}
+```
+
 ### Global configuration
+
+MBS execution global configuration parameters.
 
 `.mbs-config.json`
 
 ```js
 {
-    // parallelism: [optional] run parallelism (default: available cores)
+    // [optional] parallelism: run parallelism
+    // [default] n. available cores
     "parallelism": 16,
-    // timeout: [optional] components build global timeout sec (default: infinity)
+    // [optional] timeout: components run global timeout sec
+    // [default] infinity
     "timeout": 3600
 }
 ```
@@ -131,24 +158,26 @@ Environment variable that you can pass to `mbs`:
 
 ```js
 {
-    // toolchain identifier
+    // id: toolchain identifier
     "id": "toolchain-abc",
-    // timeout: [optional] toolchain build timeout sec (default: global | :infinity)
+    // [optional] timeout: toolchain build timeout sec
+    // [default] the global one | infinity
     "timeout": 3600,
     "toolchain": {
-        // toolchain dockerfile
+        // dockerfile: toolchain dockerfile
         "dockerfile": "Dockerfile",
-        // build "input" files (glob expression allowed)
-        // these are the files "watched" for changes
+        // files: build "input" files (glob expression allowed)
+        // these are the files "watched" for changes,
         // define this list very carefully
         "files": [
             "build.sh"
         ],
-        // [optional] step executed if and only if a dependency (transitively) change
+        // [optional] deps_change_step: step executed if and only if
+        // a dependency (transitively) change
         "deps_change_step": "deps_change",
-        // toolchains steps
-        // the toolchain will be executed calling the toolchain docker image with
-        // the following steps as command, sequentially
+        // steps: toolchains steps
+        // the toolchain will be executed calling the toolchain docker
+        // image with the following steps as command, sequentially
         "steps": [
             "deps",
             "compile",
@@ -156,8 +185,8 @@ Environment variable that you can pass to `mbs`:
             "test",
             "build"
         ]
-        // [optional] toolchain destroy steps
-        // This is tipically used when defining a "deploy" toolchain
+        // [optional] destroy_steps: toolchain destroy steps
+        // this is tipically used when defining a "deploy" toolchain
         "destroy_steps": [
             "destroy"
         ]
@@ -169,38 +198,42 @@ Environment variable that you can pass to `mbs`:
 
 ```js
 {
-    // component identifier
+    // id: component identifier
     "id": "component-xyz",
-    // timeout: [optional] components build timeout sec (default: global | :infinity)
+    // [optional] timeout: components build timeout sec
+    // [default] the global one | infinity
     "timeout": 3600,
     "component": {
-        // toolchain used to build the component
+        // toolchain: toolchain used to build the component
         "toolchain": "toolchain-abc",
-        // [optional] toolchain run options (passed to every toolchain "step" commands)
+        // [optional] toolchain_opts: toolchain run options
+        // passed to every toolchain "step" commands
         // MBS_* environment variable expansion supported
         "toolchain_opts": ["--type", "app"],
-        // build "input" files (glob expression allowed)
-        // these are the files "watched" for changes
+        // files: build "input" files (glob expression allowed)
+        // these are the files "watched" for changes,
         // define this list very carefully
         "files": [
             "**/*.c",
             // glob negation via "!"
             "!example/**/*"
         ],
-        // build output targets
-        // target supported are files (via file:// scheme or no scheme)
+        // targets: build output targets
+        // supported target are files (via file:// scheme or no scheme)
         // and docker images (docker://)
         "targets": [
             "xyz-target.bin"
         ],
-        // [optional] build "dependencies", components this build depends on.
+        // [optional] dependencies: build "dependencies"
+        // components this build depends on.
         // This is the element that define the build graph.
-        // These dependencies will run before the current component and their target
-        // will be available to this component
+        // These dependencies will run before the current
+        // component and their target will be available to this component
         "dependencies": [
             "xyz-library"
         ],
-        // [optional] specific "docker run" options to add when running the toolchain
+        // [optional] docker_opts: specific "docker run" options to add
+        // when running the toolchain
         "docker_opts": ["--net", "host"]
     }
 }
@@ -210,28 +243,35 @@ Environment variable that you can pass to `mbs`:
 
 ```js
 {
-    // component identifier
+    // id: component identifier
     "id": "component-xyz",
-    // timeout: [optional] components deploy timeout sec (default: global | :infinity)
+    // [optional] timeout: components deploy timeout sec
+    // [default] the global one | infinity
     "timeout": 3600,
     "component": {
-        // toolchain used to deploy the component's target
+        // toolchain: toolchain used to deploy the component's target
         "toolchain": "toolchain-abc",
-        // [optional] toolchain run options (passed to every toolchain "step" commands)
+        // [optional] toolchain_opts: toolchain run options
+        // passed to every toolchain "step" commands
         // MBS_* environment variable expansion supported
         "toolchain_opts": ["--type", "app"],
-        // toolchain deployed artifacts (this should be a subset of targets in the same component .mbs-build.json manifest)
+        // files: toolchain deployed artifacts
+        // this should be a subset of targets in the same
+        // component .mbs-build.json manifest
         "files": [
             "xyz-target.bin"
         ],
-        // deploy "dependencies".
-        // This is the element that define the deploy graph.
-        // These dependencies will run before the current component.
+        // [optional] dependencies: deploy "dependencies"
+        //  components this deploy depends on.
+        //  This is the element that define the build graph.
+        //  These dependencies will run before the current
+        //  component and their target will be available
+        //  to this component
         "dependencies": [
             "xyz-infrastructure"
         ]
     },
-    // [optional] specific "docker build" options to add when running toolchain build
+    // [optional] specific "docker build" options to add when running a toolchain build
     "docker_opts": []
 }
 ```

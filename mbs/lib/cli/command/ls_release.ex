@@ -37,7 +37,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
 
     IO.puts("  components:")
 
-    ReleaseManifest.find_all_metadata()
+    ReleaseManifest.find_all_metadata(release.id)
     |> Enum.sort_by(& &1["id"])
     |> Enum.each(&IO.puts("  - #{&1["id"]}  (#{&1["checksum"]})"))
 

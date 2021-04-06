@@ -3,16 +3,14 @@ defmodule MBS.Manifest do
   MBS manifest functions
   """
 
-  alias MBS.{Checksum, Const, Utils}
+  alias MBS.{Checksum, Const, ProjectManifest, Utils}
   alias MBS.Manifest.{Component, Target, Toolchain, Type, Validator}
 
-  @spec find_all(Type.type(), Path.t(), boolean()) :: [Type.t()]
-  def find_all(type, in_dir \\ ".", exclude_mbs_private_dirs \\ true) do
-    exclude_dirs = if exclude_mbs_private_dirs, do: Const.mbs_dirs(), else: []
+  @spec find_all(Type.type(), Path.t()) :: [Type.t()]
+  def find_all(type, in_dir \\ ".") do
+    project_manifest_path = Path.join(in_dir, Const.manifest_project_filename())
 
-    Path.join([in_dir, "**", "#{manifest_name(type)}"])
-    |> Path.wildcard(match_dot: true)
-    |> reject_files_in_dirs(exclude_dirs)
+    ProjectManifest.load(type, project_manifest_path)
     |> Enum.map(fn manifest_path ->
       manifest_path
       |> decode()
@@ -29,15 +27,6 @@ defmodule MBS.Manifest do
 
   defp manifest_name(:deploy),
     do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_deploy_filename()}}"
-
-  @spec reject_files_in_dirs([Path.t()], [Path.t()]) :: [Path.t()]
-  defp reject_files_in_dirs(paths, dirs) do
-    Enum.reject(paths, fn path ->
-      dirs
-      |> Enum.map(&Path.basename/1)
-      |> Enum.any?(fn dir -> dir in Path.split(path) end)
-    end)
-  end
 
   @spec decode(Path.t()) :: map()
   defp decode(manifest_path) do
@@ -60,22 +49,34 @@ defmodule MBS.Manifest do
 
     manifest = put_in(manifest["docker_opts"], manifest["docker_opts"] || [])
 
-    cond do
-      Path.basename(manifest_path) in [Const.manifest_build_filename(), Const.manifest_deploy_filename()] ->
-        manifest = Map.put(manifest, "__schema__", "component")
+    manifest_build_filename = Const.manifest_build_filename()
+    manifest_deploy_filename = Const.manifest_deploy_filename()
+    manifest_toolchain_filename = Const.manifest_toolchain_filename()
 
-        if manifest["component"] do
-          manifest = put_in(manifest["component"]["toolchain_opts"], manifest["component"]["toolchain_opts"] || [])
-          manifest = put_in(manifest["component"]["targets"], manifest["component"]["targets"] || [])
-          put_in(manifest["component"]["dependencies"], manifest["component"]["dependencies"] || [])
-        else
-          manifest
-        end
-
-      Path.basename(manifest_path) == Const.manifest_toolchain_filename() ->
-        manifest = Map.put(manifest, "__schema__", "toolchain")
-        put_in(manifest["toolchain"]["destroy_steps"], manifest["toolchain"]["destroy_steps"] || [])
+    case Path.basename(manifest_path) do
+      ^manifest_build_filename -> add_defaults_build(manifest)
+      ^manifest_deploy_filename -> add_defaults_build(manifest)
+      ^manifest_toolchain_filename -> add_defaults_toolchain(manifest)
     end
+  end
+
+  @spec add_defaults_build(map()) :: map()
+  defp add_defaults_build(manifest) do
+    manifest = Map.put(manifest, "__schema__", "component")
+
+    if manifest["component"] do
+      manifest = put_in(manifest["component"]["toolchain_opts"], manifest["component"]["toolchain_opts"] || [])
+      manifest = put_in(manifest["component"]["targets"], manifest["component"]["targets"] || [])
+      put_in(manifest["component"]["dependencies"], manifest["component"]["dependencies"] || [])
+    else
+      manifest
+    end
+  end
+
+  @spec add_defaults_toolchain(map()) :: map()
+  defp add_defaults_toolchain(manifest) do
+    manifest = Map.put(manifest, "__schema__", "toolchain")
+    put_in(manifest["toolchain"]["destroy_steps"], manifest["toolchain"]["destroy_steps"] || [])
   end
 
   @spec to_struct(Type.type(), map()) :: Type.t()

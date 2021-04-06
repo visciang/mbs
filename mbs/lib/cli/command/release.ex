@@ -11,7 +11,7 @@ end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
   alias MBS.CLI.Command
-  alias MBS.{CLI, Config, Const, Manifest, ReleaseManifest, Utils, Workflow}
+  alias MBS.{CLI, Config, Const, Manifest, ProjectManifest, ReleaseManifest, Utils, Workflow}
 
   @spec run(Command.MakeRelease.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(
@@ -64,6 +64,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
 
     if res == :ok do
       ReleaseManifest.write(deploy_manifests, id, metadata)
+      ProjectManifest.write(deploy_manifests, id)
     end
 
     res

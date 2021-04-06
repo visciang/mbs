@@ -8,15 +8,15 @@ defmodule MBS.ReleaseManifest do
 
   @spec find_all :: [Type.t()]
   def find_all do
-    Path.join([Const.releases_dir(), "**", "#{Const.manifest_release_filename()}"])
+    Path.join([Const.releases_dir(), "*", "#{Const.manifest_release_filename()}"])
     |> Path.wildcard(match_dot: true)
     |> Enum.map(&decode/1)
     |> Enum.map(&to_struct/1)
   end
 
-  @spec find_all_metadata :: [map()]
-  def find_all_metadata do
-    Path.join([Const.releases_dir(), "**", "#{Const.release_metadata_filename()}"])
+  @spec find_all_metadata(String.t()) :: [map()]
+  def find_all_metadata(release_id) do
+    Path.join([Const.releases_dir(), release_id, "*", "#{Const.release_metadata_filename()}"])
     |> Path.wildcard(match_dot: true)
     |> Enum.map(&decode/1)
   end
@@ -60,8 +60,6 @@ defmodule MBS.ReleaseManifest do
       Path.join(release_dir, Const.manifest_release_filename()),
       release_manifest |> Map.from_struct() |> Jason.encode!(pretty: true)
     )
-
-    :ok
   end
 
   @spec release_checksum([Manifest.Type.t()], Path.t()) :: String.t()

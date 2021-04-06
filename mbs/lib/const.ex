@@ -3,8 +3,11 @@ defmodule MBS.Const do
   MBS constants
   """
 
-  @spec config_file() :: String.t()
+  @spec config_file :: String.t()
   def config_file, do: ".mbs-config.json"
+
+  @spec manifest_project_filename :: String.t()
+  def manifest_project_filename, do: ".mbs-project.json"
 
   @spec manifest_build_filename :: String.t()
   def manifest_build_filename, do: ".mbs-build.json"
@@ -35,7 +38,4 @@ defmodule MBS.Const do
 
   @spec local_dependencies_targets_dir :: Path.t()
   def local_dependencies_targets_dir, do: ".deps"
-
-  @spec mbs_dirs :: [Path.t()]
-  def mbs_dirs, do: [cache_dir(), releases_dir(), graph_dir()]
 end
