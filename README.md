@@ -119,7 +119,7 @@ Environment variable that you can pass to `mbs`:
 The project file should be placed in the repository root folder.
 It lists all the components and toolchains folders. 
 
-The approach of mbs is to have an explicit component's inclusion and it doesn't support auto-discovery. Auto-discovery (via wildcard globs search) works well in small repository, but is heavy on the FS when you work on repositories with lots of (git untracked) files.
+The approach of mbs is to have an explicit component's inclusion and it doesn't support auto-discovery. Auto-discovery (via wildcard globs search) works well in small repository, but it's heavy on the filesystem when you work on repositories with lots of (git untracked) files.
 
 Even more, being explicit, you can put in or out a component just adding or removing the component directory from the project file.
 

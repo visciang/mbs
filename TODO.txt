@@ -13,8 +13,6 @@ execution:
   --init anche su toolchain "docker run"?
 
 manifest:
-- currently we apply a recursive glob discover of manifests, introduce a components manifest to explicitly list them (usefull also to add/remove a component from the run)
-  it scales well in big repository with lot's of untracked file (-> node_modules)
 - .mbs-config.json sezione file_profiles
 - Config option use .gitignore to filter job.files
 
