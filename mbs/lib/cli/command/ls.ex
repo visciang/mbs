@@ -73,6 +73,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     IO.puts("  steps:")
     Enum.each(toolchain.steps, &IO.puts("    - #{&1}"))
 
+    if toolchain.deps_change_step != nil do
+      IO.puts("  deps_change_step:")
+      IO.puts("    #{toolchain.deps_change_step}")
+    end
+
     if toolchain.destroy_steps != [] do
       IO.puts("  destroy_steps:")
       Enum.each(toolchain.destroy_steps, &IO.puts("    - #{&1}"))
