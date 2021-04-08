@@ -1,6 +1,6 @@
 defmodule MBS do
   @moduledoc """
-  Meta Build System
+  a Meta Build System
   """
 
   alias MBS.{Config, Env, Utils}
@@ -10,7 +10,7 @@ defmodule MBS do
   def main(args) do
     :ok = Reporter.start_link()
 
-    Env.validate!()
+    :ok = Env.validate()
     config = Config.load()
 
     workflow_status =
@@ -20,20 +20,11 @@ defmodule MBS do
 
     Reporter.stop(workflow_status)
 
-    exit_status(workflow_status)
+    exit_with(workflow_status)
   end
 
-  @spec exit_status(:ok | :error | :timeout) :: :ok
-  defp exit_status(workflow_status) do
-    case workflow_status do
-      :ok ->
-        :ok
-
-      :error ->
-        Utils.halt(nil, 1)
-
-      :timeout ->
-        Utils.halt(nil, 2)
-    end
-  end
+  @spec exit_with(:ok | :error | :timeout) :: :ok
+  defp exit_with(:ok), do: :ok
+  defp exit_with(:error), do: Utils.halt(nil, 1)
+  defp exit_with(:timeout), do: Utils.halt(nil, 2)
 end

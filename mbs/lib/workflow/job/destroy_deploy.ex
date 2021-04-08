@@ -9,7 +9,7 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
+  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.fun()
   def fun(%Config.Data{} = conf, %Manifest.Toolchain{} = toolchain) do
     Job.RunDeploy.fun(conf, toolchain, true)
   end

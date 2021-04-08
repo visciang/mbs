@@ -2,8 +2,7 @@
 
 set -e
 
-docker build --rm -f dockerfiles/Dockerfile --target slim --tag mbs:slim .
-docker build --rm -f dockerfiles/Dockerfile --target full --tag mbs:full .
+docker build --rm -f dockerfiles/Dockerfile --tag=mbs .
 
 if [ ! -z "$RUN_IT" ]; then
     ./mbs.sh version

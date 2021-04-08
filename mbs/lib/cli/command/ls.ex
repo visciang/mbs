@@ -54,6 +54,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
       Enum.each(component.dependencies, &IO.puts("    - #{&1}"))
     end
 
+    if component.services != nil do
+      IO.puts("  services:")
+      IO.puts("    #{component.services}")
+    end
+
     if component.docker_opts != [] do
       IO.puts("  docker_opts:")
       Enum.each(component.docker_opts, &IO.puts("    - #{&1}"))

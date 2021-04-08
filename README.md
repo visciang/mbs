@@ -42,7 +42,7 @@ Remember that, like every tool, `mbs` / mono-repos / etc. are just patterns and 
 ### A bit of history
 
 TODO:
-extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / baur / please / hearthly / waypoint / gitlab / "pipelines in general".
+extra reference to monorepo or other similar tools/solutions: cmake / ninja / doit / bazel / baur / please / hearthly / waypoint / gitlab / "pipelines in general".
 
 TODO: describe the language oriented approach used by some tools (NPM workspaces, Elixir umbrella, GO, Rust cargo workspaces, ...), there the driver (obviously) is the language in mbs is the domain where you can develop together different things.
 
@@ -251,10 +251,14 @@ MBS execution global configuration parameters.
         "dependencies": [
             "xyz-library"
         ],
-        // [optional] docker_opts: specific "docker run" options to add
-        // when running the toolchain
-        "docker_opts": ["--net", "host"]
-    }
+        // [optional] services: sidecar services via docker-compose
+        "service": [
+            "dockerfiles/docker-compose.yml"
+        ]
+    },
+    // [optional] docker_opts: specific "docker run" options to add
+    // when running the toolchain
+    "docker_opts": ["--net", "host"]
 }
 ```
 
@@ -295,7 +299,7 @@ MBS execution global configuration parameters.
 }
 ```
 
-## Files and files_profile rules
+### Files and files_profile rules
 
 The global config key "files_profile" defines a **set of predefined files profile**
 that can be referenced in the single components to avoid duplication.
@@ -316,6 +320,11 @@ For example, give the following component's manifest:
 
 mbs will track and watch files collected from the elixir profile rules but nothing that could match
 files like "*.tmp.ex".
+
+### Sidecar services
+
+It's possible execute a compoment build having the toolchain "linked" to a docker-compose.
+This can be used to run integration tests against together with some external services (a DB, cache, etc.)
 
 ## Toolchains development
 
@@ -425,7 +434,7 @@ alias mbs="\
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v $PWD:$PWD -w $PWD \
         ... \
-        mbs:full
+        mbs
 "
 ```
 

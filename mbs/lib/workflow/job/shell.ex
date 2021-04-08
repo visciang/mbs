@@ -10,7 +10,7 @@ defmodule MBS.Workflow.Job.Shell do
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t(), String.t()) :: Job.job_fun()
+  @spec fun(Config.Data.t(), Manifest.Type.t(), String.t()) :: Job.fun()
   def fun(%Config.Data{}, %Manifest.Toolchain{checksum: checksum}, _shell_target) do
     fn _job_id, _upstream_results ->
       %Job.FunResult{checksum: checksum}

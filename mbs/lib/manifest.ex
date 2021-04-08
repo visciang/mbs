@@ -93,6 +93,7 @@ defmodule MBS.Manifest do
          files_profile
        ) do
     f_prof = Map.get(files_profile, component["files_profile"], [])
+    services_file = if component["services"] != nil, do: [component["services"]], else: []
 
     %Component{
       type: type,
@@ -101,9 +102,10 @@ defmodule MBS.Manifest do
       timeout: timeout,
       toolchain: component["toolchain"],
       toolchain_opts: component["toolchain_opts"],
-      files: files(type, dir, f_prof ++ component["files"]),
+      files: files(type, dir, f_prof ++ services_file ++ component["files"]),
       targets: targets(dir, component["targets"]),
       dependencies: component["dependencies"],
+      services: if(component["services"] != nil, do: Path.join(dir, component["services"])),
       docker_opts: docker_opts
     }
   end
@@ -167,14 +169,9 @@ defmodule MBS.Manifest do
   defp targets(dir, targets) do
     targets
     |> Enum.map(fn
-      "docker://" <> target ->
-        %Target{type: :docker, target: target}
-
-      "file://" <> target ->
-        %Target{type: :file, target: Path.join(dir, target)}
-
-      target ->
-        %Target{type: :file, target: Path.join(dir, target)}
+      "docker://" <> target -> %Target{type: :docker, target: target}
+      "file://" <> target -> %Target{type: :file, target: Path.join(dir, target)}
+      target -> %Target{type: :file, target: Path.join(dir, target)}
     end)
     |> Enum.uniq()
   end

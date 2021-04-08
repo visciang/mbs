@@ -130,9 +130,32 @@ defmodule MBS.Manifest.Validator do
       validate_list_of_strings(component, ["files"], dir)
     end
 
+    validate_component_services(dir, component)
+
     validate_list_of_strings(component, ["toolchain_opts"], dir)
     validate_list_of_strings(component, ["targets"], dir)
     validate_list_of_strings(component, ["dependencies"], dir)
+  end
+
+  @spec validate_component_services(Path.t(), map()) :: :ok
+  defp validate_component_services(dir, component) do
+    services_compose_path = component["services"]
+
+    if services_compose_path != nil do
+      unless is_binary(services_compose_path) do
+        message = error_message(dir, "Bad services type")
+        Utils.halt(message)
+      end
+
+      path = Path.join(dir, services_compose_path)
+
+      unless File.exists?(path) do
+        message = error_message(dir, "Bad services unknown file #{path}")
+        Utils.halt(message)
+      end
+    end
+
+    :ok
   end
 
   @spec validate_list_of_strings(map(), Path.t(), Path.t()) :: :ok

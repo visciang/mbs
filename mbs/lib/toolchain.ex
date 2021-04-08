@@ -17,44 +17,73 @@ defmodule MBS.Toolchain do
     Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")
   end
 
-  @spec shell_cmd(Manifest.Component.t(), String.t(), %{String.t() => Job.FunResult.t()}) :: String.t()
+  @spec shell_cmd(Manifest.Component.t(), String.t(), Job.upstream_results()) :: String.t()
   def shell_cmd(
-        %Manifest.Component{toolchain: toolchain} = component,
+        %Manifest.Component{id: id, toolchain: toolchain, services: services_compose_file} = component,
         checksum,
         upstream_results
       ) do
     env = run_build_env_vars(component, checksum, upstream_results)
-    opts = run_opts(component) ++ ["--entrypoint", "sh", "--interactive"]
+    job_id = "#{id}_shell"
 
-    Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
+    {docker_network_name, cmd_up, cmd_down} =
+      if services_compose_file != nil do
+        {:ok, docker_network_name, cmd_up} = Docker.compose_cmd(:up, services_compose_file, env, job_id)
+        {:ok, _docker_network_name, cmd_down} = Docker.compose_cmd(:down, services_compose_file, env, job_id)
+        {docker_network_name, cmd_up, cmd_down}
+      else
+        {nil, "true", "true"}
+      end
+
+    opts = run_opts(component, docker_network_name) ++ ["--entrypoint", "sh", "--interactive"]
+    cmd_run = Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
+
+    "#{cmd_up}; #{cmd_run}; #{cmd_down}"
   end
 
   @spec exec_build(
           Manifest.Component.t(),
           String.t(),
-          %{String.t() => Job.FunResult.t()},
+          Job.upstream_results(),
           [{Path.t(), DependencyManifest.Type.t()}],
           String.t()
         ) :: :ok | {:error, String.t()}
   def exec_build(%Manifest.Component{} = component, checksum, upstream_results, changed_deps, job_id) do
     env = run_build_env_vars(component, checksum, upstream_results)
-    run_opts = run_opts(component)
 
     deps_change_steps =
-      if changed_deps != [] and component.toolchain.deps_change_step do
+      if changed_deps != [] and component.toolchain.deps_change_step != nil do
         [component.toolchain.deps_change_step]
       else
         []
       end
 
-    with :ok <- exec(component, env, job_id, deps_change_steps, run_opts),
-         :ok <- exec(component, env, job_id, component.toolchain.steps, run_opts) do
-      Enum.each(changed_deps, fn {path, type} ->
-        DependencyManifest.write(path, type)
-      end)
-    else
-      error -> error
-    end
+    res =
+      with {:ok, docker_network_name} <- exec_services(:up, component, env, job_id),
+           run_opts = run_opts(component, docker_network_name),
+           :ok <- exec(component, env, job_id, deps_change_steps, run_opts),
+           :ok <- exec(component, env, job_id, component.toolchain.steps, run_opts) do
+        Enum.each(changed_deps, fn {path, type} ->
+          DependencyManifest.write(path, type)
+        end)
+      else
+        error -> error
+      end
+
+    exec_services(:down, component, env, job_id)
+    res
+  end
+
+  @spec exec_services(:up | :down, Manifest.Component.t(), env_list(), String.t()) ::
+          {:ok, nil | String.t()} | {:error, term()}
+  defp exec_services(_action, %Manifest.Component{services: nil}, _env, _job_id),
+    do: {:ok, nil}
+
+  defp exec_services(action, %Manifest.Component{services: services_compose_file}, env, job_id) do
+    reporter_id = "#{job_id}:services"
+    Reporter.job_report(reporter_id, Reporter.Status.log(), "Sidecar services #{action} ...", nil)
+
+    Docker.compose(action, services_compose_file, env, reporter_id)
   end
 
   @spec exec_deploy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
@@ -105,13 +134,14 @@ defmodule MBS.Toolchain do
     end)
   end
 
-  @spec run_opts(Manifest.Component.t()) :: opts()
-  defp run_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}) do
+  @spec run_opts(Manifest.Component.t(), nil | String.t()) :: opts()
+  defp run_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}, network_name) do
     opts = ["--rm", "-t" | docker_opts]
     work_dir_opts = ["-w", "#{work_dir}"]
     dir_mount_opts = ["-v", "#{work_dir}:#{work_dir}"]
+    net_opts = if network_name != nil, do: ["--net", network_name], else: []
 
-    opts ++ work_dir_opts ++ dir_mount_opts
+    opts ++ work_dir_opts ++ dir_mount_opts ++ net_opts
   end
 
   @spec run_deploy_opts(Manifest.Component.t()) :: opts()
@@ -132,7 +162,7 @@ defmodule MBS.Toolchain do
     opts ++ work_dir_opts ++ dir_mount_opts
   end
 
-  @spec run_build_env_vars(Manifest.Component.t(), String.t(), %{String.t() => Job.FunResult.t()}) :: env_list()
+  @spec run_build_env_vars(Manifest.Component.t(), String.t(), Job.upstream_results()) :: env_list()
   defp run_build_env_vars(
          %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
          checksum,

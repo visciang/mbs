@@ -12,14 +12,8 @@ COPY mbs/.formatter.exs ./
 RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
-FROM elixir:1.11.4-alpine AS slim
-RUN apk add --no-cache docker git
-COPY dockerfiles/entrypoint.sh /entrypoint.sh
-COPY --from=builder /mbs/mbs /usr/local/bin/
-ENTRYPOINT [ "/entrypoint.sh" ]
-
-FROM elixir:1.11.4-alpine AS full
-RUN apk add --no-cache docker git graphviz
+FROM elixir:1.11.4-alpine
+RUN apk add --no-cache docker docker-compose graphviz git
 COPY dockerfiles/entrypoint.sh /entrypoint.sh
 COPY --from=builder /mbs/mbs /usr/local/bin/
 ENTRYPOINT [ "/entrypoint.sh" ]

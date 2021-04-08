@@ -18,5 +18,6 @@ defmodule MBS.Workflow.Job do
           }
   end
 
-  @type job_fun :: (String.t(), Dask.Job.upstream_results() -> FunResult.t())
+  @type upstream_results :: %{String.t() => FunResult.t()}
+  @type fun :: (String.t(), upstream_results() -> FunResult.t())
 end

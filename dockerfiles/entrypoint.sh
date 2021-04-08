@@ -13,7 +13,7 @@ if [ $CMD == "build" ] && [ $SUBCMD == "shell" ]; then
     DOCKER_CMD=$($MBS build shell $SHELL_TARGET --docker-cmd)
 
     echo -e "\nStarting interactive toolchain shell ...\n"
-    $DOCKER_CMD
+    eval $DOCKER_CMD
 else
     $MBS $@
 fi

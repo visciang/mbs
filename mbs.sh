@@ -25,7 +25,7 @@ alias mbs="\
     -e MBS_GRAPH_VOLUME=$MBS_GRAPH_VOLUME \
     -e LOG_LEVEL=$LOG_LEVEL \
     -e LOG_COLOR=$LOG_COLOR \
-    mbs:full"
+    mbs"
 
 if [ "$#" -ne 0 ]; then
     mbs $@

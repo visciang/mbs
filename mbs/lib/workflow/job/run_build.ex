@@ -10,7 +10,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t(), boolean()) :: Job.job_fun()
+  @spec fun(Config.Data.t(), Manifest.Type.t(), boolean()) :: Job.fun()
   def fun(%Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum} = toolchain, force) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
@@ -76,7 +76,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec transitive_targets(String.t(), String.t(), [Manifest.Target.t()], %{String.t() => Job.FunResult.t()}) ::
+  @spec transitive_targets(String.t(), String.t(), [Manifest.Target.t()], Job.upstream_results()) ::
           MapSet.t(Manifest.Target.t())
   defp transitive_targets(id, checksum, targets, upstream_results) do
     {:ok, expanded_targets} = Job.Cache.expand_targets_path(id, checksum, targets)
@@ -133,7 +133,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec get_changed_dependencies_targets(Manifest.Component.t(), %{String.t() => Job.FunResult.t()}, boolean()) ::
+  @spec get_changed_dependencies_targets(Manifest.Component.t(), Job.upstream_results(), boolean()) ::
           [{Path.t(), DependencyManifest.Type.t()}]
   defp get_changed_dependencies_targets(%Manifest.Component{dir: dir, toolchain: toolchain}, upstream_results, force) do
     local_dependencies_targets_dir = Path.join(dir, Const.local_dependencies_targets_dir())

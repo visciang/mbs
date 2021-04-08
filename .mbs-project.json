@@ -21,6 +21,7 @@
         "examples/monorepo/components/python_examples/python_library",
         "examples/monorepo/components/python_examples/python_native_app",
         "examples/monorepo/components/python_examples/python_native_app_dockerized",
+        "examples/monorepo/components/sidecar_services_example/services_app",
         "examples/monorepo/toolchains/build/cmake",
         "examples/monorepo/toolchains/build/docker",
         "examples/monorepo/toolchains/build/docker-compose",

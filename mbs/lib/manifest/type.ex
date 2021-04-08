@@ -8,7 +8,19 @@ end
 defmodule MBS.Manifest.Component do
   @moduledoc false
 
-  defstruct [:type, :id, :dir, :timeout, :toolchain, :toolchain_opts, :files, :targets, :dependencies, :docker_opts]
+  defstruct [
+    :type,
+    :id,
+    :dir,
+    :timeout,
+    :toolchain,
+    :toolchain_opts,
+    :files,
+    :targets,
+    :dependencies,
+    :services,
+    :docker_opts
+  ]
 
   @type t :: %__MODULE__{
           type: MBS.Manifest.Type.type(),
@@ -20,6 +32,7 @@ defmodule MBS.Manifest.Component do
           files: nonempty_list(String.t()) | nonempty_list(MBS.Manifest.Target.t()),
           targets: nonempty_list(MBS.Manifest.Target.t()),
           dependencies: [String.t()],
+          services: nil | Path.t(),
           docker_opts: [String.t()]
         }
 end

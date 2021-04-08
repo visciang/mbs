@@ -5,16 +5,16 @@ defmodule MBS.Env do
 
   alias MBS.Utils
 
-  @spec validate! :: :ok
-  def validate! do
+  @spec validate :: :ok
+  def validate do
     ["MBS_CACHE_VOLUME", "MBS_RELEASE_VOLUME", "MBS_GRAPH_VOLUME"]
-    |> Enum.each(&exist_env!/1)
+    |> Enum.each(&exist_env/1)
 
     :ok
   end
 
-  @spec exist_env!(String.t()) :: :ok
-  defp exist_env!(env_name) do
+  @spec exist_env(String.t()) :: :ok
+  defp exist_env(env_name) do
     if System.get_env(env_name) == nil do
       Utils.halt("Environment variable #{env_name} not defined")
     end

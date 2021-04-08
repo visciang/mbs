@@ -9,7 +9,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t(), boolean()) :: Job.job_fun()
+  @spec fun(Config.Data.t(), Manifest.Type.t(), boolean()) :: Job.fun()
   def fun(%Config.Data{}, %Manifest.Toolchain{id: id, dir: toolchain_dir}, _force) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()

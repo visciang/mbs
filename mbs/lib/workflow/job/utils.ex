@@ -7,7 +7,7 @@ defmodule MBS.Workflow.Job.Utils do
   alias MBS.Manifest.{Component, Toolchain, Type}
   alias MBS.Workflow.Job
 
-  @spec build_checksum(Component.t(), %{String.t() => Job.FunResult.t()}) :: String.t()
+  @spec build_checksum(Component.t(), Job.upstream_results()) :: String.t()
   def build_checksum(%Component{dir: component_dir, files: files} = component, upstream_results) do
     dependencies = component_dependencies(component)
     upstream_results = filter_upstream_results(upstream_results, dependencies)
@@ -22,7 +22,7 @@ defmodule MBS.Workflow.Job.Utils do
     checksum(component_dir, files, upstream_checksums)
   end
 
-  @spec deploy_checksum(Component.t(), String.t(), %{String.t() => Job.FunResult.t()}) :: String.t()
+  @spec deploy_checksum(Component.t(), String.t(), Job.upstream_results()) :: String.t()
   def deploy_checksum(%Component{dir: component_dir} = component, build_checksum, upstream_results) do
     dependencies = component_dependencies(component)
     upstream_results = filter_upstream_results(upstream_results, dependencies)
@@ -70,7 +70,7 @@ defmodule MBS.Workflow.Job.Utils do
     |> Checksum.checksum()
   end
 
-  @spec upstream_results_to_checksums_map(%{String.t() => Job.FunResult.t()}) :: %{String.t() => String.t()}
+  @spec upstream_results_to_checksums_map(Job.upstream_results()) :: %{String.t() => String.t()}
   defp upstream_results_to_checksums_map(upstream_results) do
     Map.new(upstream_results, fn
       {dependency_name, %Job.FunResult{checksum: dependency_checksum}} ->

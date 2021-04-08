@@ -13,25 +13,17 @@ defmodule MBS.Docker do
     cmd_args = ["image", "ls", "-q", "#{repository}:#{tag}"]
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
-      {"", 0} ->
-        {:ok, nil}
-
-      {res, 0} ->
-        {:ok, String.trim(res)}
-
-      {res, _} ->
-        {:error, res}
+      {"", 0} -> {:ok, nil}
+      {res, 0} -> {:ok, String.trim(res)}
+      {res, _} -> {:error, res}
     end
   end
 
   @spec image_exists(String.t(), String.t()) :: boolean()
   def image_exists(repository, tag) do
     case image_id(repository, tag) do
-      {:ok, id} when is_binary(id) ->
-        true
-
-      _ ->
-        false
+      {:ok, id} when is_binary(id) -> true
+      _ -> false
     end
   end
 
@@ -43,11 +35,8 @@ defmodule MBS.Docker do
     Reporter.job_report(job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true, into: File.stream!(image_file_path, [:compressed])) do
-      {_, 0} ->
-        :ok
-
-      {res, _} ->
-        {:error, res}
+      {_, 0} -> :ok
+      {res, _} -> {:error, res}
     end
   end
 
@@ -61,11 +50,8 @@ defmodule MBS.Docker do
     Reporter.job_report(job_id, Reporter.Status.log(), "docker #{inspect(cmd_args)}", nil)
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
-      {_, 0} ->
-        :ok
-
-      {res, _} ->
-        {:error, res}
+      {_, 0} -> :ok
+      {res, _} -> {:error, res}
     end
   end
 
@@ -79,11 +65,8 @@ defmodule MBS.Docker do
     end
 
     case System.cmd("docker", cmd_args, cd: dir, stderr_to_stdout: true, into: cmd_into) do
-      {_, 0} ->
-        :ok
-
-      {res, _} ->
-        {:error, res}
+      {_, 0} -> :ok
+      {res, _} -> {:error, res}
     end
   end
 
@@ -92,11 +75,8 @@ defmodule MBS.Docker do
     cmd_args = ["image", "pull", "#{repository}:#{tag}"]
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
-      {_, 0} ->
-        :ok
-
-      {res, _} ->
-        {:error, res}
+      {_, 0} -> :ok
+      {res, _} -> {:error, res}
     end
   end
 
@@ -111,11 +91,8 @@ defmodule MBS.Docker do
     end
 
     case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
-      {_, 0} ->
-        :ok
-
-      {res, exit_status} ->
-        {:error, {res, exit_status}}
+      {_, 0} -> :ok
+      {res, exit_status} -> {:error, {res, exit_status}}
     end
   end
 
@@ -123,6 +100,34 @@ defmodule MBS.Docker do
   def image_run_cmd(repository, tag, opts, env) do
     (["docker", "run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"])
     |> Enum.join(" ")
+  end
+
+  @spec compose(:up | :down, Path.t(), env_list(), String.t()) :: {:ok, String.t()} | {:error, term()}
+  def compose(action, compose_file, env, job_id) do
+    compose_project_name = String.replace(job_id, ":", "")
+    cmd_action = if action == :up, do: ["up", "-d"], else: ["down", "--volumes", "--remove-orphans"]
+    cmd_args = ["--project-name", compose_project_name, "-f", compose_file | cmd_action]
+    cmd_into = %Reporter.Log{job_id: "#{job_id}_#{action}"}
+
+    docker_network_name = "#{compose_project_name}_default"
+
+    case System.cmd("docker-compose", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
+      {_, 0} -> {:ok, docker_network_name}
+      {res, exit_status} -> {:error, {res, exit_status}}
+    end
+  end
+
+  @spec compose_cmd(:up | :down, Path.t(), env_list(), String.t()) :: {:ok, String.t(), String.t()} | {:error, term()}
+  def compose_cmd(action, compose_file, env, job_id) do
+    compose_project_name = String.replace(job_id, ":", "")
+    cmd_action = if action == :up, do: ["up", "-d"], else: ["down", "--volumes", "--remove-orphans"]
+    cmd_args = ["--project-name", compose_project_name, "-f", compose_file | cmd_action]
+    env_cmd = Enum.map(env, fn {name, value} -> "#{name}='#{value}'" end)
+
+    docker_network_name = "#{compose_project_name}_default"
+    cmd = (env_cmd ++ ["docker-compose"] ++ cmd_args) |> Enum.join(" ")
+
+    {:ok, docker_network_name, cmd}
   end
 
   @spec docker_env(env_list()) :: [String.t()]

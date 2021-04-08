@@ -59,7 +59,8 @@ defmodule Test.Limiter do
       flunk("Dask limiter didn't reach zero running jobs")
     end
 
-    Dask.Limiter.stats(wl)
+    wl
+    |> Dask.Limiter.stats()
     |> case do
       [running: 0, waiting: 0] ->
         :ok

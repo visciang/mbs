@@ -1,0 +1,7 @@
+version: "3.8"
+
+services:
+  sidecar_service:
+    init: true
+    image: alpine:3.13.2
+    command: ["sh", "-c", "while [ true ]; do echo alive; sleep 2; done"]

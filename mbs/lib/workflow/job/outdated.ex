@@ -9,7 +9,7 @@ defmodule MBS.Workflow.Job.Outdated do
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.job_fun()
+  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.fun()
   def fun(%Config.Data{}, %Manifest.Toolchain{id: id, checksum: checksum}) do
     fn job_id, _upstream_results ->
       unless Job.Cache.hit_toolchain(id, checksum) do
