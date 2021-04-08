@@ -5,7 +5,7 @@ deploy:
 - deploy state (to deploy only if needed, we should support multi environment deployments)
 
 execution:
-- docker-compose support
+- docker-compose refactoring (we should "docke-compose down" even on job timeout)
 - pass e json env variable to toolchains run with all the MBS_* vars and metadata
   (should be a better / more flexible contract)
 - podman / docker executor choice ?
@@ -23,7 +23,7 @@ cli
 - Job logs on files option?
 
 sandboxing:
-- Sandboxing execution (every buld should se only its file (the input one) and dependencies artifact)
+- Sandboxing execution (every build should se only its file (the input one) and dependencies artifact)
   no FS sharing with the host => no build tmp files left around, only the targets file should be extract and copied in the cache
 
 support / doc
