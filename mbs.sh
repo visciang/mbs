@@ -12,7 +12,6 @@ MBS_CACHE_VOLUME="mbs-cache"
 MBS_RELEASE_VOLUME="mbs-releases"
 MBS_GRAPH_VOLUME="$ABS_BASEDIR/.mbs-graph"
 
-
 TTY="-ti"
 if [ ! -t 1 ]; then TTY=""; fi
 

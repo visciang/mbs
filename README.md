@@ -16,12 +16,12 @@ The user experience we aim to is a (meta) build system that let you properly wor
 
 ### What MBS is not
 
-It's all about **tradeoff**. We should do one thing (put your definition of "one thing" here) and do it well (your definition also here). This can't be considered without a clear context that defines where we would like to operate; and different context means different requirements, different expectation and so different definitions.
+It's all about **tradeoff**. We should do one thing (put your definition of "one thing" here) and do it well (your definition also here). This can't be considered without a clear context that defines where we would like to operate; and different context means different requirements, different expectations and so different definitions.
 
 What we are trying to target here is a simple thing to operate in the context of project oriented monorepositories with a number N of components where N is such that you can run a full build of it on a single machine (you can run means you accept the time it could take to complete a full build on you n-Core host).
 
 That's obviously the worst case, normally we only work on a very small subset of the components and at the "higher level" of the dependency graph. So we won't rebuild the world every time.
-This is true unless you are working on a toolchain that a lot of components use.
+This is true unless you are working on a toolchain used by a lot of components.
 
 In this context, we can build a tool that can stay simple because it doesn't have to deal with monsters, monorepository hosting thousands on components. When you really need this level of complexity other horizontaly scalable solutions are needed, at the price of infrastructure and tools complexity.
 
@@ -30,7 +30,7 @@ In this context, we can build a tool that can stay simple because it doesn't hav
 Soon or later most medium sized organization reach the point where they have to **standardize and normalize the CI / CD workflow** across products, teams etc.
 
 Someone goes to the "million multi-repository jungle" and internal artifact hell versioning / compatibility matrix, while others opt to a single mono-repo or few of them. It's a matter of trade offs, considering the projects organization, teams, products, silos, people locations / offices, etc.
-In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need the glue (a standardized one) to keep things sorted and manageable, to make the dev (and ops) life easier / deterministic.
+In general, no matter if you go for a single mono-repo or few projects oriented mono-repos, you need a standardized glue to keep things sorted and manageable, to make the dev (and ops) life easier / deterministic.
 
 ### Terminology
 - **Toolchain**: defines your "build" / "deploy" recipes, standardized and parameterizable.
