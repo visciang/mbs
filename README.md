@@ -8,7 +8,7 @@ Docker **containerization** technology is used both to run `mbs` and to define y
 
 With MBS you can easly define the toolchains to build / deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services.
 
-TODO insert here a "small" DAG image
+![image info](./docs/schema-deps-graph.png)
 
 This will give you **parallelized** fast builds for free that can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
 
@@ -24,9 +24,6 @@ That's obviously the worst case, normally we only work on a very small subset of
 This is true unless you are working on a toolchain that a lot of components use.
 
 In this context, we can build a tool that can stay simple because it doesn't have to deal with monsters, monorepository hosting thousands on components. When you really need this level of complexity other horizontaly scalable solutions are needed, at the price of infrastructure and tools complexity.
-
-TODO would be nice a graph to show the distribution in terms of number of components per project,
-from 1 (micro-service) to project oriented monorepo (100 components) to the big monsters..
 
 ### Motivation
 
@@ -337,7 +334,7 @@ files like "*.tmp.ex".
 ### Sidecar services
 
 It's possible execute a compoment build having the toolchain "linked" to a docker-compose.
-This can be used to run integration tests against together with some external services (a DB, cache, etc.)
+This can be used to run integration tests together with some external services (DB, cache, queue, etc.)
 
 ## Toolchains development
 
@@ -427,6 +424,16 @@ Internal dependencies are normally copied / installed so that they are visible i
 Now, if we execute this step unconditionally every time we run a component's build, we would install all the internal dependencies and maybe re-trigger their build wasting time. This re-build normally happens when we (or the language) share packages in source form and not compiled form, or when the language builder looks at timestamps (not checksums) to re-build its targets.
 
 This problem is addressed with the "deps_change_step" in the toolchain manifest, it will be executed as the very first step if and only if a dependency change. For example if you change a component source file and no dependency is changed, only the toolchain steps will be executed.
+
+## Components development
+
+While working on a component sometime it's convenient to "jump into" the toolchain of that component to manualy build/test and iterate using the very same environment used by mbs.
+
+```sh
+mbs build shell component_xyz
+```
+
+This will first build all the dependencies of component_xyz, start all the side-car services and the open a shell in the toolchain context.
 
 ## MBS Development
 
