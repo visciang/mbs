@@ -106,7 +106,7 @@ defmodule MBS.Docker do
 
   @spec image_run_cmd_args(String.t(), String.t(), [String.t()], env_list()) :: [String.t()]
   defp image_run_cmd_args(repository, tag, opts, env) do
-    ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"]
+    ["run", "--init"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"]
   end
 
   @spec compose(compose_action(), Path.t(), env_list(), String.t()) :: {:ok, String.t()} | {:error, term()}
