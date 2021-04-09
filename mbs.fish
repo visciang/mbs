@@ -10,8 +10,13 @@ set MBS_CACHE_VOLUME "mbs-cache"
 set MBS_RELEASE_VOLUME "mbs-releases"
 set MBS_GRAPH_VOLUME "$ABS_BASEDIR/.mbs-graph"
 
+set TTY "-ti"
+if not isatty
+    set TTY ""
+end
+
 alias mbs="\
-    docker run --init --rm -ti \
+    docker run --init --rm $TTY \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $MBS_CACHE_VOLUME:/.mbs-cache \
     -v $MBS_RELEASE_VOLUME:/.mbs-releases \
