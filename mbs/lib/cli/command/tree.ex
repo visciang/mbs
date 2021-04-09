@@ -3,21 +3,22 @@ defmodule MBS.CLI.Command.Tree do
   defstruct [:type, :targets]
 
   @type t :: %__MODULE__{
-          type: MBS.Manifest.Type.type(),
+          type: MBS.Manifest.BuildDeploy.Type.type(),
           targets: [String.t()]
         }
 end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
   alias MBS.CLI.Command
-  alias MBS.{CLI, Config, Manifest}
+  alias MBS.{CLI, Config}
+  alias MBS.Manifest.BuildDeploy
   alias MBS.Workflow.Job
 
   @spec run(CLI.Command.Tree.t(), Config.Data.t()) :: :ok
   def run(%Command.Tree{type: type, targets: target_ids}, %Config.Data{} = config) do
     IO.puts("")
 
-    manifests = Manifest.find_all(type, config)
+    manifests = BuildDeploy.find_all(type, config)
 
     target_ids = if target_ids == [], do: Enum.map(manifests, & &1.id), else: target_ids
 
@@ -31,7 +32,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
     :ok
   end
 
-  @spec print_tree([String.t()], %{String.t() => Manifest.Type.t()}, IO.chardata()) :: :ok
+  @spec print_tree([String.t()], %{String.t() => BuildDeploy.Type.t()}, IO.chardata()) :: :ok
   defp print_tree(names, manifests_map, indent) do
     names_length = length(names)
 

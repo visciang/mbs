@@ -9,8 +9,6 @@ defmodule MBS.Cache do
     dest_target = Path.join([dest_dir, Path.basename(target)])
     File.mkdir_p!(dest_dir)
     File.cp!(target, dest_target)
-
-    :ok
   end
 
   @spec get(Path.t(), String.t(), String.t(), String.t()) :: {:ok, Path.t()} | :error

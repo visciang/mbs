@@ -63,28 +63,10 @@ defmodule MBS.Config do
 
   @spec add_defaults(map()) :: map()
   defp add_defaults(conf) do
-    conf =
-      if conf["parallelism"] == nil do
-        put_in(conf["parallelism"], :erlang.system_info(:logical_processors))
-      else
-        conf
-      end
-
-    conf =
-      if conf["timeout"] == nil do
-        put_in(conf["timeout"], :infinity)
-      else
-        conf
-      end
-
-    conf =
-      if conf["files_profile"] == nil do
-        put_in(conf["files_profile"], %{})
-      else
-        conf
-      end
-
     conf
+    |> put_in(["parallelism"], conf["parallelism"] || :erlang.system_info(:logical_processors))
+    |> put_in(["timeout"], conf["timeout"] || :infinity)
+    |> put_in(["files_profile"], conf["files_profile"] || %{})
   end
 
   @spec validate(map()) :: map()
@@ -95,25 +77,21 @@ defmodule MBS.Config do
     conf
   end
 
-  @spec validate_parallelism(non_neg_integer()) :: :ok
+  @spec validate_parallelism(non_neg_integer()) :: nil
   defp validate_parallelism(parallelism) do
     unless is_integer(parallelism) and parallelism > 0 do
       Utils.halt("Bad parallelism in #{Const.config_file()}")
     end
-
-    :ok
   end
 
-  @spec validate_timeout(timeout()) :: :ok
+  @spec validate_timeout(timeout()) :: nil
   defp validate_timeout(timeout) do
     unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
       Utils.halt("Bad timeout in #{Const.config_file()}")
     end
-
-    :ok
   end
 
-  @spec validate_timeout(map()) :: :ok
+  @spec validate_timeout(map()) :: nil
   defp validate_files_profile(files_profile) do
     unless is_map(files_profile) do
       Utils.halt("Bad files_profile in #{Const.config_file()}")
@@ -124,6 +102,8 @@ defmodule MBS.Config do
         Utils.halt("Bad #{profile_id} files_profile value in #{Const.config_file()}")
       end
     end)
+
+    nil
   end
 
   @spec to_struct(map()) :: Data.t()

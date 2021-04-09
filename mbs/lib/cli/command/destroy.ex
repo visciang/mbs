@@ -9,15 +9,16 @@ end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Destroy do
   alias MBS.CLI.Command
-  alias MBS.{Config, Manifest, ReleaseManifest, Utils, Workflow}
+  alias MBS.{Config, Utils, Workflow}
+  alias MBS.Manifest.{BuildDeploy, Release}
 
   @spec run(Command.Destroy.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(%Command.Destroy{release_id: release_id}, %Config.Data{} = config) do
-    {release, release_dir} = ReleaseManifest.get_release(release_id)
+    {release, release_dir} = Release.get_release(release_id)
 
     IO.puts("\nDestroying deploy release '#{release.id}' (#{release.checksum})\n")
 
-    manifests = Manifest.find_all(:deploy, config, release_dir)
+    manifests = BuildDeploy.find_all(:deploy, config, release_dir)
 
     with {:ok, _} <- load_toolchains(config, manifests),
          {:ok, _} <- run_destroy(config, manifests) do
@@ -28,13 +29,13 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Destroy do
     end
   end
 
-  @spec load_toolchains(Config.Data.t(), [Manifest.Type.t()]) :: Dask.await_result()
+  @spec load_toolchains(Config.Data.t(), [BuildDeploy.Type.t()]) :: Dask.await_result()
   defp load_toolchains(%Config.Data{} = config, manifests) do
-    manifests_toolchains = Enum.filter(manifests, &match?(%Manifest.Toolchain{}, &1))
+    manifests_toolchains = Enum.filter(manifests, &match?(%BuildDeploy.Toolchain{}, &1))
     run_destroy(config, manifests_toolchains)
   end
 
-  @spec run_destroy(Config.Data.t(), [Manifest.Type.t()]) :: Dask.await_result()
+  @spec run_destroy(Config.Data.t(), [BuildDeploy.Type.t()]) :: Dask.await_result()
   defp run_destroy(%Config.Data{} = config, manifests) do
     dask =
       Workflow.workflow(

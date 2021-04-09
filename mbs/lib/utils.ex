@@ -23,4 +23,12 @@ defmodule MBS.Utils do
   def union_mapsets(mapsets) do
     Enum.reduce(mapsets, fn mapset, mapsets_union -> MapSet.union(mapsets_union, mapset) end)
   end
+
+  @spec gunzip(Path.t(), Path.t()) :: :ok
+  def gunzip(src, dest) do
+    src
+    |> File.stream!([:compressed], 2048)
+    |> Stream.into(File.stream!(dest, [], 2048))
+    |> Stream.run()
+  end
 end

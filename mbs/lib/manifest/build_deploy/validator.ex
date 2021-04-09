@@ -1,4 +1,4 @@
-defmodule MBS.Manifest.Validator do
+defmodule MBS.Manifest.BuildDeploy.Validator do
   @moduledoc """
   Manifest file validator
   """
@@ -19,7 +19,7 @@ defmodule MBS.Manifest.Validator do
     manifests
   end
 
-  @spec validate_schema([map()]) :: :ok
+  @spec validate_schema([map()]) :: nil
   defp validate_schema(manifests) do
     Enum.each(manifests, fn manifest ->
       validate_id(manifest)
@@ -27,9 +27,11 @@ defmodule MBS.Manifest.Validator do
       validate_docker_opts(manifest)
       validate_type(manifest)
     end)
+
+    nil
   end
 
-  @spec validate_id(map()) :: :ok
+  @spec validate_id(map()) :: nil
   defp validate_id(%{"id" => id, "dir" => dir}) do
     if id == nil do
       message = error_message(dir, "Missing id field")
@@ -46,30 +48,24 @@ defmodule MBS.Manifest.Validator do
 
       Utils.halt(message)
     end
-
-    :ok
   end
 
-  @spec validate_timeout(map()) :: :ok
+  @spec validate_timeout(map()) :: nil
   defp validate_timeout(%{"timeout" => timeout, "dir" => dir}) do
     unless timeout == :infinity or (is_integer(timeout) and timeout > 0) do
       message = error_message(dir, "Invalid timeout field")
       Utils.halt(message)
     end
-
-    :ok
   end
 
-  @spec validate_docker_opts(map()) :: :ok
+  @spec validate_docker_opts(map()) :: nil
   defp validate_docker_opts(%{"docker_opts" => _, "dir" => dir} = docker) do
     validate_list_of_strings(docker, ["docker_opts"], dir)
-
-    :ok
   end
 
-  defp validate_docker_opts(_), do: :ok
+  defp validate_docker_opts(_), do: nil
 
-  @spec validate_type(map()) :: :ok
+  @spec validate_type(map()) :: nil
   defp validate_type(%{"__schema__" => "toolchain", "dir" => dir} = type) do
     toolchain = type["toolchain"]
 
@@ -137,7 +133,7 @@ defmodule MBS.Manifest.Validator do
     validate_list_of_strings(component, ["dependencies"], dir)
   end
 
-  @spec validate_component_services(Path.t(), map()) :: :ok
+  @spec validate_component_services(Path.t(), map()) :: nil
   defp validate_component_services(dir, component) do
     services_compose_path = component["services"]
 
@@ -154,11 +150,9 @@ defmodule MBS.Manifest.Validator do
         Utils.halt(message)
       end
     end
-
-    :ok
   end
 
-  @spec validate_list_of_strings(map(), Path.t(), Path.t()) :: :ok
+  @spec validate_list_of_strings(map(), Path.t(), Path.t()) :: nil
   defp validate_list_of_strings(manifest, path, dir) do
     elm = get_in(manifest, path)
 
@@ -171,11 +165,9 @@ defmodule MBS.Manifest.Validator do
       message = error_message(dir, "Bad #{inspect(path)} type")
       Utils.halt(message)
     end
-
-    :ok
   end
 
-  @spec validate_unique_id([map()], MapSet.t(String.t())) :: :ok
+  @spec validate_unique_id([map()], MapSet.t(String.t())) :: nil
   defp validate_unique_id(manifests, ids) do
     if MapSet.size(ids) != length(manifests) do
       message =
@@ -188,11 +180,9 @@ defmodule MBS.Manifest.Validator do
 
       Utils.halt(message)
     end
-
-    :ok
   end
 
-  @spec validate_components([map()], MapSet.t(String.t())) :: :ok
+  @spec validate_components([map()], MapSet.t(String.t())) :: nil
   defp validate_components(manifests, ids) do
     toolchains_ids =
       manifests
@@ -214,9 +204,11 @@ defmodule MBS.Manifest.Validator do
         Utils.halt(message)
       end
     end)
+
+    nil
   end
 
-  @spec validate_files_profile([map()], MapSet.t(String.t())) :: :ok
+  @spec validate_files_profile([map()], MapSet.t(String.t())) :: nil
   defp validate_files_profile(manifests, available_files_profile) do
     Enum.each(manifests, fn manifest ->
       dir = manifest["dir"]
@@ -227,6 +219,8 @@ defmodule MBS.Manifest.Validator do
         Utils.halt(message)
       end
     end)
+
+    nil
   end
 
   @spec error_message(Path.t(), String.t()) :: IO.chardata()

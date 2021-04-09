@@ -1,9 +1,9 @@
-defmodule MBS.DependencyManifest do
+defmodule MBS.Manifest.Dependency do
   @moduledoc """
   MBS dependency manifest functions
   """
 
-  alias MBS.DependencyManifest.Type
+  alias MBS.Manifest.Dependency.Type
 
   @spec write(Path.t(), Type.t()) :: :ok
   def write(path, %Type{} = t) do

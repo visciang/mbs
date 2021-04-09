@@ -1,4 +1,4 @@
-defmodule MBS.ReleaseManifest.Type do
+defmodule MBS.Manifest.Release.Type do
   @moduledoc false
 
   defstruct [:id, :checksum, :metadata]

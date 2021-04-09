@@ -4,19 +4,20 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Manifest, Toolchain}
+  alias MBS.{Config, Toolchain}
+  alias MBS.Manifest.BuildDeploy
   alias MBS.Workflow.Job
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t()) :: Job.fun()
-  def fun(%Config.Data{} = conf, %Manifest.Toolchain{} = toolchain) do
+  @spec fun(Config.Data.t(), BuildDeploy.Type.t()) :: Job.fun()
+  def fun(%Config.Data{} = conf, %BuildDeploy.Toolchain{} = toolchain) do
     Job.RunDeploy.fun(conf, toolchain, true)
   end
 
   def fun(
         %Config.Data{},
-        %Manifest.Component{dir: component_dir, toolchain: %Manifest.Toolchain{dir: toolchain_dir}} = component
+        %BuildDeploy.Component{dir: component_dir, toolchain: %BuildDeploy.Toolchain{dir: toolchain_dir}} = component
       ) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()

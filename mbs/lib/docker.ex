@@ -2,8 +2,10 @@ defmodule MBS.Docker do
   @moduledoc false
 
   alias MBS.CLI.Reporter
+  alias MBS.Utils
   require MBS.CLI.Reporter.Status
 
+  @type compose_action :: :up | :down
   @type env_list :: [{String.t(), String.t()}]
 
   @cmd_arg_dind ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
@@ -43,7 +45,7 @@ defmodule MBS.Docker do
   @spec image_load(Path.t(), String.t()) :: :ok | {:error, term()}
   def image_load(path_tar_gz, job_id) do
     path_tar = Path.join(System.tmp_dir!(), Path.basename(path_tar_gz, ".gz"))
-    gunzip(path_tar_gz, path_tar)
+    Utils.gunzip(path_tar_gz, path_tar)
 
     cmd_args = ["image", "load", "--input", path_tar]
 
@@ -83,7 +85,7 @@ defmodule MBS.Docker do
   @spec image_run(String.t(), String.t(), [String.t()], env_list(), [String.t()], String.t()) ::
           :ok | {:error, {term(), pos_integer()}}
   def image_run(repository, tag, opts, env, command, job_id) do
-    cmd_args = ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"] ++ command
+    cmd_args = image_run_cmd_args(repository, tag, opts, env) ++ command
     cmd_into = %Reporter.Log{job_id: job_id}
 
     if Logger.level() == :debug do
@@ -98,15 +100,18 @@ defmodule MBS.Docker do
 
   @spec image_run_cmd(String.t(), String.t(), [String.t()], env_list()) :: String.t()
   def image_run_cmd(repository, tag, opts, env) do
-    (["docker", "run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"])
+    ["docker" | image_run_cmd_args(repository, tag, opts, env)]
     |> Enum.join(" ")
   end
 
-  @spec compose(:up | :down, Path.t(), env_list(), String.t()) :: {:ok, String.t()} | {:error, term()}
+  @spec image_run_cmd_args(String.t(), String.t(), [String.t()], env_list()) :: [String.t()]
+  defp image_run_cmd_args(repository, tag, opts, env) do
+    ["run"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"]
+  end
+
+  @spec compose(compose_action(), Path.t(), env_list(), String.t()) :: {:ok, String.t()} | {:error, term()}
   def compose(action, compose_file, env, job_id) do
-    compose_project_name = String.replace(job_id, ":", "")
-    cmd_action = if action == :up, do: ["up", "-d"], else: ["down", "--volumes", "--remove-orphans"]
-    cmd_args = ["--project-name", compose_project_name, "-f", compose_file | cmd_action]
+    {cmd_args, compose_project_name} = compose_args(action, compose_file, job_id)
     cmd_into = %Reporter.Log{job_id: "#{job_id}_#{action}"}
 
     docker_network_name = "#{compose_project_name}_default"
@@ -117,11 +122,10 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec compose_cmd(:up | :down, Path.t(), env_list(), String.t()) :: {:ok, String.t(), String.t()} | {:error, term()}
+  @spec compose_cmd(compose_action(), Path.t(), env_list(), String.t()) ::
+          {:ok, String.t(), String.t()} | {:error, term()}
   def compose_cmd(action, compose_file, env, job_id) do
-    compose_project_name = String.replace(job_id, ":", "")
-    cmd_action = if action == :up, do: ["up", "-d"], else: ["down", "--volumes", "--remove-orphans"]
-    cmd_args = ["--project-name", compose_project_name, "-f", compose_file | cmd_action]
+    {cmd_args, compose_project_name} = compose_args(action, compose_file, job_id)
     env_cmd = Enum.map(env, fn {name, value} -> "#{name}='#{value}'" end)
 
     docker_network_name = "#{compose_project_name}_default"
@@ -130,16 +134,17 @@ defmodule MBS.Docker do
     {:ok, docker_network_name, cmd}
   end
 
+  @spec compose_args(compose_action(), Path.t(), String.t()) :: {[String.t()], String.t()}
+  defp compose_args(action, compose_file, job_id) do
+    compose_project_name = String.replace(job_id, ":", "")
+    cmd_action = if action == :up, do: ["up", "-d"], else: ["down", "--volumes", "--remove-orphans"]
+    cmd_args = ["--project-name", compose_project_name, "-f", compose_file | cmd_action]
+
+    {cmd_args, compose_project_name}
+  end
+
   @spec docker_env(env_list()) :: [String.t()]
   defp docker_env(env) do
     Enum.flat_map(env, fn {env_name, env_value} -> ["-e", "#{env_name}=#{env_value}"] end)
-  end
-
-  @spec gunzip(Path.t(), Path.t()) :: :ok
-  defp gunzip(src, dest) do
-    src
-    |> File.stream!([:compressed], 2048)
-    |> Stream.into(File.stream!(dest, [], 2048))
-    |> Stream.run()
   end
 end

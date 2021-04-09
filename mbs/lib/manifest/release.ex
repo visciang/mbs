@@ -1,10 +1,11 @@
-defmodule MBS.ReleaseManifest do
+defmodule MBS.Manifest.Release do
   @moduledoc """
   MBS release manifest functions
   """
 
-  alias MBS.{Checksum, Const, Manifest, Utils}
-  alias MBS.ReleaseManifest.Type
+  alias MBS.{Checksum, Const, Utils}
+  alias MBS.Manifest.BuildDeploy
+  alias MBS.Manifest.Release.Type
 
   @spec find_all :: [Type.t()]
   def find_all do
@@ -46,7 +47,7 @@ defmodule MBS.ReleaseManifest do
     }
   end
 
-  @spec write([Manifest.Type.t()], String.t(), nil | String.t()) :: :ok
+  @spec write([BuildDeploy.Type.t()], String.t(), nil | String.t()) :: :ok
   def write(manifests, release_id, metadata) do
     release_dir = Path.join(Const.releases_dir(), release_id)
 
@@ -62,7 +63,7 @@ defmodule MBS.ReleaseManifest do
     )
   end
 
-  @spec release_checksum([Manifest.Type.t()], Path.t()) :: String.t()
+  @spec release_checksum([BuildDeploy.Type.t()], Path.t()) :: String.t()
   defp release_checksum(manifests, release_dir) do
     manifests
     |> Enum.map(fn %{id: id} ->
@@ -89,7 +90,7 @@ defmodule MBS.ReleaseManifest do
     end
   end
 
-  @spec to_struct(map) :: MBS.ReleaseManifest.Type.t()
+  @spec to_struct(map) :: Type.t()
   defp to_struct(%{"id" => id, "checksum" => checksum, "metadata" => metadata}) do
     %Type{id: id, checksum: checksum, metadata: metadata}
   end

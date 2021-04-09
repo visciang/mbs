@@ -1,11 +1,11 @@
-defmodule MBS.Manifest.Type do
+defmodule MBS.Manifest.BuildDeploy.Type do
   @moduledoc false
 
   @type type :: :build | :deploy
-  @type t :: MBS.Manifest.Component.t() | MBS.Manifest.Toolchain.t()
+  @type t :: MBS.Manifest.BuildDeploy.Component.t() | MBS.Manifest.BuildDeploy.Toolchain.t()
 end
 
-defmodule MBS.Manifest.Component do
+defmodule MBS.Manifest.BuildDeploy.Component do
   @moduledoc false
 
   defstruct [
@@ -23,21 +23,21 @@ defmodule MBS.Manifest.Component do
   ]
 
   @type t :: %__MODULE__{
-          type: MBS.Manifest.Type.type(),
+          type: MBS.Manifest.BuildDeploy.Type.type(),
           id: String.t(),
           dir: Path.t(),
           timeout: timeout(),
-          toolchain: MBS.Manifest.Toolchain.t(),
+          toolchain: MBS.Manifest.BuildDeploy.Toolchain.t(),
           toolchain_opts: [String.t()],
-          files: nonempty_list(String.t()) | nonempty_list(MBS.Manifest.Target.t()),
-          targets: nonempty_list(MBS.Manifest.Target.t()),
+          files: nonempty_list(String.t()) | nonempty_list(MBS.Manifest.BuildDeploy.Target.t()),
+          targets: nonempty_list(MBS.Manifest.BuildDeploy.Target.t()),
           dependencies: [String.t()],
           services: nil | Path.t(),
           docker_opts: [String.t()]
         }
 end
 
-defmodule MBS.Manifest.Toolchain do
+defmodule MBS.Manifest.BuildDeploy.Toolchain do
   @moduledoc false
 
   defstruct [
@@ -55,7 +55,7 @@ defmodule MBS.Manifest.Toolchain do
   ]
 
   @type t :: %__MODULE__{
-          type: MBS.Manifest.Type.type(),
+          type: MBS.Manifest.BuildDeploy.Type.type(),
           id: String.t(),
           dir: Path.t(),
           timeout: timeout(),
@@ -69,7 +69,7 @@ defmodule MBS.Manifest.Toolchain do
         }
 end
 
-defmodule MBS.Manifest.Target do
+defmodule MBS.Manifest.BuildDeploy.Target do
   @moduledoc false
 
   defstruct [:type, :target]

@@ -3,7 +3,7 @@ defmodule MBS.Workflow.Job do
   Workflow job logic
   """
 
-  alias MBS.Manifest.Target
+  alias MBS.Manifest.BuildDeploy.Target
 
   defmodule FunResult do
     @moduledoc """

@@ -17,8 +17,8 @@ defmodule MBS.Env do
   defp exist_env(env_name) do
     if System.get_env(env_name) == nil do
       Utils.halt("Environment variable #{env_name} not defined")
+    else
+      :ok
     end
-
-    :ok
   end
 end

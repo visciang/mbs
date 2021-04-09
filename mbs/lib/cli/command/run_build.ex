@@ -10,12 +10,13 @@ end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
   alias MBS.CLI.Command
-  alias MBS.{CLI, Config, Manifest, Utils, Workflow}
+  alias MBS.{CLI, Config, Utils, Workflow}
+  alias MBS.Manifest.BuildDeploy
 
   @spec run(Command.RunBuild.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(%Command.RunBuild{targets: target_ids, force: force}, %Config.Data{} = config) do
     dask =
-      Manifest.find_all(:build, config)
+      BuildDeploy.find_all(:build, config)
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
       |> Workflow.workflow(
         config,

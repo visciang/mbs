@@ -4,7 +4,8 @@ defmodule MBS.Toolchain do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Const, DependencyManifest, Docker, Manifest}
+  alias MBS.{Const, Docker}
+  alias MBS.Manifest.{BuildDeploy, Dependency}
   alias MBS.Workflow.Job
 
   require Reporter.Status
@@ -12,14 +13,20 @@ defmodule MBS.Toolchain do
   @type opts :: [String.t()]
   @type env_list :: [{String.t(), String.t()}]
 
-  @spec build(Manifest.Toolchain.t()) :: :ok | {:error, term()}
-  def build(%Manifest.Toolchain{id: id, dir: dir, checksum: checksum, dockerfile: dockerfile, docker_opts: docker_opts}) do
+  @spec build(BuildDeploy.Toolchain.t()) :: :ok | {:error, term()}
+  def build(%BuildDeploy.Toolchain{
+        id: id,
+        dir: dir,
+        checksum: checksum,
+        dockerfile: dockerfile,
+        docker_opts: docker_opts
+      }) do
     Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")
   end
 
-  @spec shell_cmd(Manifest.Component.t(), String.t(), Job.upstream_results()) :: String.t()
+  @spec shell_cmd(BuildDeploy.Component.t(), String.t(), Job.upstream_results()) :: String.t()
   def shell_cmd(
-        %Manifest.Component{id: id, toolchain: toolchain, services: services_compose_file} = component,
+        %BuildDeploy.Component{id: id, toolchain: toolchain, services: services_compose_file} = component,
         checksum,
         upstream_results
       ) do
@@ -42,13 +49,13 @@ defmodule MBS.Toolchain do
   end
 
   @spec exec_build(
-          Manifest.Component.t(),
+          BuildDeploy.Component.t(),
           String.t(),
           Job.upstream_results(),
-          [{Path.t(), DependencyManifest.Type.t()}],
+          [{Path.t(), Dependency.Type.t()}],
           String.t()
         ) :: :ok | {:error, String.t()}
-  def exec_build(%Manifest.Component{} = component, checksum, upstream_results, changed_deps, job_id) do
+  def exec_build(%BuildDeploy.Component{} = component, checksum, upstream_results, changed_deps, job_id) do
     env = run_build_env_vars(component, checksum, upstream_results)
 
     deps_change_steps =
@@ -64,7 +71,7 @@ defmodule MBS.Toolchain do
            :ok <- exec(component, env, job_id, deps_change_steps, run_opts),
            :ok <- exec(component, env, job_id, component.toolchain.steps, run_opts) do
         Enum.each(changed_deps, fn {path, type} ->
-          DependencyManifest.write(path, type)
+          Dependency.write(path, type)
         end)
       else
         error -> error
@@ -74,36 +81,36 @@ defmodule MBS.Toolchain do
     res
   end
 
-  @spec exec_services(:up | :down, Manifest.Component.t(), env_list(), String.t()) ::
+  @spec exec_services(Docker.compose_action(), BuildDeploy.Component.t(), env_list(), String.t()) ::
           {:ok, nil | String.t()} | {:error, term()}
-  defp exec_services(_action, %Manifest.Component{services: nil}, _env, _job_id),
+  defp exec_services(_action, %BuildDeploy.Component{services: nil}, _env, _job_id),
     do: {:ok, nil}
 
-  defp exec_services(action, %Manifest.Component{services: services_compose_file}, env, job_id) do
+  defp exec_services(action, %BuildDeploy.Component{services: services_compose_file}, env, job_id) do
     reporter_id = "#{job_id}:services"
     Reporter.job_report(reporter_id, Reporter.Status.log(), "Sidecar services #{action} ...", nil)
 
     Docker.compose(action, services_compose_file, env, reporter_id)
   end
 
-  @spec exec_deploy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
-  def exec_deploy(%Manifest.Component{} = component, checksum, job_id) do
+  @spec exec_deploy(BuildDeploy.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
+  def exec_deploy(%BuildDeploy.Component{} = component, checksum, job_id) do
     env = run_deploy_env_vars(component, checksum)
     run_opts = run_deploy_opts(component)
     exec(component, env, job_id, component.toolchain.steps, run_opts)
   end
 
-  @spec exec_destroy(Manifest.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
-  def exec_destroy(%Manifest.Component{} = component, checksum, job_id) do
+  @spec exec_destroy(BuildDeploy.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
+  def exec_destroy(%BuildDeploy.Component{} = component, checksum, job_id) do
     env = run_deploy_env_vars(component, checksum)
     component = put_in(component.toolchain.steps, ["destroy"])
     run_opts = run_deploy_opts(component)
     exec(component, env, job_id, component.toolchain.destroy_steps, run_opts)
   end
 
-  @spec exec(Manifest.Component.t(), env_list(), String.t(), [String.t()], opts()) :: :ok | {:error, String.t()}
+  @spec exec(BuildDeploy.Component.t(), env_list(), String.t(), [String.t()], opts()) :: :ok | {:error, String.t()}
   defp exec(
-         %Manifest.Component{toolchain: toolchain, toolchain_opts: toolchain_opts},
+         %BuildDeploy.Component{toolchain: toolchain, toolchain_opts: toolchain_opts},
          env,
          job_id,
          toolchain_steps,
@@ -134,8 +141,8 @@ defmodule MBS.Toolchain do
     end)
   end
 
-  @spec run_opts(Manifest.Component.t(), nil | String.t()) :: opts()
-  defp run_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}, network_name) do
+  @spec run_opts(BuildDeploy.Component.t(), nil | String.t()) :: opts()
+  defp run_opts(%BuildDeploy.Component{docker_opts: docker_opts, dir: work_dir}, network_name) do
     opts = ["--rm", "-t" | docker_opts]
     work_dir_opts = ["-w", "#{work_dir}"]
     dir_mount_opts = ["-v", "#{work_dir}:#{work_dir}"]
@@ -144,8 +151,8 @@ defmodule MBS.Toolchain do
     opts ++ work_dir_opts ++ dir_mount_opts ++ net_opts
   end
 
-  @spec run_deploy_opts(Manifest.Component.t()) :: opts()
-  def run_deploy_opts(%Manifest.Component{docker_opts: docker_opts, dir: work_dir}) do
+  @spec run_deploy_opts(BuildDeploy.Component.t()) :: opts()
+  def run_deploy_opts(%BuildDeploy.Component{docker_opts: docker_opts, dir: work_dir}) do
     opts = ["--rm", "-t" | docker_opts]
     work_dir_opts = ["-w", "#{work_dir}"]
 
@@ -162,9 +169,9 @@ defmodule MBS.Toolchain do
     opts ++ work_dir_opts ++ dir_mount_opts
   end
 
-  @spec run_build_env_vars(Manifest.Component.t(), String.t(), Job.upstream_results()) :: env_list()
+  @spec run_build_env_vars(BuildDeploy.Component.t(), String.t(), Job.upstream_results()) :: env_list()
   defp run_build_env_vars(
-         %Manifest.Component{id: id, dir: dir, dependencies: dependencies},
+         %BuildDeploy.Component{id: id, dir: dir, dependencies: dependencies},
          checksum,
          upstream_results
        ) do
@@ -184,8 +191,8 @@ defmodule MBS.Toolchain do
     [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
   end
 
-  @spec run_deploy_env_vars(Manifest.Component.t(), String.t()) :: env_list()
-  defp run_deploy_env_vars(%Manifest.Component{id: id, dir: dir}, checksum) do
+  @spec run_deploy_env_vars(BuildDeploy.Component.t(), String.t()) :: env_list()
+  defp run_deploy_env_vars(%BuildDeploy.Component{id: id, dir: dir}, checksum) do
     [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum}]
   end
 

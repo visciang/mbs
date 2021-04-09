@@ -3,7 +3,7 @@ defmodule MBS.CLI.Command.Ls do
   defstruct [:type, :verbose, :targets]
 
   @type t :: %__MODULE__{
-          type: MBS.Manifest.Type.type(),
+          type: MBS.Manifest.BuildDeploy.Type.type(),
           verbose: boolean(),
           targets: [String.t()]
         }
@@ -11,13 +11,14 @@ end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   alias MBS.CLI.{Command, Utils}
-  alias MBS.{Config, Manifest}
+  alias MBS.Config
+  alias MBS.Manifest.BuildDeploy
 
   @spec run(Command.Ls.t(), Config.Data.t()) :: :ok
   def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{} = config) do
     IO.puts("")
 
-    Manifest.find_all(type, config)
+    BuildDeploy.find_all(type, config)
     |> Enum.filter(&Utils.filter_manifest_by_id(&1.id, target_ids))
     |> Enum.sort_by(& &1.id)
     |> Enum.each(&print_ls(&1, type, verbose))
@@ -25,8 +26,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     :ok
   end
 
-  @spec print_ls(Manifest.Component.t(), Manifest.Type.type(), boolean()) :: :ok
-  defp print_ls(%Manifest.Component{} = component, type, true) do
+  @spec print_ls(BuildDeploy.Component.t(), BuildDeploy.Type.type(), boolean()) :: :ok
+  defp print_ls(%BuildDeploy.Component{} = component, type, true) do
     IO.puts(IO.ANSI.format([:bright, "#{component.id}", :normal, "  (component)", ":"]))
     IO.puts("  dir:")
     IO.puts("    #{component.dir}")
@@ -67,7 +68,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     IO.puts("")
   end
 
-  defp print_ls(%Manifest.Toolchain{} = toolchain, _type, true) do
+  defp print_ls(%BuildDeploy.Toolchain{} = toolchain, _type, true) do
     IO.puts(IO.ANSI.format([:bright, "#{toolchain.id}", :normal, "  (toolchain)", ":"]))
     IO.puts("  dir:")
     IO.puts("    #{toolchain.dir}")
@@ -105,14 +106,14 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
 
   defp target_to_str(target) do
     case target do
-      %Manifest.Target{type: :file, target: target} ->
+      %BuildDeploy.Target{type: :file, target: target} ->
         target
 
-      %Manifest.Target{type: :docker, target: target} ->
+      %BuildDeploy.Target{type: :docker, target: target} ->
         "docker://#{target}"
     end
   end
 
-  defp flavor(%Manifest.Toolchain{}), do: "toolchain"
-  defp flavor(%Manifest.Component{}), do: "component"
+  defp flavor(%BuildDeploy.Toolchain{}), do: "toolchain"
+  defp flavor(%BuildDeploy.Component{}), do: "component"
 end

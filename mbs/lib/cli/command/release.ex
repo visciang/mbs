@@ -11,7 +11,8 @@ end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
   alias MBS.CLI.Command
-  alias MBS.{CLI, Config, Const, Manifest, ProjectManifest, ReleaseManifest, Utils, Workflow}
+  alias MBS.{CLI, Config, Const, Utils, Workflow}
+  alias MBS.Manifest.{BuildDeploy, Project, Release}
 
   @spec run(Command.MakeRelease.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(
@@ -23,14 +24,14 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     File.mkdir_p!(output_dir)
 
     deploy_manifests =
-      Manifest.find_all(:deploy, config)
+      BuildDeploy.find_all(:deploy, config)
       |> filter_used_toolchains()
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
 
     build_targets_id = Enum.map(deploy_manifests, & &1.id)
 
     build_manifests =
-      Manifest.find_all(:build, config)
+      BuildDeploy.find_all(:build, config)
       |> CLI.Utils.transitive_dependencies_closure(build_targets_id)
 
     validate_deploy_files(build_manifests, deploy_manifests)
@@ -63,32 +64,32 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
       end
 
     if res == :ok do
-      ReleaseManifest.write(deploy_manifests, id, metadata)
-      ProjectManifest.write(deploy_manifests, id)
+      Release.write(deploy_manifests, id, metadata)
+      Project.write(deploy_manifests, id)
     end
 
     res
   end
 
-  @spec filter_used_toolchains([Manifest.Type.t()]) :: [Manifest.Type.t()]
+  @spec filter_used_toolchains([BuildDeploy.Type.t()]) :: [BuildDeploy.Type.t()]
   defp filter_used_toolchains(manifests) do
-    # we collect all the toolchains (as part of Manifest.find_all(:deploy))
+    # we collect all the toolchains (as part of BuildDeploy.find_all(:deploy))
     # but some of them are not used to run any component deploy
     manifests
-    |> Enum.filter(&match?(%Manifest.Component{}, &1))
+    |> Enum.filter(&match?(%BuildDeploy.Component{}, &1))
     |> Enum.flat_map(&[&1, &1.toolchain])
   end
 
-  @spec validate_deploy_files([Manifest.Type.t()], [Manifest.Type.t()]) :: :ok
+  @spec validate_deploy_files([BuildDeploy.Type.t()], [BuildDeploy.Type.t()]) :: :ok
   defp validate_deploy_files(build_manifests, deploy_manifests) do
     build_manifest_targets_map =
       build_manifests
-      |> Enum.filter(&match?(%Manifest.Component{}, &1))
+      |> Enum.filter(&match?(%BuildDeploy.Component{}, &1))
       |> Map.new(&{&1.id, MapSet.new(&1.targets)})
 
     deploy_manifests
-    |> Enum.filter(&match?(%Manifest.Component{}, &1))
-    |> Enum.each(fn %Manifest.Component{id: id, files: files} ->
+    |> Enum.filter(&match?(%BuildDeploy.Component{}, &1))
+    |> Enum.each(fn %BuildDeploy.Component{id: id, files: files} ->
       files
       |> MapSet.new()
       |> MapSet.subset?(Map.get(build_manifest_targets_map, id, MapSet.new()))
@@ -99,7 +100,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     end)
   end
 
-  @spec build_checksums([String.t()], [Manifest.Type.t()], Config.Data.t()) :: %{String.t() => String.t()}
+  @spec build_checksums([String.t()], [BuildDeploy.Type.t()], Config.Data.t()) :: %{String.t() => String.t()}
   defp build_checksums(_target_ids, build_manifests, config) do
     dask = Workflow.workflow(build_manifests, config, &Workflow.Job.Checksums.fun/2)
 

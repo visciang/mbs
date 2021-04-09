@@ -1,10 +1,11 @@
-defmodule MBS.Manifest do
+defmodule MBS.Manifest.BuildDeploy do
   @moduledoc """
-  MBS manifest functions
+  MBS build/deploy manifest functions
   """
 
-  alias MBS.{Checksum, Config, Const, ProjectManifest, Utils}
-  alias MBS.Manifest.{Component, Target, Toolchain, Type, Validator}
+  alias MBS.{Checksum, Config, Const, Utils}
+  alias MBS.Manifest.BuildDeploy.{Component, Target, Toolchain, Type, Validator}
+  alias MBS.Manifest.Project
 
   @spec find_all(Type.type(), Config.Data.t(), Path.t()) :: [Type.t()]
   def find_all(type, %Config.Data{files_profile: files_profile}, in_dir \\ ".") do
@@ -12,7 +13,7 @@ defmodule MBS.Manifest do
     available_files_profiles = Map.keys(files_profile)
 
     project_manifest_path
-    |> ProjectManifest.load(type)
+    |> Project.load(type)
     |> Enum.map(fn manifest_path ->
       manifest_path
       |> decode()
@@ -46,10 +47,11 @@ defmodule MBS.Manifest do
 
   @spec add_defaults(map(), Path.t()) :: map()
   defp add_defaults(manifest, manifest_path) do
-    manifest = put_in(manifest["dir"], Path.dirname(Path.expand(manifest_path)))
-    manifest = Map.put_new(manifest, "timeout", :infinity)
-
-    manifest = put_in(manifest["docker_opts"], manifest["docker_opts"] || [])
+    manifest =
+      manifest
+      |> put_in(["dir"], Path.dirname(Path.expand(manifest_path)))
+      |> put_in(["timeout"], manifest["timeout"] || :infinity)
+      |> put_in(["docker_opts"], manifest["docker_opts"] || [])
 
     manifest_build_filename = Const.manifest_build_filename()
     manifest_deploy_filename = Const.manifest_deploy_filename()
@@ -64,19 +66,20 @@ defmodule MBS.Manifest do
 
   @spec add_defaults_build(map()) :: map()
   defp add_defaults_build(manifest) do
-    manifest = Map.put(manifest, "__schema__", "component")
-
-    manifest = put_in(manifest["component"]["toolchain_opts"], manifest["component"]["toolchain_opts"] || [])
-    manifest = put_in(manifest["component"]["targets"], manifest["component"]["targets"] || [])
-    manifest = put_in(manifest["component"]["files"], manifest["component"]["files"] || [])
-    put_in(manifest["component"]["dependencies"], manifest["component"]["dependencies"] || [])
+    manifest
+    |> Map.put("__schema__", "component")
+    |> put_in(["component", "toolchain_opts"], manifest["component"]["toolchain_opts"] || [])
+    |> put_in(["component", "targets"], manifest["component"]["targets"] || [])
+    |> put_in(["component", "files"], manifest["component"]["files"] || [])
+    |> put_in(["component", "dependencies"], manifest["component"]["dependencies"] || [])
   end
 
   @spec add_defaults_toolchain(map()) :: map()
   defp add_defaults_toolchain(manifest) do
-    manifest = Map.put(manifest, "__schema__", "toolchain")
-    manifest = put_in(manifest["toolchain"]["files"], manifest["toolchain"]["files"] || [])
-    put_in(manifest["toolchain"]["destroy_steps"], manifest["toolchain"]["destroy_steps"] || [])
+    manifest
+    |> Map.put("__schema__", "toolchain")
+    |> put_in(["toolchain", "files"], manifest["toolchain"]["files"] || [])
+    |> put_in(["toolchain", "destroy_steps"], manifest["toolchain"]["destroy_steps"] || [])
   end
 
   @spec to_struct(Type.type(), map(), Config.Data.files_profiles()) :: Type.t()

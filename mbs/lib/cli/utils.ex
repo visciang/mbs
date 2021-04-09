@@ -1,14 +1,17 @@
 defmodule MBS.CLI.Utils do
   @moduledoc false
 
-  alias MBS.Manifest
+  alias MBS.Manifest.BuildDeploy
   alias MBS.Workflow.Job
+
+  @type manifest_map :: %{String.t() => BuildDeploy.Type.t()}
+  @type manifest_set :: MapSet.t(BuildDeploy.Type.t())
 
   @spec filter_manifest_by_id(String.t(), [String.t()]) :: boolean()
   def filter_manifest_by_id(_id, []), do: true
   def filter_manifest_by_id(id, target_ids), do: id in target_ids
 
-  @spec transitive_dependencies_closure([Manifest.Type.t()], [String.t()]) :: [Manifest.Type.t()]
+  @spec transitive_dependencies_closure([BuildDeploy.Type.t()], [String.t()]) :: [BuildDeploy.Type.t()]
   def transitive_dependencies_closure(manifests, []), do: manifests
 
   def transitive_dependencies_closure(manifests, target_ids) do
@@ -16,37 +19,38 @@ defmodule MBS.CLI.Utils do
     target_manifests = Enum.filter(manifests, &filter_manifest_by_id(&1.id, target_ids))
 
     target_manifests
-    |> Enum.flat_map(&do_transitive_dependencies_closure(&1, manifests_map))
+    |> Enum.flat_map(&_transitive_dependencies_closure(&1, manifests_map))
     |> Enum.uniq()
   end
 
-  @spec do_transitive_dependencies_closure(
-          Manifest.Type.t(),
-          %{String.t() => Manifest.Type.t()},
-          MapSet.t(Manifest.Type.t())
-        ) :: MapSet.t(Manifest.Type.t())
-  defp do_transitive_dependencies_closure(target_manifest, manifests_map, visited_manifests \\ MapSet.new()) do
+  @spec _transitive_dependencies_closure(BuildDeploy.Type.t(), manifest_map(), manifest_set()) :: manifest_set()
+  defp _transitive_dependencies_closure(target_manifest, manifests_map, visited_manifests \\ MapSet.new()) do
     if MapSet.member?(visited_manifests, target_manifest) do
       visited_manifests
     else
-      case target_manifest do
-        %Manifest.Component{} = component ->
-          dependencies = Job.Utils.component_dependencies(component)
+      _transitive_dependencies_closure_visit(target_manifest, manifests_map, visited_manifests)
+    end
+  end
 
-          Enum.reduce(dependencies, visited_manifests, fn
-            dependency_id, visited_manifests ->
-              dependency_manifest = Map.fetch!(manifests_map, dependency_id)
-              visited_manifests = MapSet.put(visited_manifests, target_manifest)
+  @spec _transitive_dependencies_closure_visit(BuildDeploy.Type.t(), manifest_map(), manifest_set()) :: manifest_set()
+  defp _transitive_dependencies_closure_visit(target_manifest, manifests_map, visited_manifests) do
+    case target_manifest do
+      %BuildDeploy.Component{} = component ->
+        dependencies = Job.Utils.component_dependencies(component)
 
-              MapSet.union(
-                visited_manifests,
-                do_transitive_dependencies_closure(dependency_manifest, manifests_map, visited_manifests)
-              )
-          end)
+        Enum.reduce(dependencies, visited_manifests, fn
+          dependency_id, visited_manifests ->
+            dependency_manifest = Map.fetch!(manifests_map, dependency_id)
+            visited_manifests = MapSet.put(visited_manifests, target_manifest)
 
-        %Manifest.Toolchain{} ->
-          MapSet.put(visited_manifests, target_manifest)
-      end
+            MapSet.union(
+              visited_manifests,
+              _transitive_dependencies_closure(dependency_manifest, manifests_map, visited_manifests)
+            )
+        end)
+
+      %BuildDeploy.Toolchain{} ->
+        MapSet.put(visited_manifests, target_manifest)
     end
   end
 end

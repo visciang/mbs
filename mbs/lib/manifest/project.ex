@@ -1,13 +1,14 @@
-defmodule MBS.ProjectManifest do
+defmodule MBS.Manifest.Project do
   @moduledoc """
   MBS project manifest
   """
 
   require Logger
 
-  alias MBS.{Const, Manifest, Utils}
+  alias MBS.{Const, Utils}
+  alias MBS.Manifest.BuildDeploy
 
-  @spec load(Path.t(), Manifest.Type.type()) :: [Path.t()]
+  @spec load(Path.t(), BuildDeploy.Type.type()) :: [Path.t()]
   def load(manifest_path, type) do
     dir = Path.dirname(manifest_path)
 
@@ -21,10 +22,10 @@ defmodule MBS.ProjectManifest do
       {:error, reason} ->
         Utils.halt("Error parsing #{manifest_path}\n  #{Jason.DecodeError.message(reason)}")
     end
-    |> process(type, dir)
+    |> to_components_dirs(type, dir)
   end
 
-  @spec write([Manifest.Type.t()], String.t()) :: :ok
+  @spec write([BuildDeploy.Type.t()], String.t()) :: :ok
   def write(manifests, release_id) do
     release_dir = Path.join(Const.releases_dir(), release_id)
     components_id = Enum.map(manifests, & &1.id)
@@ -35,8 +36,8 @@ defmodule MBS.ProjectManifest do
     )
   end
 
-  @spec process(map(), Manifest.Type.type(), Path.t()) :: [Path.t()]
-  defp process(manifest_map, type, base_dir) do
+  @spec to_components_dirs(map(), BuildDeploy.Type.type(), Path.t()) :: [Path.t()]
+  defp to_components_dirs(manifest_map, type, base_dir) do
     unless is_map(manifest_map) do
       message = "Bad mbs-project.json type"
       Utils.halt(message)

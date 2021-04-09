@@ -5,9 +5,11 @@ defmodule MBS.Workflow.Job.Cache do
 
   alias MBS.CLI.Reporter
   alias MBS.{Cache, Const, Docker}
-  alias MBS.Manifest.Target
+  alias MBS.Manifest.BuildDeploy.Target
 
   require MBS.CLI.Reporter.Status
+
+  @type cache_result :: :cache_miss | :cached
 
   @spec hit_toolchain(String.t(), String.t()) :: boolean()
   def hit_toolchain(id, checksum) do
@@ -25,7 +27,7 @@ defmodule MBS.Workflow.Job.Cache do
     end)
   end
 
-  @spec get_toolchain(String.t(), String.t()) :: :cache_miss | :cached
+  @spec get_toolchain(String.t(), String.t()) :: cache_result()
   def get_toolchain(id, checksum) do
     if hit_toolchain(id, checksum) do
       :cached
@@ -34,7 +36,7 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  @spec get_targets(String.t(), String.t(), [String.t()]) :: :cache_miss | :cached
+  @spec get_targets(String.t(), String.t(), [String.t()]) :: cache_result()
   def get_targets(id, checksum, targets) do
     found_all_targets =
       Enum.all?(targets, fn
@@ -90,9 +92,7 @@ defmodule MBS.Workflow.Job.Cache do
   end
 
   @spec put_toolchain(String.t(), String.t()) :: :ok
-  def put_toolchain(_id, _checksum) do
-    :ok
-  end
+  def put_toolchain(_id, _checksum), do: :ok
 
   @spec copy_targets(String.t(), String.t(), [Target.t()], Path.t()) :: :ok | {:error, term()}
   def copy_targets(id, checksum, targets, output_dir) do
@@ -104,12 +104,8 @@ defmodule MBS.Workflow.Job.Cache do
           cache_target_path = Cache.path(Const.cache_dir(), id, checksum, target)
           release_target_path = Path.join(output_dir, Path.basename(target))
 
-          Reporter.job_report(
-            id,
-            Reporter.Status.log(),
-            "cp #{cache_target_path} #{release_target_path}",
-            nil
-          )
+          report_msg = "cp #{cache_target_path} #{release_target_path}"
+          Reporter.job_report(id, Reporter.Status.log(), report_msg, nil)
 
           File.cp!(cache_target_path, release_target_path)
 

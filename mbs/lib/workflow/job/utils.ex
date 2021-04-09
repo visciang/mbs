@@ -4,7 +4,7 @@ defmodule MBS.Workflow.Job.Utils do
   """
 
   alias MBS.{Checksum, Const}
-  alias MBS.Manifest.{Component, Toolchain, Type}
+  alias MBS.Manifest.BuildDeploy.{Component, Toolchain, Type}
   alias MBS.Workflow.Job
 
   @spec build_checksum(Component.t(), Job.upstream_results()) :: String.t()
@@ -44,12 +44,10 @@ defmodule MBS.Workflow.Job.Utils do
   end
 
   @spec component_dependencies(Type.t()) :: [String.t()]
+  def component_dependencies(%Toolchain{}), do: []
+
   def component_dependencies(%Component{toolchain: %Toolchain{id: toolchain_id}, dependencies: dependencies}) do
     [toolchain_id | dependencies]
-  end
-
-  def component_dependencies(%Toolchain{}) do
-    []
   end
 
   @spec checksum(Path.t(), [Path.t()], %{String.t() => String.t()}) :: String.t()

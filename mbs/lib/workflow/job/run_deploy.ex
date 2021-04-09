@@ -4,13 +4,14 @@ defmodule MBS.Workflow.Job.RunDeploy do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Const, Docker, Manifest, Toolchain}
+  alias MBS.{Config, Const, Docker, Toolchain}
+  alias MBS.Manifest.BuildDeploy
   alias MBS.Workflow.Job
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), Manifest.Type.t(), boolean()) :: Job.fun()
-  def fun(%Config.Data{}, %Manifest.Toolchain{id: id, dir: toolchain_dir}, _force) do
+  @spec fun(Config.Data.t(), BuildDeploy.Type.t(), boolean()) :: Job.fun()
+  def fun(%Config.Data{}, %BuildDeploy.Toolchain{id: id, dir: toolchain_dir}, _force) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
@@ -42,7 +43,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
   def fun(
         %Config.Data{},
-        %Manifest.Component{dir: component_dir, toolchain: %Manifest.Toolchain{dir: toolchain_dir}} = component,
+        %BuildDeploy.Component{dir: component_dir, toolchain: %BuildDeploy.Toolchain{dir: toolchain_dir}} = component,
         _force
       ) do
     fn job_id, upstream_results ->

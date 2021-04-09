@@ -10,11 +10,12 @@ end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   alias MBS.CLI.{Command, Reporter}
-  alias MBS.{CLI, Config, Manifest, Utils, Workflow}
+  alias MBS.{CLI, Config, Utils, Workflow}
+  alias MBS.Manifest.BuildDeploy
 
   @spec run(Command.Shell.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config) do
-    manifests = Manifest.find_all(:build, config)
+    manifests = BuildDeploy.find_all(:build, config)
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)
 
     CLI.Command.run(%Command.RunBuild{targets: target_direct_dependencies}, config)
@@ -23,7 +24,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config) do
     Reporter.mute(true)
 
-    manifests = Manifest.find_all(:build, config)
+    manifests = BuildDeploy.find_all(:build, config)
 
     dask =
       manifests
@@ -51,13 +52,13 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
     end
   end
 
-  @spec target_component_direct_dependencies([Manifest.Type.t()], String.t()) :: [String.t()]
+  @spec target_component_direct_dependencies([BuildDeploy.Type.t()], String.t()) :: [String.t()]
   defp target_component_direct_dependencies(manifests, id) do
     case Enum.find(manifests, &(&1.id == id)) do
-      %Manifest.Component{} = component ->
+      %BuildDeploy.Component{} = component ->
         [component.toolchain.id | component.dependencies]
 
-      %Manifest.Toolchain{} ->
+      %BuildDeploy.Toolchain{} ->
         Utils.halt("Bad target, the target should be a component not a toolchain")
 
       nil ->

@@ -1,4 +1,4 @@
-defmodule MBS.DependencyManifest.Type do
+defmodule MBS.Manifest.Dependency.Type do
   @moduledoc false
 
   defstruct [:id, :checksum]
