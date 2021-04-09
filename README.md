@@ -8,12 +8,25 @@ Docker **containerization** technology is used both to run `mbs` and to define y
 
 With MBS you can easly define the toolchains to build / deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services.
 
+TODO insert here a "small" DAG image
+
 This will give you **parallelized** fast builds for free that can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
 
 The user experience we aim to is a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a service oriented solution.
 
-**TODO** explain that:
-the system scales well, but: vertical build scalability, the git repo should fit in the dev machine
+### What MBS is not
+
+It's all about **tradeoff**. We should do one thing (put your definition of "one thing" here) and do it well (your definition also here). This can't be considered without a clear context that defines where we would like to operate; and different context means different requirements, different expectation and so different definitions.
+
+What we are trying to target here is a simple thing to operate in the context of project oriented monorepositories with a number N of components where N is such that you can run a full build of it on a single machine (you can run means you accept the time it could take to complete a full build on you n-Core host).
+
+That's obviously the worst case, normally we only work on a very small subset of the components and at the "higher level" of the dependency graph. So we won't rebuild the world every time.
+This is true unless you are working on a toolchain that a lot of components use.
+
+In this context, we can build a tool that can stay simple because it doesn't have to deal with monsters, monorepository hosting thousands on components. When you really need this level of complexity other horizontaly scalable solutions are needed, at the price of infrastructure and tools complexity.
+
+TODO would be nice a graph to show the distribution in terms of number of components per project,
+from 1 (micro-service) to project oriented monorepo (100 components) to the big monsters..
 
 ### Motivation
 
