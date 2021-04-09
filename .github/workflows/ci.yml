@@ -9,5 +9,16 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Run
-        run: ./ci.sh
+      - name: Build docker image
+        run: |
+          ./ci.sh
+
+      - name: Push docker image
+        if: github.ref == 'refs/heads/master'
+        env:
+          DOCKER_IMAGE_NAME: visciang/mbs:latest
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+        run: |
+          echo "$DOCKERHUB_TOKEN" | docker login -u visciang --password-stdin
+          docker tag mbs:latest $DOCKER_IMAGE_NAME
+          docker push $DOCKER_IMAGE_NAME
