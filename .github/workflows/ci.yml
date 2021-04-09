@@ -13,6 +13,11 @@ jobs:
         run: |
           ./ci.sh
 
+      - name: Build mbs in mbs
+        run: |
+          source ./mbs.sh
+          mbs build run --logs mbs
+
       - name: Push docker image
         if: github.ref == 'refs/heads/main'
         env:
