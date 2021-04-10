@@ -11,8 +11,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Version do
 
   @spec run(Command.Version.t(), Config.Data.t()) :: :ok
   def run(%Command.Version{}, %Config.Data{}) do
-    {_, vsn} = :application.get_key(:mbs, :vsn)
-    IO.puts(vsn)
+    IO.puts(System.fetch_env!("MBS_VERSION"))
 
     :ok
   end

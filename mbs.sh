@@ -2,6 +2,8 @@
 
 set -e
 
+MBS_VERSION=latest
+
 LOG_LEVEL=info
 LOG_COLOR=true
 
@@ -28,7 +30,7 @@ alias mbs="\
     -e MBS_GRAPH_VOLUME=$MBS_GRAPH_VOLUME \
     -e LOG_LEVEL=$LOG_LEVEL \
     -e LOG_COLOR=$LOG_COLOR \
-    mbs"
+    mbs:$MBS_VERSION"
 
 if [ "$#" -ne 0 ]; then
     mbs $@

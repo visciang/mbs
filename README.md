@@ -62,10 +62,10 @@ TODO: describe the language oriented approach used by some tools (NPM workspaces
 
 ## Getting Started
 
-To start playing with some toy examples, let's build first `mbs` (run `./ci.sh`, the only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`!
+To start playing with some toy examples, let's build first `mbs` (run `./build.sh`, the only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`!
 
 ```sh
-./ci.sh
+./build.sh
 source mbs.sh
 ```
 
@@ -443,7 +443,7 @@ Development should aim to correctness, simplicity, sensible defaults and "small"
 
 Requirements: `docker`
 
-The `ci.sh` script builds two docker images (`mbs:slim`, `mbs:full`).
+The `build.sh` script builds two docker images (`mbs:slim`, `mbs:full`).
 These images can be used to run `mbs` on any system with docker support.
 
 A convenient alias can be defined to use `mbs` as a native CLI application. Pay attention to the `$PWD` in the alias, it will use the cwd from within you issue the `mbs` aliased command. So it won't work if don't issue it from the repo root directory.

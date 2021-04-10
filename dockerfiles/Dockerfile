@@ -16,4 +16,6 @@ FROM elixir:1.11.4-alpine
 RUN apk add --no-cache docker docker-compose graphviz git
 COPY dockerfiles/entrypoint.sh /entrypoint.sh
 COPY --from=builder /mbs/mbs /usr/local/bin/
+ARG MBS_VERSION=latest
+ENV MBS_VERSION=${MBS_VERSION}
 ENTRYPOINT [ "/entrypoint.sh" ]

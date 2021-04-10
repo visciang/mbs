@@ -1,5 +1,7 @@
 #!/bin/fish
 
+set MBS_VERSION latest
+
 set LOG_LEVEL info
 set LOG_COLOR true
 
@@ -28,7 +30,7 @@ alias mbs="\
     -e MBS_GRAPH_VOLUME=$MBS_GRAPH_VOLUME \
     -e LOG_LEVEL=$LOG_LEVEL \
     -e LOG_COLOR=$LOG_COLOR \
-    mbs"
+    mbs:$MBS_VERSION"
 
 if [ (count $argv) != 0 ]
     mbs $argv

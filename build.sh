@@ -2,7 +2,11 @@
 
 set -e
 
-docker build --rm -f dockerfiles/Dockerfile --tag=mbs .
+MBS_VERSION=${MBS_VERSION:-latest}
+
+docker build --rm -f dockerfiles/Dockerfile \
+    --build-arg="MBS_VERSION=$MBS_VERSION" \
+    --tag=mbs:$MBS_VERSION .
 
 if [ ! -z "$RUN_IT" ]; then
     ./mbs.sh version
