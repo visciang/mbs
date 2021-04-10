@@ -2,7 +2,7 @@
 
 set -e
 
-MBS_VERSION=latest
+MBS_VERSION=${MBS_VERSION:-latest}
 
 LOG_LEVEL=info
 LOG_COLOR=true

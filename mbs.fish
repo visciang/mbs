@@ -1,6 +1,6 @@
 #!/bin/fish
 
-set MBS_VERSION latest
+set -q MBS_VERSION || set MBS_VERSION latest
 
 set LOG_LEVEL info
 set LOG_COLOR true
