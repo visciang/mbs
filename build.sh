@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 MBS_VERSION=${MBS_VERSION:-latest}
 
