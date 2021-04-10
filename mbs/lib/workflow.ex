@@ -10,14 +10,14 @@ defmodule MBS.Workflow do
           [BuildDeploy.Type.t()],
           Config.Data.t(),
           (Config.Data.t(), BuildDeploy.Type.t() -> Dask.Job.fun()),
-          Dask.Job.on_exit(),
+          (Config.Data.t(), BuildDeploy.Type.t() -> Dask.Job.on_exit()),
           :upward | :downward
         ) :: Dask.t()
   def workflow(
         manifests,
         %Config.Data{timeout: global_timeout_sec} = config,
         job_fun,
-        job_on_exit \\ &default_job_on_exit/3,
+        job_fun_on_exit \\ &default_job_fun_on_exit/2,
         direction \\ :upward
       ) do
     workflow =
@@ -26,7 +26,7 @@ defmodule MBS.Workflow do
         local_timeout_ms = convert_timeout_s_to_ms(local_timeout_sec)
         timeout_ms = min(global_timeout_ms, local_timeout_ms)
 
-        Dask.job(workflow, manifest.id, job_fun.(config, manifest), timeout_ms, job_on_exit)
+        Dask.job(workflow, manifest.id, job_fun.(config, manifest), timeout_ms, job_fun_on_exit.(config, manifest))
       end)
 
     Enum.reduce(manifests, workflow, fn
@@ -51,7 +51,9 @@ defmodule MBS.Workflow do
     end)
   end
 
-  def default_job_on_exit(_, _, _), do: :ok
+  def default_job_fun_on_exit(_, _) do
+    fn _, _, _, _ -> :ok end
+  end
 
   defp convert_timeout_s_to_ms(:infinity), do: :infinity
   defp convert_timeout_s_to_ms(seconds), do: seconds * 1_000

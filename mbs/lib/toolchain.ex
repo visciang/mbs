@@ -4,7 +4,7 @@ defmodule MBS.Toolchain do
   """
 
   alias MBS.CLI.Reporter
-  alias MBS.{Const, Docker}
+  alias MBS.{Const, Docker, DockerCompose}
   alias MBS.Manifest.{BuildDeploy, Dependency}
   alias MBS.Workflow.Job
 
@@ -35,8 +35,8 @@ defmodule MBS.Toolchain do
 
     {docker_network_name, cmd_up, cmd_down} =
       if services_compose_file != nil do
-        {:ok, docker_network_name, cmd_up} = Docker.compose_cmd(:up, services_compose_file, env, job_id)
-        {:ok, _docker_network_name, cmd_down} = Docker.compose_cmd(:down, services_compose_file, env, job_id)
+        {:ok, docker_network_name, cmd_up} = DockerCompose.compose_cmd(:up, services_compose_file, env, job_id)
+        {:ok, _docker_network_name, cmd_down} = DockerCompose.compose_cmd(:down, services_compose_file, env, job_id)
         {docker_network_name, cmd_up, cmd_down}
       else
         {nil, "true", "true"}
@@ -77,20 +77,19 @@ defmodule MBS.Toolchain do
         error -> error
       end
 
-    exec_services(:down, component, env, job_id)
     res
   end
 
-  @spec exec_services(Docker.compose_action(), BuildDeploy.Component.t(), env_list(), String.t()) ::
+  @spec exec_services(DockerCompose.compose_action(), BuildDeploy.Component.t(), env_list(), String.t()) ::
           {:ok, nil | String.t()} | {:error, term()}
-  defp exec_services(_action, %BuildDeploy.Component{services: nil}, _env, _job_id),
+  def exec_services(_action, %BuildDeploy.Component{services: nil}, _env, _job_id),
     do: {:ok, nil}
 
-  defp exec_services(action, %BuildDeploy.Component{services: services_compose_file}, env, job_id) do
+  def exec_services(action, %BuildDeploy.Component{services: services_compose_file}, env, job_id) do
     reporter_id = "#{job_id}:services"
     Reporter.job_report(reporter_id, Reporter.Status.log(), "Sidecar services #{action} ...", nil)
 
-    Docker.compose(action, services_compose_file, env, reporter_id)
+    DockerCompose.compose(action, services_compose_file, env, reporter_id)
   end
 
   @spec exec_deploy(BuildDeploy.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}

@@ -16,17 +16,17 @@ defmodule MBS.Workflow.Job.RunBuild do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
-      {report_status, report_desc} =
+      {cached, report_status, report_desc} =
         with :cache_miss <- cache_get_toolchain(id, checksum, force),
              :ok <- Toolchain.build(toolchain),
              :ok <- Job.Cache.put_toolchain(id, checksum) do
-          {Reporter.Status.ok(), checksum}
+          {false, Reporter.Status.ok(), checksum}
         else
           :cached ->
-            {Reporter.Status.uptodate(), checksum}
+            {true, Reporter.Status.uptodate(), checksum}
 
           {:error, reason} ->
-            {Reporter.Status.error(reason), nil}
+            {false, Reporter.Status.error(reason), nil}
         end
 
       end_time = Reporter.time()
@@ -37,7 +37,7 @@ defmodule MBS.Workflow.Job.RunBuild do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{checksum: checksum, targets: MapSet.new()}
+      %Job.FunResult{cached: cached, checksum: checksum, targets: MapSet.new()}
     end
   end
 
@@ -47,19 +47,19 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       checksum = Job.Utils.build_checksum(component, upstream_results)
 
-      {report_status, report_desc} =
+      {cached, report_status, report_desc} =
         with :cache_miss <- cache_get_targets(id, checksum, targets, force),
              changed_deps <- get_changed_dependencies_targets(component, upstream_results, force),
              :ok <- Toolchain.exec_build(component, checksum, upstream_results, changed_deps, job_id),
              :ok <- assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(id, checksum, targets) do
-          {Reporter.Status.ok(), checksum}
+          {false, Reporter.Status.ok(), checksum}
         else
           :cached ->
-            {Reporter.Status.uptodate(), checksum}
+            {true, Reporter.Status.uptodate(), checksum}
 
           {:error, reason} ->
-            {Reporter.Status.error(reason), nil, nil}
+            {false, Reporter.Status.error(reason), nil, nil}
         end
 
       end_time = Reporter.time()
@@ -71,9 +71,29 @@ defmodule MBS.Workflow.Job.RunBuild do
       end
 
       %Job.FunResult{
+        cached: cached,
         checksum: checksum,
         targets: transitive_targets(id, checksum, targets, upstream_results)
       }
+    end
+  end
+
+  @spec fun_on_exit(Config.Data.t(), BuildDeploy.Type.t()) :: Dask.Job.on_exit()
+  def fun_on_exit(%Config.Data{} = config, %BuildDeploy.Toolchain{} = toolchain) do
+    Job.OnExit.fun(config, toolchain)
+  end
+
+  def fun_on_exit(%Config.Data{} = config, %BuildDeploy.Component{} = component) do
+    job_on_exit = Job.OnExit.fun(config, component)
+
+    fn job_id, upstream_results, job_exec_result, elapsed_time_ms ->
+      services_up =
+        match?({:job_ok, %Job.FunResult{cached: false}}, job_exec_result) or match?(:job_timeout, job_exec_result)
+
+      if services_up do
+        Toolchain.exec_services(:down, component, [], job_id)
+        job_on_exit.(job_id, upstream_results, job_exec_result, elapsed_time_ms)
+      end
     end
   end
 

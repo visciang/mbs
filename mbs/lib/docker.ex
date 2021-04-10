@@ -5,7 +5,6 @@ defmodule MBS.Docker do
   alias MBS.Utils
   require MBS.CLI.Reporter.Status
 
-  @type compose_action :: :up | :down
   @type env_list :: [{String.t(), String.t()}]
 
   @cmd_arg_dind ["-v", "/var/run/docker.sock:/var/run/docker.sock"]
@@ -107,40 +106,6 @@ defmodule MBS.Docker do
   @spec image_run_cmd_args(String.t(), String.t(), [String.t()], env_list()) :: [String.t()]
   defp image_run_cmd_args(repository, tag, opts, env) do
     ["run", "--init"] ++ opts ++ @cmd_arg_dind ++ docker_env(env) ++ ["#{repository}:#{tag}"]
-  end
-
-  @spec compose(compose_action(), Path.t(), env_list(), String.t()) :: {:ok, String.t()} | {:error, term()}
-  def compose(action, compose_file, env, job_id) do
-    {cmd_args, compose_project_name} = compose_args(action, compose_file, job_id)
-    cmd_into = %Reporter.Log{job_id: "#{job_id}_#{action}"}
-
-    docker_network_name = "#{compose_project_name}_default"
-
-    case System.cmd("docker-compose", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
-      {_, 0} -> {:ok, docker_network_name}
-      {res, exit_status} -> {:error, {res, exit_status}}
-    end
-  end
-
-  @spec compose_cmd(compose_action(), Path.t(), env_list(), String.t()) ::
-          {:ok, String.t(), String.t()} | {:error, term()}
-  def compose_cmd(action, compose_file, env, job_id) do
-    {cmd_args, compose_project_name} = compose_args(action, compose_file, job_id)
-    env_cmd = Enum.map(env, fn {name, value} -> "#{name}='#{value}'" end)
-
-    docker_network_name = "#{compose_project_name}_default"
-    cmd = (env_cmd ++ ["docker-compose"] ++ cmd_args) |> Enum.join(" ")
-
-    {:ok, docker_network_name, cmd}
-  end
-
-  @spec compose_args(compose_action(), Path.t(), String.t()) :: {[String.t()], String.t()}
-  defp compose_args(action, compose_file, job_id) do
-    compose_project_name = String.replace(job_id, ":", "")
-    cmd_action = if action == :up, do: ["up", "-d"], else: ["down", "--volumes", "--remove-orphans"]
-    cmd_args = ["--project-name", compose_project_name, "-f", compose_file | cmd_action]
-
-    {cmd_args, compose_project_name}
   end
 
   @spec docker_env(env_list()) :: [String.t()]

@@ -29,11 +29,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
     dask =
       manifests
       |> CLI.Utils.transitive_dependencies_closure([target])
-      |> Workflow.workflow(
-        config,
-        &Workflow.Job.Shell.fun(&1, &2, target),
-        &Workflow.Job.OnExit.fun/3
-      )
+      |> Workflow.workflow(config, &Workflow.Job.Shell.fun(&1, &2, target), &Workflow.Job.OnExit.fun/2)
 
     dask_exec =
       try do

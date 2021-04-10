@@ -18,11 +18,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
     dask =
       BuildDeploy.find_all(:build, config)
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
-      |> Workflow.workflow(
-        config,
-        &Workflow.Job.RunBuild.fun(&1, &2, force),
-        &Workflow.Job.OnExit.fun/3
-      )
+      |> Workflow.workflow(config, &Workflow.Job.RunBuild.fun(&1, &2, force), &Workflow.Job.RunBuild.fun_on_exit/2)
 
     dask_exec =
       try do

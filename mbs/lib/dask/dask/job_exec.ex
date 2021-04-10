@@ -14,7 +14,7 @@ defmodule Dask.JobExec do
       {job_status, elapsed_time} =
         timed(fn -> exec_job_fun(job, limiter, upstream_jobs_status, job.id) end, job.timeout)
 
-      job.on_exit.(job.id, job_status, elapsed_time)
+      job.on_exit.(job.id, upstream_jobs_status, job_status, elapsed_time)
 
       Enum.each(downstream_job_pid_set, &send(&1, {job.id, job_status}))
 

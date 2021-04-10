@@ -10,9 +10,10 @@ defmodule MBS.Workflow.Job do
     Job function result data
     """
 
-    defstruct [:checksum, :targets]
+    defstruct [:cached, :checksum, :targets]
 
     @type t :: %__MODULE__{
+            cached: boolean(),
             checksum: String.t(),
             targets: nil | MapSet.t({String.t(), Target.t()})
           }

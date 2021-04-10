@@ -21,7 +21,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunDeploy do
 
     dask =
       BuildDeploy.find_all(:deploy, config, release_dir)
-      |> Workflow.workflow(config, &Workflow.Job.RunDeploy.fun(&1, &2, force), &Workflow.Job.OnExit.fun/3)
+      |> Workflow.workflow(config, &Workflow.Job.RunDeploy.fun(&1, &2, force), &Workflow.Job.OnExit.fun/2)
 
     dask_exec =
       try do
