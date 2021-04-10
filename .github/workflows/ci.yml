@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Build docker image
+      - name: Build
         run: |
           case $GITHUB_REF in
             refs/heads/*)
@@ -21,10 +21,6 @@ jobs:
           esac
 
           ./build.sh
-
-      - name: Build mbs in mbs
-        run: |
-          source ./mbs.sh
           ./mbs.sh build run --logs mbs
 
       - name: Push docker image
