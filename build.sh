@@ -6,7 +6,7 @@ MBS_VERSION=${MBS_VERSION:-latest}
 
 docker build --rm -f dockerfiles/Dockerfile \
     --build-arg="MBS_VERSION=$MBS_VERSION" \
-    --tag=mbs:$MBS_VERSION .
+    --tag=visciang/mbs:$MBS_VERSION .
 
 if [ ! -z "$RUN_IT" ]; then
     ./mbs.sh version

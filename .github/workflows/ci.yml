@@ -37,5 +37,4 @@ jobs:
           DOCKER_IMAGE_TAG=$DOCKER_IMAGE_REPO:$MBS_VERSION
 
           echo "$DOCKERHUB_TOKEN" | docker login -u visciang --password-stdin
-          docker tag mbs:latest $DOCKER_IMAGE_TAG
           docker push $DOCKER_IMAGE_TAG

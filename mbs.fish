@@ -30,7 +30,7 @@ alias mbs="\
     -e MBS_GRAPH_VOLUME=$MBS_GRAPH_VOLUME \
     -e LOG_LEVEL=$LOG_LEVEL \
     -e LOG_COLOR=$LOG_COLOR \
-    mbs:$MBS_VERSION"
+    visciang/mbs:$MBS_VERSION"
 
 if [ (count $argv) != 0 ]
     mbs $argv
