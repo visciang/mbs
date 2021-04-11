@@ -23,7 +23,7 @@ What we are trying to target here is a simple thing to operate in the context of
 That's obviously the worst case, normally we only work on a very small subset of the components and at the "higher level" of the dependency graph. So we won't rebuild the world every time.
 This is true unless you are working on a toolchain used by a lot of components.
 
-In this context, we can build a tool that can stay simple because it doesn't have to deal with monsters, monorepository hosting thousands on components. When you really need this level of complexity other horizontaly scalable solutions are needed, at the price of infrastructure and tools complexity.
+In this context, we can build a tool that can stay simple because it doesn't have to deal with monsters, monorepository hosting thousands of components. When you really need this level of complexity other horizontaly scalable solutions are needed, at the price of infrastructure and tools complexity.
 
 ### Motivation
 
@@ -62,18 +62,245 @@ TODO: describe the language oriented approach used by some tools (NPM workspaces
 
 ## Getting Started
 
-To start playing with some toy examples, let's build first `mbs` (run `./build.sh`, the only requirement is docker) and then `source mbs.sh` or `source mbs.fish` and play with `mbs`!
+Prerequisite: docker installed
+
+### Init a new repo
+
+As describe in the introduction, `mbs` is distributed as a docker image, so you don't need to install any executable.
+
+To initialize a new repository:
 
 ```sh
-./build.sh
-source mbs.sh
+cd my_repository
+
+MBS_VERSION=x.y.z    # NOTE: here the MBS version you will use
+docker run --rm -ti -v $PWD:/repo -w /repo visciang/mbs:$MBS_VERSION init
 ```
 
-For example run `mbs --help` and `mbs build ls`, it will list also some examples included in the repository under `examples/monorepo/`.
+The `docker run` command will pull the mbs image and run it with the `init` command in the repository directory.
+It will setup the repository directory with a couple of config file (`.mbs-config.json`, `.mbs-project.json`) and `mbs.sh` script.
 
-TODO: a quick tour based on the example/
+- more details about the config files in [Configuration](###Configuration).
+- `mbs.sh` script is a convenient wrapper around the `docker run` command (you can also source it and you will have an `mbs` alias in the shell).
 
-TODO: A word about building `mbs` in `mbs`
+You will have:
+
+```sh
+ls -a
+.mbs-config.json  .mbs-project.json  mbs.sh*
+```
+
+These files should be git committed in your repo.
+
+Now you should be able to run mbs:
+
+```sh
+./mbs.sh --help
+
+# or
+
+source `./mbs.sh`
+mbs --help
+```
+
+### Let's play
+
+Since the `mbs` github repository includes some examples under `example/monorepo`, it's convenient to play there to get the feeling of how you can use `mbs` in different contexts.
+
+This will be the same onboarding experience you will have joining the development of an `mbs` managed monorepo.
+
+The below example won't install anything on your machine, but it will download and create docker images and two docker volumes (where it caches artifacts and releases).
+
+```sh
+MBS_VERSION=vA.B.C  # NOTE: here the MBS version you want to use
+git clone --depth 1 -b $MBS_VERSION https://github.com/visciang/mbs-monorepo
+```
+
+and
+
+```sh
+cd mbs-monorepo
+source ./mbs.sh
+mbs --help
+```
+
+Lets' see the available component
+
+```sh
+mbs build ls
+
+# OUTPUT
+c_native_binary  (component)
+c_shared_library  (component)
+c_shared_sub_library  (component)
+docker_app  (component)
+docker_apps_composition  (component)
+ex_app  (component)
+ex_lib  (component)
+ex_sublib  (component)
+goapp  (component)
+golib  (component)
+infrastructure_terraform_state  (component)
+infrastructure_via_terraform  (component)
+js_app  (component)
+js_library  (component)
+localstack  (component)
+localstack_wait  (component)
+mbs  (component)
+python_library  (component)
+python_native_app  (component)
+python_native_app_dockerized  (component)
+services_app  (component)
+toolchain-build-cmake  (toolchain)
+toolchain-build-docker  (toolchain)
+toolchain-build-docker_compose  (toolchain)
+toolchain-build-elixir  (toolchain)
+toolchain-build-go  (toolchain)
+toolchain-build-js  (toolchain)
+toolchain-build-python  (toolchain)
+toolchain-build-terraform  (toolchain)
+toolchain-deploy-awscli  (toolchain)
+toolchain-deploy-docker_compose  (toolchain)
+toolchain-deploy-terraform  (toolchain)
+toolchain-mbs  (toolchain)
+toolchain-meta-sh  (toolchain)
+
+Successfully completed (0 jobs) (0.053 sec)
+```
+
+To have a better picture of the components dependencies:
+
+```sh
+mbs build graph
+# this will produce .mbs-graph/graph.svg
+```
+
+Open `.mbs-graph/graph.svg` and see the dependencies:
+
+![Alt text](./.mbs-graph/graph.svg)
+
+Now, we can build only a subset of the components, for instance `c_native_binary`.
+If you check the deps graph you will see it depends on `c_shared_library` that depends on `c_shared_sub_library`, and they all depends on the `toolchain-build-cmake`.
+
+alternativelly, you can see this also in the CLI via:
+
+```sh
+mbs build tree c_native_binary
+
+# OUTPUT
+└── c_native_binary
+    ├── c_shared_library
+    │   ├── c_shared_sub_library
+    │   │   └── toolchain-build-cmake
+    │   └── toolchain-build-cmake
+    └── toolchain-build-cmake
+
+Successfully completed (0 jobs) (0.056 sec)
+```
+
+But before running the build, let's get more info about `c_native_binary` component
+
+```sh
+mbs build ls --verbose c_native_binary
+
+# OUTPUT
+c_native_binary  (component):
+  dir:
+    /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary
+  timeout:
+    infinity
+  toolchain:
+    toolchain-build-cmake
+  targets:
+    - /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary/.build/c_native_binary
+  files:
+    - /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary/.mbs-build.json
+    - /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary/CMakeLists.txt
+    - /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary/main.c
+  dependencies:
+    - c_shared_library
+```
+
+Run the build:
+
+```sh
+mbs build run --logs c_native_binary
+
+# OUTPUT
+. - toolchain-build-cmake:build   ~ Sending build context to Docker daemon  4.096kB
+. - toolchain-build-cmake:build   ~ 
+
+  ...
+
+. - c_native_binary:build   ~ 
+. - c_native_binary:build   ~ [ 50%] Building C object CMakeFiles/c_native_binary.dir/main.c.o
+. - c_native_binary:build   ~ 
+. - c_native_binary:build   ~ [100%] Linking C executable c_native_binary
+. - c_native_binary:build   ~ 
+. - c_native_binary:build   ~ [100%] Built target c_native_binary
+. - c_native_binary:build   ~ 
+✔ - c_native_binary:build   (1.064 sec) 
+✔ - c_native_binary   (1.076 sec) ~ AF4HPEN5Y4LSTDNGG42YIJDEOTOZLF2ABYRE7SUJIF5QFLXLSZYA
+
+Successfully completed (7 jobs) (46.843 sec)
+```
+
+When the build is complete, let's run again the build (it will be a fully cached run):
+
+```sh
+mbs build run --logs c_native_binary
+
+# OUTPUT
+✔ - toolchain-build-cmake   (0.03 sec) ~ GEYSPDOBUCRI227AEHO5J5MRO4CKVD4UWY5CGOWLZG6SDYLOMRDQ
+✔ - c_shared_sub_library   (0.001 sec) ~ PGWFSGRKY3CFISKFAMGTCTXIZXGAOVWHDZ54RZY5UAU34HE44Z4A
+✔ - c_shared_library   (0.0 sec) ~ PWNH7OP52HZBWCTOS4T6DI2I6YEORH46GJFF24TOG5GGDQWX4R7Q
+✔ - c_native_binary   (0.0 sec) ~ AF4HPEN5Y4LSTDNGG42YIJDEOTOZLF2ABYRE7SUJIF5QFLXLSZYA
+
+Successfully completed (4 jobs) (0.091 sec)
+```
+
+Now let's change some code, for instance edit `examples/monorepo/components/c_examples/c_shared_library/lib.c` (introduce a change to the "Hello!\n" string).
+Then run again the build (it will rebuild only `c_shared_library` -> `c_native_binary`)
+
+```sh
+mbs build run --logs c_native_binary
+
+# OUTPUT
+mbs build run --logs c_native_binary
+✔ - toolchain-build-cmake   (0.03 sec) ~ GEYSPDOBUCRI227AEHO5J5MRO4CKVD4UWY5CGOWLZG6SDYLOMRDQ
+✔ - c_shared_sub_library   (0.001 sec) ~ PGWFSGRKY3CFISKFAMGTCTXIZXGAOVWHDZ54RZY5UAU34HE44Z4A
+. - c_shared_library:build   ~ -- The C compiler identification is GNU 10.2.0
+. - c_shared_library:build   ~
+
+ ...
+
+ . - c_native_binary:build   ~ [100%] Linking C executable c_native_binary
+. - c_native_binary:build   ~ 
+. - c_native_binary:build   ~ [100%] Built target c_native_binary
+. - c_native_binary:build   ~ 
+✔ - c_native_binary:build   (0.956 sec) 
+✔ - c_native_binary   (0.964 sec) ~ KGKJ6WES7BRUW5UFTSE2GG2QZONVGDB6PKTCEEEQ7XAT63XQBM4A
+```
+
+If you revert the change just made in `examples/monorepo/components/c_examples/c_shared_library/lib.c` and run again the build, you will see it's fully cached.
+
+Let's go on building all the components (it will take a while):
+
+```sh
+mbs build run --logs
+```
+
+You will see the build of indipendent components running in parallel.
+When it's ready, let's use another command to check that nothing is outdated.
+
+```sh
+mbs build outdated
+
+# OUTPUT
+Successfully completed (0 jobs) (0.233 sec)
+```
+
+TODO release -> deploy tour
 
 ## CLI interface
 
@@ -109,8 +336,7 @@ MBS caches **build artificats** and **releases artifacts** in two specific direc
 
 These directories should be mounted when running mbs otherwise you will loose the generated artificats between executions (no caching!).
 
-The best approach is to "mount" these directories, for example to a host directory (bind mount) or to a docker volume (volume mount).
-More info in [MBS wrapper script](###MBS-wrapper-script).
+The best approach is to "mount" these directories, for example to a host directory (bind mount) or to a docker volume (volume mount) in `mbs.sh`.
 
 This approach is flexible enough to "share" the cache data between all the developers and the CI. It's enough to map the host dir to a "shared disk" (for example with S3FS-FUSE to share via aws S3, NFS, cifs, ...).
 
@@ -127,7 +353,7 @@ Environment variable that you can pass to `mbs`:
 ### Project
 
 The project file should be placed in the repository root folder.
-It lists all the components and toolchains folders. 
+It lists all the components and toolchains folders.
 
 The approach of mbs is to have an explicit component's inclusion and it doesn't support auto-discovery. Auto-discovery (via wildcard globs search) works well in small repository, but it's heavy on the filesystem when you work on repositories with lots of (git untracked) files.
 
@@ -262,7 +488,7 @@ MBS execution global configuration parameters.
             "xyz-library"
         ],
         // [optional] services: sidecar services via docker-compose
-        "service": [
+        "services": [
             "dockerfiles/docker-compose.yml"
         ]
     },
@@ -333,7 +559,7 @@ files like "*.tmp.ex".
 
 ### Sidecar services
 
-It's possible execute a compoment build having the toolchain "linked" to a docker-compose.
+It's possible execute a compoment build having the toolchain "linked" to a docker-compose (ref: build manifest "services" field).
 This can be used to run integration tests together with some external services (DB, cache, queue, etc.)
 
 ## Toolchains development
@@ -434,30 +660,3 @@ mbs build shell component_xyz
 ```
 
 This will first build all the dependencies of component_xyz, start all the side-car services and the open a shell in the toolchain context.
-
-## MBS Development
-
-Development should aim to correctness, simplicity, sensible defaults and "small" codebase (with very few dependencies).
-
-### Bootstrap / Build
-
-Requirements: `docker`
-
-The `build.sh` script builds two docker images (`mbs:slim`, `mbs:full`).
-These images can be used to run `mbs` on any system with docker support.
-
-A convenient alias can be defined to use `mbs` as a native CLI application. Pay attention to the `$PWD` in the alias, it will use the cwd from within you issue the `mbs` aliased command. So it won't work if don't issue it from the repo root directory.
-
-```bash
-alias mbs="\
-    docker run --init --rm -ti \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -v $PWD:$PWD -w $PWD \
-        ... \
-        mbs
-"
-```
-
-### MBS wrapper script
-
-It's definetely better to use a wrapper script like [mbs.sh](./mbs.sh) in this repository, the script should be include and committed in your repository. The script can also be "sourced": `source mbs.sh`.

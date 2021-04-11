@@ -18,4 +18,8 @@ COPY dockerfiles/entrypoint.sh /entrypoint.sh
 COPY --from=builder /mbs/mbs /usr/local/bin/
 ARG MBS_VERSION=latest
 ENV MBS_VERSION=${MBS_VERSION}
+COPY examples/repo_init /repo_init
+COPY mbs.sh mbs.fish /repo_init/
+RUN sed -i "s/latest/$MBS_VERSION/g" /repo_init/mbs.sh
+RUN sed -i "s/latest/$MBS_VERSION/g" /repo_init/mbs.fish
 ENTRYPOINT [ "/entrypoint.sh" ]

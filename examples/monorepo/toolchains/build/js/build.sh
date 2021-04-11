@@ -2,6 +2,9 @@
 
 set -e
 
+mkdir -p .build
+mkdir -p node_modules
+
 case $1 in
     deps_change)
         rm -rf .build/
