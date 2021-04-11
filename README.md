@@ -177,7 +177,7 @@ mbs build graph
 
 Open `.mbs-graph/graph.svg` and see the dependencies:
 
-![Alt text](./.mbs-graph/graph.svg)
+![Alt text](./docs/graph.svg)
 
 Now, we can build only a subset of the components, for instance `c_native_binary`.
 If you check the deps graph you will see it depends on `c_shared_library` that depends on `c_shared_sub_library`, and they all depends on the `toolchain-build-cmake`.

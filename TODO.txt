@@ -1,11 +1,7 @@
-cache:
-- possibility to cache a toolchain step (for example to cache deps)
-
 deploy:
 - deploy state (to deploy only if needed, we should support multi environment deployments)
 
 execution:
-- docker-compose refactoring (we should "docke-compose down" even on job timeout)
 - pass e json env variable to toolchains run with all the MBS_* vars and metadata
   (should be a better / more flexible contract)
 - podman / docker executor choice ?
