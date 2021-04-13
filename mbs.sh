@@ -10,8 +10,9 @@ LOG_COLOR=true
 BASEDIR=$(dirname "$0")
 ABS_BASEDIR=$(readlink -f -- "$BASEDIR")
 
-MBS_CACHE_VOLUME="mbs-cache"
-MBS_RELEASE_VOLUME="mbs-releases"
+MBS_PROJECT_ID=mbs
+MBS_CACHE_VOLUME="mbs-$MBS_PROJECT_ID-cache"
+MBS_RELEASE_VOLUME="mbs-$MBS_PROJECT_ID-releases"
 MBS_GRAPH_VOLUME="$ABS_BASEDIR/.mbs-graph"
 
 TTY="-ti"

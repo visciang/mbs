@@ -8,9 +8,10 @@ set LOG_COLOR true
 set BASEDIR (dirname "$0")
 set ABS_BASEDIR (readlink -f -- $BASEDIR)
 
-set MBS_CACHE_VOLUME "mbs-cache"
-set MBS_RELEASE_VOLUME "mbs-releases"
-set MBS_GRAPH_VOLUME "$ABS_BASEDIR/.mbs-graph"
+set MBS_PROJECT_ID mbs
+set MBS_CACHE_VOLUME mbs-$MBS_PROJECT_ID-cache
+set MBS_RELEASE_VOLUME mbs-$MBS_PROJECT_ID-releases
+set MBS_GRAPH_VOLUME $ABS_BASEDIR/.mbs-graph
 
 set TTY "-ti"
 if not isatty

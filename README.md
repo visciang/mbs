@@ -71,10 +71,13 @@ As describe in the introduction, `mbs` is distributed as a docker image, so you 
 To initialize a new repository:
 
 ```sh
-cd my_repository
+cd my_project
 
-MBS_VERSION=x.y.z    # NOTE: here the MBS version you will use
-docker run --rm -ti -v $PWD:/repo -w /repo visciang/mbs:$MBS_VERSION init
+# NOTE: here the MBS version you will use
+MBS_VERSION=x.y.z
+
+# NOTE: substitute project_name with yours
+docker run --rm -ti -v $PWD:/repo -w /repo visciang/mbs:$MBS_VERSION init project_name
 ```
 
 The `docker run` command will pull the mbs image and run it with the `init` command in the repository directory.
