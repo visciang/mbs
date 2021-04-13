@@ -13,6 +13,7 @@ case $1 in
         terraform validate
         ;;
     build)
+        rm -rf .build
         mkdir .build
         tar --exclude='.build' -czf .build/terraform.tgz .
         ;;

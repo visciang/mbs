@@ -54,28 +54,16 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  @spec expand_targets_path(String.t(), String.t(), [Target.t()]) :: :error | {:ok, [Target.t()]}
+  @spec expand_targets_path(String.t(), String.t(), [Target.t()]) :: [Target.t()]
   def expand_targets_path(id, checksum, targets) do
-    targets
-    |> Enum.reduce_while([], fn
-      %Target{type: :file, target: target} = t, expanded_targets ->
-        case Cache.get(Const.cache_dir(), id, checksum, target) do
-          {:ok, target_cache_path} ->
-            t = put_in(t.target, target_cache_path)
-            {:cont, [t | expanded_targets]}
+    Enum.map(targets, fn
+      %Target{type: :file, target: target} = t ->
+        target_cache_path = Cache.path(Const.cache_dir(), id, checksum, target)
+        put_in(t.target, target_cache_path)
 
-          _ ->
-            {:halt, :error}
-        end
-
-      %Target{type: :docker, target: target} = t, expanded_targets ->
-        t = put_in(t.target, "#{target}:#{checksum}")
-        {:cont, [t | expanded_targets]}
+      %Target{type: :docker, target: target} = t ->
+        put_in(t.target, "#{target}:#{checksum}")
     end)
-    |> case do
-      :error -> :error
-      expanded_targets -> {:ok, expanded_targets}
-    end
   end
 
   @spec put_targets(String.t(), String.t(), [String.t()]) :: :ok

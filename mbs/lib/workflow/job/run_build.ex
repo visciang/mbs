@@ -100,7 +100,7 @@ defmodule MBS.Workflow.Job.RunBuild do
   @spec transitive_targets(String.t(), String.t(), [BuildDeploy.Target.t()], Job.upstream_results()) ::
           MapSet.t(BuildDeploy.Target.t())
   defp transitive_targets(id, checksum, targets, upstream_results) do
-    {:ok, expanded_targets} = Job.Cache.expand_targets_path(id, checksum, targets)
+    expanded_targets = Job.Cache.expand_targets_path(id, checksum, targets)
 
     expanded_targets_set =
       expanded_targets
