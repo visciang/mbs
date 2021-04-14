@@ -11,7 +11,7 @@ BASEDIR=$(dirname "$0")
 ABS_BASEDIR=$(readlink -f -- "$BASEDIR")
 
 MBS_PROJECT_ID=mbs
-MBS_CACHE_VOLUME="mbs-$MBS_PROJECT_ID-cache"
+MBS_ARTIFACTS_CACHE_VOLUME="mbs-$MBS_PROJECT_ID-cache"
 MBS_RELEASES_VOLUME="mbs-$MBS_PROJECT_ID-releases"
 MBS_GRAPH_VOLUME="$ABS_BASEDIR/.mbs-graph"
 
@@ -21,12 +21,12 @@ if [ ! -t 1 ]; then TTY=""; fi
 alias mbs="\
     docker run --init --rm $TTY \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -v $MBS_CACHE_VOLUME:/.mbs-cache \
+    -v $MBS_ARTIFACTS_CACHE_VOLUME:/.mbs-cache \
     -v $MBS_RELEASES_VOLUME:/.mbs-releases \
     -v $MBS_GRAPH_VOLUME:/.mbs-graph \
     -v $ABS_BASEDIR:$ABS_BASEDIR \
     -w $ABS_BASEDIR \
-    -e MBS_CACHE_VOLUME=$MBS_CACHE_VOLUME \
+    -e MBS_ARTIFACTS_CACHE_VOLUME=$MBS_ARTIFACTS_CACHE_VOLUME \
     -e MBS_RELEASES_VOLUME=$MBS_RELEASES_VOLUME \
     -e MBS_GRAPH_VOLUME=$MBS_GRAPH_VOLUME \
     -e LOG_LEVEL=$LOG_LEVEL \
