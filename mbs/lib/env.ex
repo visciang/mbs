@@ -7,7 +7,7 @@ defmodule MBS.Env do
 
   @spec validate :: :ok
   def validate do
-    ["MBS_CACHE_VOLUME", "MBS_RELEASE_VOLUME", "MBS_GRAPH_VOLUME"]
+    ["MBS_CACHE_VOLUME", "MBS_RELEASES_VOLUME", "MBS_GRAPH_VOLUME"]
     |> Enum.each(&exist_env/1)
 
     :ok

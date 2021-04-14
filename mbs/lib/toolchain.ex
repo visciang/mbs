@@ -161,8 +161,8 @@ defmodule MBS.Toolchain do
     # "docker-in-docker" case is still referenced from the HOST, and
     # not from the Container.
     # That's why we mount the original host docker volume via the
-    # evnironment variable MBS_RELEASE_VOLUME
-    mbs_release_volume = System.fetch_env!("MBS_RELEASE_VOLUME")
+    # evnironment variable MBS_RELEASES_VOLUME
+    mbs_release_volume = System.fetch_env!("MBS_RELEASES_VOLUME")
     dir_mount_opts = ["-v", "#{mbs_release_volume}:#{Const.releases_dir()}"]
 
     opts ++ work_dir_opts ++ dir_mount_opts
