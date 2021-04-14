@@ -43,7 +43,7 @@ defmodule MBS.Workflow do
           end
         rescue
           error in [Dask.Error] ->
-            Utils.halt("Error in#{component.dir}:\n  #{error.message}")
+            Utils.halt("Error in #{component.dir}:\n  #{error.message}")
         end
 
       %BuildDeploy.Toolchain{}, workflow ->
