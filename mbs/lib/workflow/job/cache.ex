@@ -13,26 +13,25 @@ defmodule MBS.Workflow.Job.Cache do
 
   @spec hit_toolchain(String.t(), String.t()) :: boolean()
   def hit_toolchain(id, checksum) do
-    Docker.image_exists(id, checksum)
+    Cache.Docker.hit(checksum, id)
   end
 
   @spec hit_targets(String.t(), String.t(), [String.t()]) :: boolean
   def hit_targets(id, checksum, targets) do
     Enum.all?(targets, fn
       %Target{type: :file, target: target} ->
-        Cache.hit(Const.cache_dir(), id, checksum, target)
+        Cache.File.hit(Const.cache_dir(), id, checksum, target)
 
       %Target{type: :docker, target: target} ->
-        Docker.image_exists(target, checksum)
+        Cache.Docker.hit(checksum, target)
     end)
   end
 
   @spec get_toolchain(String.t(), String.t()) :: cache_result()
   def get_toolchain(id, checksum) do
-    if hit_toolchain(id, checksum) do
-      :cached
-    else
-      :cache_miss
+    case Cache.Docker.get(checksum, id) do
+      :ok -> :cached
+      :error -> :cache_miss
     end
   end
 
@@ -41,10 +40,10 @@ defmodule MBS.Workflow.Job.Cache do
     found_all_targets =
       Enum.all?(targets, fn
         %Target{type: :file, target: target} ->
-          match?({:ok, _}, Cache.get(Const.cache_dir(), id, checksum, target))
+          match?({:ok, _}, Cache.File.get(Const.cache_dir(), id, checksum, target))
 
         %Target{type: :docker, target: target} ->
-          Docker.image_exists(target, checksum)
+          :ok == Cache.Docker.get(checksum, target)
       end)
 
     if found_all_targets do
@@ -58,11 +57,12 @@ defmodule MBS.Workflow.Job.Cache do
   def expand_targets_path(id, checksum, targets) do
     Enum.map(targets, fn
       %Target{type: :file, target: target} = t ->
-        target_cache_path = Cache.path(Const.cache_dir(), id, checksum, target)
+        target_cache_path = Cache.File.path(Const.cache_dir(), id, checksum, target)
         put_in(t.target, target_cache_path)
 
       %Target{type: :docker, target: target} = t ->
-        put_in(t.target, "#{target}:#{checksum}")
+        target_docker = Cache.Docker.path(checksum, target)
+        put_in(t.target, target_docker)
     end)
   end
 
@@ -70,10 +70,10 @@ defmodule MBS.Workflow.Job.Cache do
   def put_targets(id, checksum, targets) do
     Enum.each(targets, fn
       %Target{type: :file, target: target} ->
-        Cache.put(Const.cache_dir(), id, checksum, target)
+        Cache.File.put(Const.cache_dir(), id, checksum, target)
 
-      %Target{type: :docker, target: _target} ->
-        :ok
+      %Target{type: :docker, target: target} ->
+        Cache.Docker.put(checksum, target)
     end)
 
     :ok
@@ -88,8 +88,8 @@ defmodule MBS.Workflow.Job.Cache do
 
     Enum.reduce_while(targets, :ok, fn
       %Target{type: :file, target: target}, _ ->
-        if Cache.hit(Const.cache_dir(), id, checksum, target) do
-          cache_target_path = Cache.path(Const.cache_dir(), id, checksum, target)
+        if Cache.File.hit(Const.cache_dir(), id, checksum, target) do
+          cache_target_path = Cache.File.path(Const.cache_dir(), id, checksum, target)
           release_target_path = Path.join(output_dir, Path.basename(target))
 
           report_msg = "cp #{cache_target_path} #{release_target_path}"
@@ -103,12 +103,13 @@ defmodule MBS.Workflow.Job.Cache do
         end
 
       %Target{type: :docker, target: target}, _ ->
-        with true <- Docker.image_exists(target, checksum),
+        with true <- Cache.Docker.hit(checksum, target),
              :ok <- Docker.image_save(target, checksum, output_dir, id) do
           {:cont, :ok}
         else
           false ->
-            {:halt, {:error, "Missing target docker image #{target}:#{checksum}. Have you run a build?"}}
+            target_docker = Cache.Docker.path(checksum, target)
+            {:halt, {:error, "Missing target docker image #{target_docker}. Have you run a build?"}}
 
           {:error, reason} ->
             {:halt, {:error, reason}}

@@ -1,6 +1,6 @@
-defmodule MBS.Cache do
+defmodule MBS.Cache.File do
   @moduledoc """
-  Artifact Cache
+  Artifact Cache for files
   """
 
   @spec put(Path.t(), String.t(), String.t(), String.t()) :: :ok
