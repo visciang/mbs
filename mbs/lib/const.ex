@@ -30,6 +30,24 @@ defmodule MBS.Const do
   @spec cache_dir :: Path.t()
   def cache_dir, do: "/.mbs-cache"
 
+  @spec push :: boolean()
+  def push do
+    case System.get_env("MBS_PUSH", "false") do
+      "true" -> true
+      "false" -> false
+      "" -> false
+      unknown -> raise "MBS_PUSH bad value: #{unknown}"
+    end
+  end
+
+  @spec local_cache_dir :: Path.t()
+  def local_cache_dir, do: "/.mbs-local-cache"
+
+  @spec docker_registry :: String.t()
+  def docker_registry do
+    System.get_env("MBS_DOCKER_REGISTRY", "")
+  end
+
   @spec releases_dir :: Path.t()
   def releases_dir, do: "/.mbs-releases"
 

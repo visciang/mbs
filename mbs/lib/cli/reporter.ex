@@ -123,7 +123,7 @@ defmodule MBS.CLI.Reporter do
 
     log_message =
       case reason do
-        :ok -> IO.ANSI.format([:green, "Successfully completed (#{success_jobs_count} jobs)"])
+        :ok -> IO.ANSI.format([:green, "Completed (#{success_jobs_count} jobs)"])
         :error -> IO.ANSI.format([:red, "Failed jobs:", :normal, Enum.map(Enum.sort(failed_jobs), &"\n- #{&1}"), "\n"])
         :timeout -> IO.ANSI.format([:red, "Timeout"])
       end

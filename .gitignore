@@ -25,7 +25,7 @@ mbs-*.tar
 # Temporary files for e.g. tests
 /tmp
 
-.mbs-cache/
+.mbs-local-cache/
 .mbs-graph/
 .mbs-releases/
 .deps/

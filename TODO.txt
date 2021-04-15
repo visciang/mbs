@@ -34,11 +34,5 @@ support / doc
   DEPLOY:
     - fly
 
-plugins
-  - remote cache (docker / files) => push only if --push flag provided
-  - HTTP
-  - AWS
-  - DOCKER
-
 DEV:
 - functional tests

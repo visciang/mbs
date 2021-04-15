@@ -28,6 +28,16 @@ defmodule MBS.Docker do
     end
   end
 
+  @spec image_tag(String.t(), String.t(), String.t(), String.t()) :: :ok | {:error, term()}
+  def image_tag(s_image, s_tag, d_image, d_tag) do
+    cmd_args = ["image", "tag", "#{s_image}:#{s_tag}", "#{d_image}:#{d_tag}"]
+
+    case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
+      {_, 0} -> :ok
+      {res, _} -> {:error, res}
+    end
+  end
+
   @spec image_save(String.t(), String.t(), Path.t(), String.t()) :: :ok | {:error, term()}
   def image_save(repository, tag, out_dir, job_id) do
     cmd_args = ["image", "save", "#{repository}:#{tag}"]
@@ -74,6 +84,16 @@ defmodule MBS.Docker do
   @spec image_pull(String.t(), String.t()) :: :ok | {:error, term()}
   def image_pull(repository, tag) do
     cmd_args = ["image", "pull", "#{repository}:#{tag}"]
+
+    case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
+      {_, 0} -> :ok
+      {res, _} -> {:error, res}
+    end
+  end
+
+  @spec image_push(String.t(), String.t()) :: :ok | {:error, term()}
+  def image_push(repository, tag) do
+    cmd_args = ["image", "push", "#{repository}:#{tag}"]
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
       {_, 0} -> :ok

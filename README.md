@@ -2,11 +2,11 @@
 
 ## Introduction
 
-A **Meta Build System** to organizate / build / release / deploy a large ~~micro~~ service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
+A dockerized **Meta Build System** to organizate / build / release / deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
-Docker **containerization** technology is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
+**Containerization** is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
 
-With MBS you can easly define the toolchains to build / deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services.
+With MBS you can easly define the toolchains to build / deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services. Also the toolchains (used to build your components) should be part of the repository: change a toolchain -> rebuild everything that depends on the toolchain.
 
 ![image info](./docs/schema-deps-graph.png)
 
@@ -14,7 +14,15 @@ This will give you **parallelized** fast builds for free that can consistenly ru
 
 The user experience we aim to is a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a service oriented solution.
 
+To summarize:
+- build / release / deploy support
+- first class DAG dependencies (parallelized execution)
+- Checksum based diff detection
+- No development environment on your machine, just docker
+
 ### What MBS is not
+
+Well, first it is not Bazel :) .. joking.
 
 It's all about **tradeoff**. We should do one thing (put your definition of "one thing" here) and do it well (your definition also here). This can't be considered without a clear context that defines where we would like to operate; and different context means different requirements, different expectations and so different definitions.
 
@@ -57,6 +65,8 @@ extra reference to monorepo or other similar tools/solutions: cmake / ninja / do
 TODO: describe the language oriented approach used by some tools (NPM workspaces, Elixir umbrella, GO, Rust cargo workspaces, ...), there the driver (obviously) is the language in mbs is the domain where you can develop together different things.
 
 ## The [build] -> [release] -> [deploy] -> [destroy!] flow
+
+The above diagrams summarize the basic elements, concepts and workflow.
 
 ![image info](./docs/schema.png)
 
@@ -168,7 +178,7 @@ toolchain-deploy-terraform  (toolchain)
 toolchain-mbs  (toolchain)
 toolchain-meta-sh  (toolchain)
 
-Successfully completed (0 jobs) (0.053 sec)
+Completed (0 jobs) (0.053 sec)
 ```
 
 To have a better picture of the components dependencies:
@@ -198,7 +208,7 @@ mbs build tree c_native_binary
     │   └── toolchain-build-cmake
     └── toolchain-build-cmake
 
-Successfully completed (0 jobs) (0.056 sec)
+Completed (0 jobs) (0.056 sec)
 ```
 
 But before running the build, let's get more info about `c_native_binary` component
@@ -245,7 +255,7 @@ mbs build run --logs c_native_binary
 ✔ - c_native_binary:build   (1.064 sec) 
 ✔ - c_native_binary   (1.076 sec) ~ AF4HPEN5Y4LSTDNGG42YIJDEOTOZLF2ABYRE7SUJIF5QFLXLSZYA
 
-Successfully completed (7 jobs) (46.843 sec)
+Completed (7 jobs) (46.843 sec)
 ```
 
 When the build is complete, let's run again the build (it will be a fully cached run):
@@ -259,7 +269,7 @@ mbs build run --logs c_native_binary
 ✔ - c_shared_library   (0.0 sec) ~ PWNH7OP52HZBWCTOS4T6DI2I6YEORH46GJFF24TOG5GGDQWX4R7Q
 ✔ - c_native_binary   (0.0 sec) ~ AF4HPEN5Y4LSTDNGG42YIJDEOTOZLF2ABYRE7SUJIF5QFLXLSZYA
 
-Successfully completed (4 jobs) (0.091 sec)
+Completed (4 jobs) (0.091 sec)
 ```
 
 Now let's change some code, for instance edit `examples/monorepo/components/c_examples/c_shared_library/lib.c` (introduce a change to the "Hello!\n" string).
@@ -300,7 +310,7 @@ When it's ready, let's use another command to check that nothing is outdated.
 mbs build outdated
 
 # OUTPUT
-Successfully completed (0 jobs) (0.233 sec)
+Completed (0 jobs) (0.233 sec)
 ```
 
 TODO release -> deploy tour
@@ -333,17 +343,35 @@ The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMA
 
 MBS caches **build artificats** and **releases artifacts** in two specific directory (inside the mbs container).
 
-- Cache: `/.mbs-cache`
+- Artifacts local cache: `/.mbs-local-cache`
 - Releases: `/.mbs-releases`
 - Graph: `/.mbs-graph`
 
-These directories should be mounted when running mbs otherwise you will loose the generated artificats between executions (no caching!).
+Docker images are stored in your local host docker registry.
 
-The best approach is to "mount" these directories, for example to a host directory (bind mount) or to a docker volume (volume mount) in `mbs.sh`.
+![image info](./docs/schema-cache.png)
 
-This approach is flexible enough to "share" the cache data between all the developers and the CI. It's enough to map the host dir to a "shared disk" (for example with S3FS-FUSE to share via aws S3, NFS, cifs, ...).
+MBS will leverage the local caches to rebuild only what's changed.
 
-In a basic and safe setup, the cache should be shared in "read-only" mode to the developers and "read-write" to the CI.
+Optionally it's possible to define "remote caches" to have a cache shareable with the developers and the CI.
+
+In `mbs.sh` you can set them, check the script for more details. The relevant part is:
+
+```sh
+# [OPTIONAL]
+# external cache for artifacts files and docker images
+MBS_PUSH="true"
+MBS_CACHE_VOLUME="/nfs_share/mbs-$MBS_PROJECT_ID-cache"
+MBS_DOCKER_REGISTRY="https://my-private-docker-registry:5000"
+```
+
+- MBS_PUSH: enable/disable push to the remote caches
+- MBS_CACHE_VOLUME: the host directory where we mount the remote cache folder
+- MBS_DOCKER_REGISTRY: the external docker registry
+
+This approach is flexible enough to "share" the cache data between all the developers and the CI. It's enough to map the host dir to a "shared disk" (for example with NFS, cifs, ...).
+
+In a basic and safe setup, the cache should be shared in "read-only" mode to the developers (`MBS_PUSH=false`) and "read-write" to the CI (MBS_PUSH="true").
 Following this approach the developers will see and re-use the artifacts build by the CI while keeping the simplicity / conflict-less approach of a single cache writer.
 
 ### Environment variables
@@ -656,7 +684,7 @@ This problem is addressed with the "deps_change_step" in the toolchain manifest,
 
 ## Components development
 
-While working on a component sometime it's convenient to "jump into" the toolchain of that component to manualy build/test and iterate using the very same environment used by mbs.
+While working on a component sometime is convenient to "jump into" the toolchain of that component to manualy build / test and iterate using the very same environment of mbs.
 
 ```sh
 mbs build shell component_xyz
