@@ -42,7 +42,7 @@ defmodule MBS.Workflow.Job.RunBuild do
   end
 
   def fun(%Config.Data{}, %BuildDeploy.Component{id: id, targets: targets} = component, force) do
-    fn job_id, upstream_results ->
+    fn _job_id, upstream_results ->
       start_time = Reporter.time()
 
       checksum = Job.Utils.build_checksum(component, upstream_results)
@@ -50,7 +50,7 @@ defmodule MBS.Workflow.Job.RunBuild do
       {cached, report_status, report_desc} =
         with :cache_miss <- cache_get_targets(id, checksum, targets, force),
              changed_deps <- get_changed_dependencies_targets(component, upstream_results, force),
-             :ok <- Toolchain.exec_build(component, checksum, upstream_results, changed_deps, job_id),
+             :ok <- Toolchain.exec_build(component, checksum, upstream_results, changed_deps),
              :ok <- assert_targets(targets, checksum),
              :ok <- Job.Cache.put_targets(id, checksum, targets) do
           {false, Reporter.Status.ok(), checksum}
@@ -64,7 +64,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       end_time = Reporter.time()
 
-      Reporter.job_report(job_id, report_status, report_desc, end_time - start_time)
+      Reporter.job_report(id, report_status, report_desc, end_time - start_time)
 
       unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
         raise "Job failed #{inspect(report_status)}"
@@ -83,16 +83,16 @@ defmodule MBS.Workflow.Job.RunBuild do
     Job.OnExit.fun(config, toolchain)
   end
 
-  def fun_on_exit(%Config.Data{} = config, %BuildDeploy.Component{} = component) do
+  def fun_on_exit(%Config.Data{} = config, %BuildDeploy.Component{id: id} = component) do
     job_on_exit = Job.OnExit.fun(config, component)
 
-    fn job_id, upstream_results, job_exec_result, elapsed_time_ms ->
+    fn _job_id, upstream_results, job_exec_result, elapsed_time_ms ->
       services_up =
         match?({:job_ok, %Job.FunResult{cached: false}}, job_exec_result) or match?(:job_timeout, job_exec_result)
 
       if services_up do
-        Toolchain.exec_services(:down, component, [], job_id)
-        job_on_exit.(job_id, upstream_results, job_exec_result, elapsed_time_ms)
+        Toolchain.exec_services(:down, component, [])
+        job_on_exit.(id, upstream_results, job_exec_result, elapsed_time_ms)
       end
     end
   end

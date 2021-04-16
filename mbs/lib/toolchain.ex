@@ -52,10 +52,9 @@ defmodule MBS.Toolchain do
           BuildDeploy.Component.t(),
           String.t(),
           Job.upstream_results(),
-          [{Path.t(), Dependency.Type.t()}],
-          String.t()
+          [{Path.t(), Dependency.Type.t()}]
         ) :: :ok | {:error, String.t()}
-  def exec_build(%BuildDeploy.Component{} = component, checksum, upstream_results, changed_deps, job_id) do
+  def exec_build(%BuildDeploy.Component{} = component, checksum, upstream_results, changed_deps) do
     env = run_build_env_vars(component, checksum, upstream_results)
 
     deps_change_steps =
@@ -66,10 +65,10 @@ defmodule MBS.Toolchain do
       end
 
     res =
-      with {:ok, docker_network_name} <- exec_services(:up, component, env, job_id),
+      with {:ok, docker_network_name} <- exec_services(:up, component, env),
            run_opts = run_opts(component, docker_network_name),
-           :ok <- exec(component, env, job_id, deps_change_steps, run_opts),
-           :ok <- exec(component, env, job_id, component.toolchain.steps, run_opts) do
+           :ok <- exec(component, env, deps_change_steps, run_opts),
+           :ok <- exec(component, env, component.toolchain.steps, run_opts) do
         Enum.each(changed_deps, fn {path, type} ->
           Dependency.write(path, type)
         end)
@@ -80,45 +79,44 @@ defmodule MBS.Toolchain do
     res
   end
 
-  @spec exec_services(DockerCompose.compose_action(), BuildDeploy.Component.t(), env_list(), String.t()) ::
+  @spec exec_services(DockerCompose.compose_action(), BuildDeploy.Component.t(), env_list()) ::
           {:ok, nil | String.t()} | {:error, term()}
-  def exec_services(_action, %BuildDeploy.Component{services: nil}, _env, _job_id),
+  def exec_services(_action, %BuildDeploy.Component{services: nil}, _env),
     do: {:ok, nil}
 
-  def exec_services(action, %BuildDeploy.Component{services: services_compose_file}, env, job_id) do
-    reporter_id = "#{job_id}:services"
+  def exec_services(action, %BuildDeploy.Component{id: id, services: services_compose_file}, env) do
+    reporter_id = "#{id}:services"
     Reporter.job_report(reporter_id, Reporter.Status.log(), "Sidecar services #{action} ...", nil)
 
     DockerCompose.compose(action, services_compose_file, env, reporter_id)
   end
 
-  @spec exec_deploy(BuildDeploy.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
-  def exec_deploy(%BuildDeploy.Component{} = component, checksum, job_id) do
+  @spec exec_deploy(BuildDeploy.Component.t(), String.t()) :: :ok | {:error, String.t()}
+  def exec_deploy(%BuildDeploy.Component{} = component, checksum) do
     env = run_deploy_env_vars(component, checksum)
     run_opts = run_deploy_opts(component)
-    exec(component, env, job_id, component.toolchain.steps, run_opts)
+    exec(component, env, component.toolchain.steps, run_opts)
   end
 
-  @spec exec_destroy(BuildDeploy.Component.t(), String.t(), String.t()) :: :ok | {:error, String.t()}
-  def exec_destroy(%BuildDeploy.Component{} = component, checksum, job_id) do
+  @spec exec_destroy(BuildDeploy.Component.t(), String.t()) :: :ok | {:error, String.t()}
+  def exec_destroy(%BuildDeploy.Component{} = component, checksum) do
     env = run_deploy_env_vars(component, checksum)
     component = put_in(component.toolchain.steps, ["destroy"])
     run_opts = run_deploy_opts(component)
-    exec(component, env, job_id, component.toolchain.destroy_steps, run_opts)
+    exec(component, env, component.toolchain.destroy_steps, run_opts)
   end
 
-  @spec exec(BuildDeploy.Component.t(), env_list(), String.t(), [String.t()], opts()) :: :ok | {:error, String.t()}
+  @spec exec(BuildDeploy.Component.t(), env_list(), [String.t()], opts()) :: :ok | {:error, String.t()}
   defp exec(
-         %BuildDeploy.Component{toolchain: toolchain, toolchain_opts: toolchain_opts},
+         %BuildDeploy.Component{id: id, toolchain: toolchain, toolchain_opts: toolchain_opts},
          env,
-         job_id,
          toolchain_steps,
          run_opts
        ) do
     toolchain_opts = toolchain_opts_env_subs(toolchain_opts, env)
 
     Enum.reduce_while(toolchain_steps, :ok, fn toolchain_step, _ ->
-      reporter_id = "#{job_id}:#{toolchain_step}"
+      reporter_id = "#{id}:#{toolchain_step}"
       start_time = Reporter.time()
 
       case Docker.image_run(

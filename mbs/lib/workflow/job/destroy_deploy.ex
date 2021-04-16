@@ -26,7 +26,7 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
         with {:ok, build_checksum} <- Job.RunDeploy.build_checksum(component_dir),
              {:ok, toolchain_checksum} <- Job.RunDeploy.build_checksum(toolchain_dir),
              component = put_in(component.toolchain.checksum, toolchain_checksum),
-             :ok <- Toolchain.exec_destroy(component, build_checksum, job_id) do
+             :ok <- Toolchain.exec_destroy(component, build_checksum) do
           Reporter.Status.ok()
         else
           {:error, reason} ->

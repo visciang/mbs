@@ -54,7 +54,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
              {:ok, toolchain_checksum} <- build_checksum(toolchain_dir),
              deploy_checksum = Job.Utils.deploy_checksum(component, build_checksum, upstream_results),
              component = put_in(component.toolchain.checksum, toolchain_checksum),
-             :ok <- Toolchain.exec_deploy(component, build_checksum, job_id) do
+             :ok <- Toolchain.exec_deploy(component, build_checksum) do
           {Reporter.Status.ok(), deploy_checksum}
         else
           {:error, reason} ->

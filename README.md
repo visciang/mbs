@@ -2,7 +2,7 @@
 
 ## Introduction
 
-A dockerized **Meta Build System** to organizate / build / release / deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
+A fully dockerized **Meta Build System** to organizate / build / release / deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
 **Containerization** is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
 
