@@ -7,6 +7,9 @@ defmodule MBS.Env do
 
   @spec validate :: :ok
   def validate do
+    exist_env("MBS_PROJECT_ID")
+    exist_env("MBS_TMP_VOLUME")
+    exist_env("MBS_LOCAL_CACHE_VOLUME")
     exist_env("MBS_RELEASES_VOLUME")
 
     :ok

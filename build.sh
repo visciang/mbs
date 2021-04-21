@@ -18,6 +18,6 @@ if [ ! -z "$RUN_IT" ]; then
     ./mbs.sh deploy tree
     ./mbs.sh build outdated
     ./mbs.sh build tree
-    ./mbs.sh build run --logs
+    ./mbs.sh build run --verbose
     ./mbs.sh build graph
 fi

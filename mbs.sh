@@ -11,6 +11,7 @@ LOG_LEVEL="info"
 LOG_COLOR="true"
 
 MBS_PROJECT_ID="mbs"
+MBS_TMP_VOLUME="mbs-$MBS_PROJECT_ID-tmp"
 MBS_LOCAL_CACHE_VOLUME="mbs-$MBS_PROJECT_ID-local-cache"
 MBS_RELEASES_VOLUME="mbs-$MBS_PROJECT_ID-releases"
 MBS_GRAPH_VOLUME="$ABS_BASEDIR/.mbs-graph"
@@ -30,17 +31,21 @@ alias mbs="\
     docker run --init --rm $TTY \
     --net host \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -v $MBS_CACHE_VOLUME:/.mbs-cache \
+    -v $MBS_CACHE_VOLUME:/mbs-cache \
+    -v $MBS_TMP_VOLUME:/mbs-tmp \
     -v $MBS_LOCAL_CACHE_VOLUME:/.mbs-local-cache \
     -v $MBS_RELEASES_VOLUME:/.mbs-releases \
     -v $MBS_GRAPH_VOLUME:/.mbs-graph \
     -v $ABS_BASEDIR:$ABS_BASEDIR \
     -w $ABS_BASEDIR \
-    -e MBS_PUSH=$MBS_PUSH \
-    -e MBS_DOCKER_REGISTRY=$MBS_DOCKER_REGISTRY \
-    -e MBS_RELEASES_VOLUME=$MBS_RELEASES_VOLUME \
     -e LOG_LEVEL=$LOG_LEVEL \
     -e LOG_COLOR=$LOG_COLOR \
+    -e MBS_PROJECT_ID=$MBS_PROJECT_ID \
+    -e MBS_PUSH=$MBS_PUSH \
+    -e MBS_DOCKER_REGISTRY=$MBS_DOCKER_REGISTRY \
+    -e MBS_TMP_VOLUME=$MBS_TMP_VOLUME \
+    -e MBS_LOCAL_CACHE_VOLUME=$MBS_LOCAL_CACHE_VOLUME \
+    -e MBS_RELEASES_VOLUME=$MBS_RELEASES_VOLUME \
     visciang/mbs:$MBS_VERSION"
 
 if [ "$#" -ne 0 ]; then

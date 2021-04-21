@@ -8,11 +8,12 @@ defmodule MBS.Workflow.Job.RunBuild do
   alias MBS.Manifest.{BuildDeploy, Dependency}
   alias MBS.Toolchain
   alias MBS.Workflow.Job
+  alias MBS.Workflow.Job.RunBuild.Sandbox
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), BuildDeploy.Type.t(), boolean()) :: Job.fun()
-  def fun(%Config.Data{}, %BuildDeploy.Toolchain{id: id, checksum: checksum} = toolchain, force) do
+  @spec fun(Config.Data.t(), BuildDeploy.Type.t(), boolean(), boolean()) :: Job.fun()
+  def fun(%Config.Data{}, %BuildDeploy.Toolchain{id: id, checksum: checksum} = toolchain, force, _sandboxed) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
@@ -41,25 +42,28 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  def fun(%Config.Data{}, %BuildDeploy.Component{id: id, targets: targets} = component, force) do
+  def fun(%Config.Data{}, %BuildDeploy.Component{id: id} = component, force, sandboxed) do
     fn _job_id, upstream_results ->
       start_time = Reporter.time()
 
       checksum = Job.Utils.build_checksum(component, upstream_results)
+      sandboxed_component = Sandbox.up(sandboxed, component)
 
       {cached, report_status, report_desc} =
-        with :cache_miss <- cache_get_targets(id, checksum, targets, force),
-             changed_deps <- get_changed_dependencies_targets(component, upstream_results, force),
-             :ok <- Toolchain.exec_build(component, checksum, upstream_results, changed_deps),
-             :ok <- assert_targets(targets, checksum),
-             :ok <- Job.Cache.put_targets(id, checksum, targets) do
+        with :cache_miss <- cache_get_targets(id, checksum, component.targets, force),
+             changed_deps <- get_changed_dependencies_targets(sandboxed_component, upstream_results, force),
+             :ok <- put_files(sandboxed, component, sandboxed_component),
+             :ok <- put_dependencies(sandboxed_component, changed_deps),
+             :ok <- Toolchain.exec_build(sandboxed_component, checksum, upstream_results, changed_deps, sandboxed),
+             :ok <- assert_targets(sandboxed_component.targets, checksum),
+             :ok <- Job.Cache.put_targets(id, checksum, sandboxed_component.targets) do
           {false, Reporter.Status.ok(), checksum}
         else
           :cached ->
             {true, Reporter.Status.uptodate(), checksum}
 
           {:error, reason} ->
-            {false, Reporter.Status.error(reason), nil, nil}
+            {false, Reporter.Status.error(reason), nil}
         end
 
       end_time = Reporter.time()
@@ -73,25 +77,31 @@ defmodule MBS.Workflow.Job.RunBuild do
       %Job.FunResult{
         cached: cached,
         checksum: checksum,
-        targets: transitive_targets(id, checksum, targets, upstream_results)
+        targets: transitive_targets(id, checksum, sandboxed_component.targets, upstream_results)
       }
     end
   end
 
-  @spec fun_on_exit(Config.Data.t(), BuildDeploy.Type.t()) :: Dask.Job.on_exit()
-  def fun_on_exit(%Config.Data{} = config, %BuildDeploy.Toolchain{} = toolchain) do
+  @spec fun_on_exit(Config.Data.t(), BuildDeploy.Type.t(), boolean()) :: Dask.Job.on_exit()
+  def fun_on_exit(%Config.Data{} = config, %BuildDeploy.Toolchain{} = toolchain, _sandbox) do
     Job.OnExit.fun(config, toolchain)
   end
 
-  def fun_on_exit(%Config.Data{} = config, %BuildDeploy.Component{id: id} = component) do
+  def fun_on_exit(%Config.Data{} = config, %BuildDeploy.Component{id: id} = component, sandbox) do
     job_on_exit = Job.OnExit.fun(config, component)
 
     fn _job_id, upstream_results, job_exec_result, elapsed_time_ms ->
-      services_up =
-        match?({:job_ok, %Job.FunResult{cached: false}}, job_exec_result) or match?(:job_timeout, job_exec_result)
+      job_started? =
+        case job_exec_result do
+          {:job_ok, %Job.FunResult{cached: false}} -> true
+          :job_timeout -> true
+          _ -> false
+        end
 
-      if services_up do
+      if job_started? do
         Toolchain.exec_services(:down, component, [])
+        Sandbox.down(sandbox, component)
+
         job_on_exit.(id, upstream_results, job_exec_result, elapsed_time_ms)
       end
     end
@@ -134,31 +144,14 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec assert_targets([BuildDeploy.Target.t()], String.t()) :: :ok | {:error, String.t()}
-  defp assert_targets([], _checksum), do: :ok
-
-  defp assert_targets(targets, checksum) do
-    missing_targets =
-      Enum.filter(targets, fn
-        %BuildDeploy.Target{type: :file, target: target} ->
-          not File.exists?(target)
-
-        %BuildDeploy.Target{type: :docker, target: target} ->
-          not Docker.image_exists(target, checksum)
-      end)
-
-    if length(missing_targets) != 0 do
-      {:error, "Missing targets #{inspect(missing_targets)}"}
-    else
-      :ok
-    end
-  end
-
   @spec get_changed_dependencies_targets(BuildDeploy.Component.t(), Job.upstream_results(), boolean()) ::
           [{Path.t(), Dependency.Type.t()}]
-  defp get_changed_dependencies_targets(%BuildDeploy.Component{dir: dir, toolchain: toolchain}, upstream_results, force) do
-    local_dependencies_targets_dir = Path.join(dir, Const.local_dependencies_targets_dir())
-    File.mkdir_p!(local_dependencies_targets_dir)
+  defp get_changed_dependencies_targets(
+         %BuildDeploy.Component{dir: component_dir, toolchain: toolchain},
+         upstream_results,
+         force
+       ) do
+    local_deps_dir = Path.join(component_dir, Const.local_dependencies_targets_dir())
 
     upstream_targets_set =
       upstream_results
@@ -170,23 +163,11 @@ defmodule MBS.Workflow.Job.RunBuild do
       Enum.reduce(upstream_targets_set, [], fn
         {dep_id, %BuildDeploy.Target{type: :file, target: target_cache_path}}, acc ->
           target_checksum = target_cache_path |> Path.dirname() |> Path.basename()
-          target_filename = Path.basename(target_cache_path)
-
-          dest_dependency_dir = Path.join(local_dependencies_targets_dir, dep_id)
-          dest_dependency_path = Path.join(dest_dependency_dir, target_filename)
-
-          dependency_manifest_path = Path.join(dest_dependency_dir, Const.manifest_dependency_filename())
+          dependency_manifest_path = Path.join([local_deps_dir, dep_id, Const.manifest_dependency_filename()])
 
           if force or dependency_changed?(dependency_manifest_path, target_checksum) do
-            File.mkdir_p!(dest_dependency_dir)
-            File.cp!(target_cache_path, dest_dependency_path)
-
-            item = {
-              dependency_manifest_path,
-              %Dependency.Type{id: dep_id, checksum: target_checksum}
-            }
-
-            [item | acc]
+            dependency = %Dependency.Type{id: dep_id, checksum: target_checksum, cache_path: target_cache_path}
+            [{dependency_manifest_path, dependency} | acc]
           else
             acc
           end
@@ -195,16 +176,11 @@ defmodule MBS.Workflow.Job.RunBuild do
           acc
       end)
 
-    toolchain_manifest_path = Path.join(local_dependencies_targets_dir, Const.manifest_dependency_filename())
+    toolchain_manifest_path = Path.join(local_deps_dir, Const.manifest_dependency_filename())
 
     res_toolchain_changed =
       if dependency_changed?(toolchain_manifest_path, toolchain.checksum) do
-        [
-          {
-            toolchain_manifest_path,
-            %Dependency.Type{id: toolchain.id, checksum: toolchain.checksum}
-          }
-        ]
+        [{toolchain_manifest_path, %Dependency.Type{id: toolchain.id, checksum: toolchain.checksum}}]
       else
         []
       end
@@ -220,5 +196,62 @@ defmodule MBS.Workflow.Job.RunBuild do
     else
       true
     end
+  end
+
+  @spec put_files(boolean(), BuildDeploy.Component.t(), BuildDeploy.Component.t()) :: :ok
+  def put_files(false, _component, _sandboxed_component), do: :ok
+
+  def put_files(true, %BuildDeploy.Component{files: files}, %BuildDeploy.Component{files: sandbox_files}) do
+    sandbox_files
+    |> paths_dirname()
+    |> Enum.each(&File.mkdir_p!/1)
+
+    Enum.zip(files, sandbox_files)
+    |> Enum.each(fn {file, sandbox_file} -> File.cp!(file, sandbox_file) end)
+  end
+
+  @spec put_dependencies(BuildDeploy.Component.t(), [{Path.t(), Dependency.Type.t()}]) :: :ok
+  defp put_dependencies(%BuildDeploy.Component{dir: component_dir}, deps) do
+    local_deps_dir = Path.join(component_dir, Const.local_dependencies_targets_dir())
+    File.mkdir_p!(local_deps_dir)
+
+    deps
+    |> Enum.reject(&match?({_, %Dependency.Type{cache_path: nil}}, &1))
+    |> Enum.each(fn {_, %Dependency.Type{id: dep_id, cache_path: target_cache_path}} ->
+      dest_dir = Path.join(local_deps_dir, dep_id)
+      File.mkdir_p!(Path.join(local_deps_dir, dep_id))
+      File.cp!(target_cache_path, Path.join(dest_dir, Path.basename(target_cache_path)))
+    end)
+  end
+
+  @spec assert_targets([BuildDeploy.Target.t()], String.t()) :: :ok | {:error, String.t()}
+  defp assert_targets(targets, checksum) do
+    missing_docker_targets =
+      targets
+      |> filter_targets(:docker)
+      |> Enum.filter(&(not Docker.image_exists(&1, checksum)))
+
+    missing_file_targets =
+      targets
+      |> filter_targets(:file)
+      |> Enum.filter(&(not File.exists?(&1)))
+
+    missing_targets = missing_docker_targets ++ missing_file_targets
+
+    if length(missing_targets) != 0 do
+      {:error, "Missing targets #{inspect(missing_targets)}"}
+    else
+      :ok
+    end
+  end
+
+  @spec paths_dirname([Path.t()]) :: MapSet.t(Path.t())
+  defp paths_dirname(paths), do: MapSet.new(paths, &Path.dirname(&1))
+
+  @spec filter_targets([BuildDeploy.Target.t()], BuildDeploy.Target.type()) :: [Path.t()]
+  defp filter_targets(targets, type) do
+    targets
+    |> Enum.filter(&match?(%BuildDeploy.Target{type: ^type}, &1))
+    |> Enum.map(& &1.target)
   end
 end

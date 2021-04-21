@@ -130,9 +130,11 @@ defmodule MBS.CLI.Args do
   end
 
   def parse(["build", "run" | args]) do
+    defaults = [sandbox: false, force: false]
+
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean, force: :boolean])
+        OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean, force: :boolean, sandbox: :boolean])
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
@@ -142,16 +144,19 @@ defmodule MBS.CLI.Args do
       IO.puts("\nUsage:  mbs build run --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nRun a target(s) build (default: all targets)")
       IO.puts("\nOptions:")
-      IO.puts("  --logs     Stream jobs log to the console")
-      IO.puts("  --force    Skip cache and force a re-run")
+      IO.puts("  --verbose       Stream jobs log to the console")
+      IO.puts("  --force         Skip cache and force a re-run")
+      IO.puts("  --no-sandbox    No filesystem sandbox mode (default)")
+      IO.puts("  --sandbox       Filesystem sandbox mode")
       Utils.halt(nil, 0)
     end
 
-    if options[:logs] do
-      Reporter.logs(options[:logs])
+    if options[:verbose] do
+      Reporter.logs(options[:verbose])
     end
 
-    %Command.RunBuild{targets: targets, force: options[:force] || false}
+    options = Keyword.merge(defaults, options)
+    %Command.RunBuild{targets: targets, force: options[:force], sandbox: options[:sandbox]}
   end
 
   def parse(["build", "outdated" | args]) do
@@ -239,10 +244,10 @@ defmodule MBS.CLI.Args do
       IO.puts("\nUsage:  mbs release make --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nMake a release (default: all targets) - output dir '#{Const.releases_dir()}/<id>/')")
       IO.puts("\nOptions:")
-      IO.puts("  --id            release identifier")
-      IO.puts("  --logs          Stream jobs log to the console")
-      IO.puts("  --metadata      Extra metadata to include in the release manifest")
-      IO.puts("                  ex: --metadata='git_commit=...'")
+      IO.puts("  --id          release identifier")
+      IO.puts("  --verbose     Stream jobs log to the console")
+      IO.puts("  --metadata    Extra metadata to include in the release manifest")
+      IO.puts("                ex: --metadata='git_commit=...'")
       Utils.halt(nil, 0)
     end
 
@@ -250,8 +255,8 @@ defmodule MBS.CLI.Args do
       Utils.halt("Missing release --id")
     end
 
-    if options[:logs] do
-      Reporter.logs(options[:logs])
+    if options[:verbose] do
+      Reporter.logs(options[:verbose])
     end
 
     %Command.MakeRelease{
@@ -290,9 +295,11 @@ defmodule MBS.CLI.Args do
   end
 
   def parse(["deploy", "run" | args]) do
+    defaults = [force: false]
+
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean, force: :boolean])
+        OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean, force: :boolean])
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
@@ -304,8 +311,8 @@ defmodule MBS.CLI.Args do
       IO.puts("\nRelease id:")
       IO.puts("  The release identifier (ref. 'mbs release --id=RELEASE-ID')")
       IO.puts("\nOptions:")
-      IO.puts("  --logs     Stream jobs log to the console")
-      IO.puts("  --force    Force a re-run")
+      IO.puts("  --verbose    Stream jobs log to the console")
+      IO.puts("  --force      Force a re-run")
       Utils.halt(nil, 0)
     end
 
@@ -318,17 +325,18 @@ defmodule MBS.CLI.Args do
           Utils.halt("Expected exactly one release-id")
       end
 
-    if options[:logs] do
-      Reporter.logs(options[:logs])
+    if options[:verbose] do
+      Reporter.logs(options[:verbose])
     end
 
-    %Command.RunDeploy{release_id: release_id, force: options[:force] || false}
+    options = Keyword.merge(defaults, options)
+    %Command.RunDeploy{release_id: release_id, force: options[:force]}
   end
 
   def parse(["deploy", "destroy" | args]) do
     {options, targets} =
       try do
-        OptionParser.parse!(args, strict: [help: :boolean, logs: :boolean])
+        OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
       rescue
         e in [OptionParser.ParseError] ->
           Utils.halt(e.message)
@@ -340,7 +348,7 @@ defmodule MBS.CLI.Args do
       IO.puts("\nRelease id:")
       IO.puts("  The release identifier (ref. 'mbs release --id=RELEASE-ID')")
       IO.puts("\nOptions:")
-      IO.puts("  --logs     Stream jobs log to the console")
+      IO.puts("  --verbose    Stream jobs log to the console")
       Utils.halt(nil, 0)
     end
 
@@ -353,8 +361,8 @@ defmodule MBS.CLI.Args do
           Utils.halt("Expected exactly one release-id")
       end
 
-    if options[:logs] do
-      Reporter.logs(options[:logs])
+    if options[:verbose] do
+      Reporter.logs(options[:verbose])
     end
 
     %Command.Destroy{release_id: release_id}

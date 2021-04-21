@@ -21,7 +21,7 @@ jobs:
           esac
 
           ./build.sh
-          ./mbs.sh build run --logs mbs
+          ./mbs.sh build run --verbose mbs
 
       - name: Push docker image
         if: startsWith(github.ref, 'refs/tags/v')

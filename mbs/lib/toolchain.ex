@@ -42,7 +42,7 @@ defmodule MBS.Toolchain do
         {nil, "true", "true"}
       end
 
-    opts = run_opts(component, docker_network_name) ++ ["--entrypoint", "sh", "--interactive"]
+    opts = run_opts(component, docker_network_name, false) ++ ["--entrypoint", "sh", "--interactive"]
     cmd_run = Docker.image_run_cmd(toolchain.id, toolchain.checksum, opts, env)
 
     "#{cmd_up}; #{cmd_run}; #{cmd_down}"
@@ -52,9 +52,11 @@ defmodule MBS.Toolchain do
           BuildDeploy.Component.t(),
           String.t(),
           Job.upstream_results(),
-          [{Path.t(), Dependency.Type.t()}]
-        ) :: :ok | {:error, String.t()}
-  def exec_build(%BuildDeploy.Component{} = component, checksum, upstream_results, changed_deps) do
+          [{Path.t(), Dependency.Type.t()}],
+          boolean()
+        ) ::
+          :ok | {:error, String.t()}
+  def exec_build(%BuildDeploy.Component{} = component, checksum, upstream_results, changed_deps, sandboxed) do
     env = run_build_env_vars(component, checksum, upstream_results)
 
     deps_change_steps =
@@ -66,7 +68,7 @@ defmodule MBS.Toolchain do
 
     res =
       with {:ok, docker_network_name} <- exec_services(:up, component, env),
-           run_opts = run_opts(component, docker_network_name),
+           run_opts = run_opts(component, docker_network_name, sandboxed),
            :ok <- exec(component, env, deps_change_steps, run_opts),
            :ok <- exec(component, env, component.toolchain.steps, run_opts) do
         Enum.each(changed_deps, fn {path, type} ->
@@ -138,32 +140,37 @@ defmodule MBS.Toolchain do
     end)
   end
 
-  @spec run_opts(BuildDeploy.Component.t(), nil | String.t()) :: opts()
-  defp run_opts(%BuildDeploy.Component{docker_opts: docker_opts, dir: work_dir}, network_name) do
+  @spec run_opts(BuildDeploy.Component.t(), nil | String.t(), boolean()) :: opts()
+  defp run_opts(%BuildDeploy.Component{docker_opts: docker_opts, dir: component_dir}, network_name, sandboxed) do
     opts = ["--rm", "-t" | docker_opts]
-    work_dir_opts = ["-w", "#{work_dir}"]
-    dir_mount_opts = ["-v", "#{work_dir}:#{work_dir}"]
+    opts_work_dir = ["-w", "#{component_dir}"]
+
+    opts_dir_mount =
+      if sandboxed do
+        ["-v", "#{Const.tmp_volume()}:#{Const.tmp_dir()}"]
+      else
+        ["-v", "#{component_dir}:#{component_dir}"]
+      end
+
     net_opts = if network_name != nil, do: ["--net", network_name], else: []
 
-    opts ++ work_dir_opts ++ dir_mount_opts ++ net_opts
+    opts ++ opts_work_dir ++ opts_dir_mount ++ net_opts
   end
 
   @spec run_deploy_opts(BuildDeploy.Component.t()) :: opts()
   def run_deploy_opts(%BuildDeploy.Component{docker_opts: docker_opts, dir: work_dir}) do
     opts = ["--rm", "-t" | docker_opts]
-    work_dir_opts = ["-w", "#{work_dir}"]
+    opts_work_dir = ["-w", "#{work_dir}"]
 
-    # NOTE: mbs container will run the toolchain in "docker-in-docker"
-    # A Docker container in a Docker container uses the parent HOST's
-    # Docker daemon and hence,  any volumes that are mounted in the
-    # "docker-in-docker" case is still referenced from the HOST, and
-    # not from the Container.
-    # That's why we mount the original host docker volume via the
-    # evnironment variable MBS_RELEASES_VOLUME
-    mbs_release_volume = System.fetch_env!("MBS_RELEASES_VOLUME")
-    dir_mount_opts = ["-v", "#{mbs_release_volume}:#{Const.releases_dir()}"]
+    # NOTE:
+    # mbs container will run the toolchain in "docker-in-docker".
+    # A Docker container in a Docker container uses the parent HOST's Docker daemon and hence,
+    # any volumes that are mounted in the  "docker-in-docker" case is still referenced from the HOST,
+    # and not from the Container.
+    # That's why we mount the original host docker volume.
+    opts_dir_mount = ["-v", "#{Const.release_volume()}:#{Const.releases_dir()}"]
 
-    opts ++ work_dir_opts ++ dir_mount_opts
+    opts ++ opts_work_dir ++ opts_dir_mount
   end
 
   @spec run_build_env_vars(BuildDeploy.Component.t(), String.t(), Job.upstream_results()) :: env_list()

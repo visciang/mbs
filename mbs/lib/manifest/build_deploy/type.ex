@@ -74,8 +74,10 @@ defmodule MBS.Manifest.BuildDeploy.Target do
 
   defstruct [:type, :target]
 
+  @type type :: :docker | :file
+
   @type t :: %__MODULE__{
-          type: :docker | :file,
+          type: type(),
           target: String.t()
         }
 end

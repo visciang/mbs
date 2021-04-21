@@ -10,14 +10,14 @@ defmodule MBS.Cache.File do
 
   @spec put(String.t(), String.t(), String.t()) :: :ok
   def put(name, checksum, target) do
-    local_cache_dest_target = path_local(name, checksum, Path.basename(target))
+    local_cache_dest_target = path_local(name, checksum, target)
     local_cache_dest_dir = Path.dirname(local_cache_dest_target)
 
     File.mkdir_p!(local_cache_dest_dir)
     File.cp!(target, local_cache_dest_target)
 
     if Const.push() do
-      cache_dest_target = path(name, checksum, Path.basename(target))
+      cache_dest_target = path(name, checksum, target)
       cache_dest_dir = Path.dirname(cache_dest_target)
 
       Reporter.job_report(

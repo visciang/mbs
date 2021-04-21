@@ -16,7 +16,7 @@ defmodule MBS.Workflow.Job.Cache do
     Cache.Docker.hit(checksum, id)
   end
 
-  @spec hit_targets(String.t(), String.t(), [String.t()]) :: boolean
+  @spec hit_targets(String.t(), String.t(), [Target.t()]) :: boolean
   def hit_targets(id, checksum, targets) do
     Enum.all?(targets, fn
       %Target{type: :file, target: target} ->
@@ -35,7 +35,7 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  @spec get_targets(String.t(), String.t(), [String.t()]) :: cache_result()
+  @spec get_targets(String.t(), String.t(), [Target.t()]) :: cache_result()
   def get_targets(id, checksum, targets) do
     found_all_targets =
       Enum.all?(targets, fn
@@ -66,7 +66,7 @@ defmodule MBS.Workflow.Job.Cache do
     end)
   end
 
-  @spec put_targets(String.t(), String.t(), [String.t()]) :: :ok
+  @spec put_targets(String.t(), String.t(), [Target.t()]) :: :ok
   def put_targets(id, checksum, targets) do
     Enum.each(targets, fn
       %Target{type: :file, target: target} ->

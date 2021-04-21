@@ -70,6 +70,24 @@ The above diagrams summarize the basic elements, concepts and workflow.
 
 ![image info](./docs/schema.png)
 
+## Hermetic execution and sandboxing
+
+A correct build (reproductible and deterministic) should be **hermetic** or, in other words, every build should see only files, dependencies and environment variables explicitely declared as build inputs.
+
+A pure hermetic build should be "fully vendored", every dependency should be part of the repository (everything build from vendored sources). Now, not everyone can vendor the world and the tradeoff is to accept external dependencies from external repo (hexpm, pypi, npm, ...) trying to limit the non-determinism with the locking mechanism of the different package managers.
+
+Another important aspect is about our source files and dependencies: the build should see only the files explicitly declared as input for our components build.
+
+`mbs` can run the build in two modes: sandboxed or not.
+
+In **sandbox** mode the build will run in isolation. Every components build will get its files and dependencies, and will run in an isolated context. No files will go out of this context, only the build targets will be extracted by `mbs` and cached.
+
+In non sandbox mode the build will run in the repository context. Every component build will directly run in the components directory. It means the toolchain wiil see what's there and will write build file there (making the git directory "dirty").
+
+The non-sandbox mode is the default and is tipically used during development.
+
+The sandbox mode is what should be used in CI or even during development when we want to check that our build is hermetic and consistent.
+
 ## Getting Started
 
 Prerequisite: docker installed
@@ -188,14 +206,14 @@ mbs build graph
 # this will produce .mbs-graph/graph.svg
 ```
 
-Open `.mbs-graph/graph.svg` and see the dependencies:
+`.mbs-graph/graph.svg` plots the dependency graph:
 
 ![Alt text](./docs/graph.svg)
 
 Now, we can build only a subset of the components, for instance `c_native_binary`.
 If you check the deps graph you will see it depends on `c_shared_library` that depends on `c_shared_sub_library`, and they all depends on the `toolchain-build-cmake`.
 
-alternativelly, you can see this also in the CLI via:
+Alternativelly, you can see the dependency tree also in the CLI:
 
 ```sh
 mbs build tree c_native_binary
@@ -211,7 +229,7 @@ mbs build tree c_native_binary
 Completed (0 jobs) (0.056 sec)
 ```
 
-But before running the build, let's get more info about `c_native_binary` component
+Before running the build, let's get more info about `c_native_binary` component:
 
 ```sh
 mbs build ls --verbose c_native_binary
@@ -237,7 +255,7 @@ c_native_binary  (component):
 Run the build:
 
 ```sh
-mbs build run --logs c_native_binary
+mbs build run --verbose c_native_binary
 
 # OUTPUT
 . - toolchain-build-cmake:build   ~ Sending build context to Docker daemon  4.096kB
@@ -261,7 +279,7 @@ Completed (7 jobs) (46.843 sec)
 When the build is complete, let's run again the build (it will be a fully cached run):
 
 ```sh
-mbs build run --logs c_native_binary
+mbs build run --verbose c_native_binary
 
 # OUTPUT
 ✔ - toolchain-build-cmake   (0.03 sec) ~ GEYSPDOBUCRI227AEHO5J5MRO4CKVD4UWY5CGOWLZG6SDYLOMRDQ
@@ -272,14 +290,24 @@ mbs build run --logs c_native_binary
 Completed (4 jobs) (0.091 sec)
 ```
 
+If you look at the `c_native_binary` components directory you will see the intermediate build files.
+
+The same build can be run in sandbox mode:
+
+```sh
+mbs build run --verbose --sandbox c_native_binary
+```
+
+and in this case the directory will remain clean.
+
 Now let's change some code, for instance edit `examples/monorepo/components/c_examples/c_shared_library/lib.c` (introduce a change to the "Hello!\n" string).
 Then run again the build (it will rebuild only `c_shared_library` -> `c_native_binary`)
 
 ```sh
-mbs build run --logs c_native_binary
+mbs build run --verbose c_native_binary
 
 # OUTPUT
-mbs build run --logs c_native_binary
+mbs build run --verbose c_native_binary
 ✔ - toolchain-build-cmake   (0.03 sec) ~ GEYSPDOBUCRI227AEHO5J5MRO4CKVD4UWY5CGOWLZG6SDYLOMRDQ
 ✔ - c_shared_sub_library   (0.001 sec) ~ PGWFSGRKY3CFISKFAMGTCTXIZXGAOVWHDZ54RZY5UAU34HE44Z4A
 . - c_shared_library:build   ~ -- The C compiler identification is GNU 10.2.0
@@ -300,7 +328,7 @@ If you revert the change just made in `examples/monorepo/components/c_examples/c
 Let's go on building all the components (it will take a while):
 
 ```sh
-mbs build run --logs
+mbs build run --verbose
 ```
 
 You will see the build of indipendent components running in parallel.

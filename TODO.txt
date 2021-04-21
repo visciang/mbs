@@ -12,11 +12,12 @@ execution:
   --init anche su toolchain "docker run"?
 
 misc
-- docker image namespacing
+- docker image namespacing (or docker context?)
 - docker build --rm and intermediate container ... (docker rmi $(docker images -f "dangling=true" -q))
 - git://... dependencies
 
 cli
+- global docker_opts option in .mbs-config.json
 - pass secrets in mbs
 - cache command (purge | size | info ... ?)
 - Job logs on files option?
