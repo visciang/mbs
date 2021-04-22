@@ -1,32 +1,66 @@
 # MBS - a Meta Build System
 
+- [MBS - a Meta Build System](#mbs---a-meta-build-system)
+  * [Introduction](#introduction)
+    + [What MBS is not](#what-mbs-is-not)
+    + [Motivation](#motivation)
+    + [Terminology](#terminology)
+    + [Use case](#use-case)
+    + [A bit of history](#a-bit-of-history)
+  * [Architecture and workflow](#architecture-and-workflow)
+  * [Hermetic execution and sandboxing](#hermetic-execution-and-sandboxing)
+  * [Getting Started](#getting-started)
+    + [Init a new repo](#init-a-new-repo)
+    + [Let's play](#let-s-play)
+  * [CLI interface](#cli-interface)
+    + [Commands](#commands)
+  * [Configuration](#configuration)
+    + [MBS cache and release persistency](#mbs-cache-and-release-persistency)
+    + [Environment variables](#environment-variables)
+    + [Project](#project)
+    + [Global configuration](#global-configuration)
+    + [Toolchain manifest](#toolchain-manifest)
+    + [Component build manifest](#component-build-manifest)
+    + [Component deploy manifest](#component-deploy-manifest)
+    + [Files and profile rules](#files-and-profile-rules)
+    + [Sidecar services](#sidecar-services)
+  * [Toolchains development](#toolchains-development)
+    + [Interface](#interface)
+    + [Environment variables](#environment-variables-1)
+    + [Dependencies directory](#dependencies-directory)
+    + [Dependencies change](#dependencies-change)
+  * [Components development](#components-development)
+
+<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
+
 ## Introduction
 
-A fully dockerized **Meta Build System** to organizate / build / release / deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
+A fully dockerized **Meta Build System** to build, release and deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
 **Containerization** is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
 
-With MBS you can easly define the toolchains to build / deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services. Also the toolchains (used to build your components) should be part of the repository: change a toolchain -> rebuild everything that depends on the toolchain.
+With MBS you can easly define the toolchains to build and deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services. Also the toolchains (used to build your components) should be part of the repository: change a toolchain -> rebuild everything that depends on the toolchain.
 
 ![image info](./docs/schema-deps-graph.png)
 
-This will give you **parallelized** fast builds for free that can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed but only docker and your mono-repo.
+This will give you **parallelized** fast builds for free that can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed, but only docker and your mono-repo.
 
 The user experience we aim to is a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a service oriented solution.
 
 To summarize:
 - build / release / deploy support
 - first class DAG dependencies (parallelized execution)
-- Checksum based diff detection
-- No development environment on your machine, just docker
+- checksum based diff detection
+- sandboxed build
+- no development environment on your machine, just docker
 
 ### What MBS is not
 
 Well, first it is not Bazel :) .. joking.
 
-It's all about **tradeoff**. We should do one thing (put your definition of "one thing" here) and do it well (your definition also here). This can't be considered without a clear context that defines where we would like to operate; and different context means different requirements, different expectations and so different definitions.
+It's all about **tradeoff**. We should do one thing and do it well. This can't be considered without a clear context that defines where we would like to operate; and different context means different requirements, different expectations and so different definition of "one thing done well".
 
-What we are trying to target here is a simple thing to operate in the context of project oriented monorepositories with a number N of components where N is such that you can run a full build of it on a single machine (you can run means you accept the time it could take to complete a full build on you n-Core host).
+What we are trying to target here is a simple thing to operate in the context of project oriented monorepositories with a number N of components where N is such that you can run a full build of it on a single machine (you can run means you accept the time it could take to complete a full build on you n-cpu-core host).
 
 That's obviously the worst case, normally we only work on a very small subset of the components and at the "higher level" of the dependency graph. So we won't rebuild the world every time.
 This is true unless you are working on a toolchain used by a lot of components.
@@ -42,9 +76,10 @@ In general, no matter if you go for a single mono-repo or few projects oriented 
 
 ### Terminology
 - **Toolchain**: defines your "build" / "deploy" recipes, standardized and parameterizable.
-- **Component**: a sofware component, a piece of software with well defined functionalities and boundaries that can be build to a target artifact (via a toolchain). A component could be also a deployable target or not (for example a library that is only consumed by other components)
+- **Component**: a sofware component, a piece of software with well defined functionalities and boundaries that can be build to a target artifact (via a toolchain). A component could be also a deployable target or not (for example a library that is only consumed by other components in the build phase).
 
 In other words we can think about *toolchains* as "functions" that turns *components* into *artifacts*. If you think about it, also *toolchains* are components, in fact there's a special "bootstrapping" *toolchain*, docker, that is able to turn a *toolchain component* into a toolchain (artifact).
+
 MBS in a "high order function" that you feed with your mono-repo (a set of components and toolchain components) and gives you back the artifacts of your components built with your toolchain built with docker...
 
 Later on, we will see how `mbs` "builds" `mbs`, as an example of these concepts.
@@ -55,7 +90,7 @@ As explained above, `mbs` is mostly targeted at mono-repository, and if you land
 
 It naturally feets well with domain / component oriented design.
 
-Remember that, like every tool, `mbs` / mono-repos / etc. are just patterns and guidelines, not a silver bullet, and should not be misused otherwise you will shoot that silver bullet in your feet. So is essential to correclty design modules / components, their boundaries / what (business) logic we put into them and the dependecies we introduce beetween them.
+Remember that, like every tool, `mbs` / mono-repos / etc. are just patterns and guidelines, not a silver bullet, and should not be misused otherwise you will shoot that silver bullet in your feet. So it's essential to correctly design modules / components, their boundaries / what (business) logic we put into them and the dependecies we introduce beetween them.
 
 ### A bit of history
 
@@ -64,9 +99,9 @@ extra reference to monorepo or other similar tools/solutions: cmake / ninja / do
 
 TODO: describe the language oriented approach used by some tools (NPM workspaces, Elixir umbrella, GO, Rust cargo workspaces, ...), there the driver (obviously) is the language in mbs is the domain where you can develop together different things.
 
-## The [build] -> [release] -> [deploy] -> [destroy!] flow
+## Architecture and workflow
 
-The above diagrams summarize the basic elements, concepts and workflow.
+The above diagrams summarize the basic elements, concepts in `mbs` and the generic workflow we use to build, release and deploy our software components.
 
 ![image info](./docs/schema.png)
 
@@ -80,13 +115,13 @@ Another important aspect is about our source files and dependencies: the build s
 
 `mbs` can run the build in two modes: sandboxed or not.
 
-In **sandbox** mode the build will run in isolation. Every components build will get its files and dependencies, and will run in an isolated context. No files will go out of this context, only the build targets will be extracted by `mbs` and cached.
+In **sandbox** mode the build run in isolation. Every components build get its files and dependencies, and it run in an isolated context. No files can go out of this context, only the build targets are extracted and cached after a successful build.
 
-In non sandbox mode the build will run in the repository context. Every component build will directly run in the components directory. It means the toolchain wiil see what's there and will write build file there (making the git directory "dirty").
+In non sandbox mode the build run in the repository context. Every component build directly run in the components directory, sharing the host filesystem. It means the toolchain wiil see what's there and will write build file there (making the git directory "dirty").
 
 The non-sandbox mode is the default and is tipically used during development.
 
-The sandbox mode is what should be used in CI or even during development when we want to check that our build is hermetic and consistent.
+The sandbox mode is what should be used in CI or even during development to check that our build is hermetic and consistent.
 
 ## Getting Started
 
@@ -462,7 +497,7 @@ MBS execution global configuration parameters.
 }
 ```
 
-### Toolchain manifest (`.mbs-toolchain.json`)
+### Toolchain manifest
 
 ```js
 {
@@ -505,7 +540,7 @@ MBS execution global configuration parameters.
 }
 ```
 
-### Component build manifest (`.mbs-build.json`)
+### Component build manifest
 
 ```js
 {
@@ -557,7 +592,7 @@ MBS execution global configuration parameters.
 }
 ```
 
-### Component deploy manifest (`.mbs-deploy.json`)
+### Component deploy manifest
 
 ```js
 {
@@ -594,7 +629,7 @@ MBS execution global configuration parameters.
 }
 ```
 
-### Files and files_profile rules
+### Files and profile rules
 
 The global config key "files_profile" defines a **set of predefined files profile**
 that can be referenced in the single components to avoid duplication.
