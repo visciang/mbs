@@ -1,17 +1,5 @@
 # MBS - a Meta Build System
 
-- [MBS - a Meta Build System](#mbs---a-meta-build-system)
-  * [Introduction](docs/introduction.md)
-  * [Architecture and workflow](docs/architecture-and-workflow.md)
-  * [Hermetic execution and sandboxing](docs/hermetic-execution-and-sandboxing.md)
-  * [Getting Started](docs/getting-started.md)
-  * [CLI interface](docs/cli-interface.md)
-  * [Configuration](docs/configuration.md)
-  * [Toolchains development](docs/toolchains-development.md)
-  * [Components development](docs/components-development.md)
-
-<small><i><a href='http://ecotrust-canada.github.io/markdown-toc/'>Table of contents generated with markdown-toc</a></i></small>
-
 A fully dockerized **Meta Build System** to build, release and deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
 **Containerization** is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
@@ -30,3 +18,13 @@ To summarize:
 - checksum based diff detection
 - sandboxed build
 - no development environment on your machine, just docker
+
+## Documentation
+  * [Introduction](docs/introduction.md)
+  * [Architecture and workflow](docs/architecture-and-workflow.md)
+  * [Hermetic execution and sandboxing](docs/hermetic-execution-and-sandboxing.md)
+  * [Getting Started](docs/getting-started.md)
+  * [CLI interface](docs/cli-interface.md)
+  * [Configuration](docs/configuration.md)
+  * [Toolchains development](docs/toolchains-development.md)
+  * [Components development](docs/components-development.md)
