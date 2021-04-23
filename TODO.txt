@@ -22,10 +22,6 @@ cli
 - cache command (purge | size | info ... ?)
 - Job logs on files option?
 
-sandboxing:
-- Sandboxing execution (every build should se only its file (the input one) and dependencies artifact)
-  no FS sharing with the host => no build tmp files left around, only the targets file should be extract and copied in the cache
-
 support / doc
 - Documentation
 - (npm 7 workspaces) https://dev.to/limal/simplify-your-monorepo-with-npm-7-workspaces-5gmj

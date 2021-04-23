@@ -12,8 +12,14 @@ defmodule MBS.Workflow.Job.RunBuild do
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), BuildDeploy.Type.t(), boolean(), boolean()) :: Job.fun()
-  def fun(%Config.Data{}, %BuildDeploy.Toolchain{id: id, checksum: checksum} = toolchain, force, _sandboxed) do
+  @spec fun(Config.Data.t(), BuildDeploy.Type.t(), boolean(), boolean(), boolean()) :: Job.fun()
+  def fun(
+        %Config.Data{},
+        %BuildDeploy.Toolchain{id: id, checksum: checksum} = toolchain,
+        force,
+        _force_get_deps,
+        _sandboxed
+      ) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
@@ -42,7 +48,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  def fun(%Config.Data{}, %BuildDeploy.Component{id: id} = component, force, sandboxed) do
+  def fun(%Config.Data{}, %BuildDeploy.Component{id: id} = component, force, force_get_deps, sandboxed) do
     fn _job_id, upstream_results ->
       start_time = Reporter.time()
 
@@ -50,16 +56,15 @@ defmodule MBS.Workflow.Job.RunBuild do
       sandboxed_component = Sandbox.up(sandboxed, component)
 
       {cached, report_status, report_desc} =
-        with :cache_miss <- cache_get_targets(id, checksum, component.targets, force),
-             changed_deps <- get_changed_dependencies_targets(sandboxed_component, upstream_results, force),
+        with {:cache_miss, changed_deps} <-
+               get_targets_and_dependencies(sandboxed_component, checksum, upstream_results, force, force_get_deps),
              :ok <- put_files(sandboxed, component, sandboxed_component),
-             :ok <- put_dependencies(sandboxed_component, changed_deps),
              :ok <- Toolchain.exec_build(sandboxed_component, checksum, upstream_results, changed_deps, sandboxed),
              :ok <- assert_targets(sandboxed_component.targets, checksum),
              :ok <- Job.Cache.put_targets(id, checksum, sandboxed_component.targets) do
           {false, Reporter.Status.ok(), checksum}
         else
-          :cached ->
+          {:cached, _} ->
             {true, Reporter.Status.uptodate(), checksum}
 
           {:error, reason} ->
@@ -79,6 +84,34 @@ defmodule MBS.Workflow.Job.RunBuild do
         checksum: checksum,
         targets: transitive_targets(id, checksum, sandboxed_component.targets, upstream_results)
       }
+    end
+  end
+
+  @spec get_targets_and_dependencies(
+          BuildDeploy.Component.t(),
+          String.t(),
+          Job.upstream_results(),
+          boolean(),
+          boolean()
+        ) :: {Job.Cache.cache_result(), [{Path.t(), Dependency.Type.t()}]}
+  def get_targets_and_dependencies(
+        %BuildDeploy.Component{id: id, targets: targets} = component,
+        checksum,
+        upstream_results,
+        force,
+        force_get_deps
+      ) do
+    cache_result = cache_get_targets(id, checksum, targets, force)
+
+    if cache_result == :cache_miss or force_get_deps do
+      with changed_deps <- get_changed_dependencies_targets(component, upstream_results, force),
+           :ok <- put_dependencies(component, changed_deps) do
+        {cache_result, changed_deps}
+      else
+        err -> err
+      end
+    else
+      {:cached, []}
     end
   end
 

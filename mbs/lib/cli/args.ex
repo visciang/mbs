@@ -156,7 +156,7 @@ defmodule MBS.CLI.Args do
     end
 
     options = Keyword.merge(defaults, options)
-    %Command.RunBuild{targets: targets, force: options[:force], sandbox: options[:sandbox]}
+    %Command.RunBuild{targets: targets, force: options[:force], sandbox: options[:sandbox], force_get_deps: false}
   end
 
   def parse(["build", "outdated" | args]) do
