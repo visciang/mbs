@@ -1,0 +1,18 @@
+version: '3'
+
+services:
+  app:
+    image: alpine
+    volumes:
+      - type: volume
+        source: example
+        target: /nfs
+        volume:
+          nocopy: true
+volumes:
+  example:
+    driver: local
+    driver_opts:
+      type: "nfs"
+      o: "nfsvers=4,addr=192.168.178.32,rw"
+      device: ":"

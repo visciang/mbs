@@ -1,0 +1,5 @@
+sudo apt install nfs-client -y
+mkdir /tmp/data
+sudo mount -v -o vers=4,loud 192.168.178.32:/ /tmp/data/
+
+sudo umount -f -l /tmp/data
