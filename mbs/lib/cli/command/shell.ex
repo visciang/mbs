@@ -19,7 +19,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)
 
     build_direct_deps = %Command.RunBuild{targets: target_direct_dependencies, force: false, sandbox: true}
-    get_component_deps_only = %Command.RunBuild{targets: [target], force: false, sandbox: false, force_get_deps: true}
+    get_component_deps_only = %Command.RunBuild{targets: [target], force: false, sandbox: false, get_deps_only: true}
 
     with :ok <- CLI.Command.run(build_direct_deps, config),
          :ok <- CLI.Command.run(get_component_deps_only, config) do

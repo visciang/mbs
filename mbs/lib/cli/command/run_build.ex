@@ -1,11 +1,11 @@
 defmodule MBS.CLI.Command.RunBuild do
   @moduledoc false
-  defstruct [:targets, :force, :sandbox, :force_get_deps]
+  defstruct [:targets, :force, :sandbox, :get_deps_only]
 
   @type t :: %__MODULE__{
           targets: [String.t()],
           force: boolean(),
-          force_get_deps: boolean(),
+          get_deps_only: boolean(),
           sandbox: boolean()
         }
 end
@@ -17,7 +17,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
 
   @spec run(Command.RunBuild.t(), Config.Data.t()) :: :ok | :error | :timeout
   def run(
-        %Command.RunBuild{targets: target_ids, force: force, force_get_deps: force_get_deps, sandbox: sandbox},
+        %Command.RunBuild{targets: target_ids, force: force, get_deps_only: get_deps_only, sandbox: sandbox},
         %Config.Data{} = config
       ) do
     dask =
@@ -25,7 +25,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
       |> Workflow.workflow(
         config,
-        &Workflow.Job.RunBuild.fun(&1, &2, force, force_get_deps, sandbox),
+        &Workflow.Job.RunBuild.fun(&1, &2, force, get_deps_only, sandbox),
         &Workflow.Job.RunBuild.fun_on_exit(&1, &2, sandbox)
       )
 

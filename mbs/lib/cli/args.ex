@@ -144,10 +144,9 @@ defmodule MBS.CLI.Args do
       IO.puts("\nUsage:  mbs build run --help | [OPTIONS] [TARGETS...]")
       IO.puts("\nRun a target(s) build (default: all targets)")
       IO.puts("\nOptions:")
-      IO.puts("  --verbose       Stream jobs log to the console")
-      IO.puts("  --force         Skip cache and force a re-run")
-      IO.puts("  --no-sandbox    No filesystem sandbox mode (default)")
-      IO.puts("  --sandbox       Filesystem sandbox mode")
+      IO.puts("  --verbose    Stream jobs log to the console")
+      IO.puts("  --force      Skip cache and force a re-run")
+      IO.puts("  --sandbox    Filesystem sandbox mode (default: no sandbox)")
       Utils.halt(nil, 0)
     end
 
@@ -156,7 +155,7 @@ defmodule MBS.CLI.Args do
     end
 
     options = Keyword.merge(defaults, options)
-    %Command.RunBuild{targets: targets, force: options[:force], sandbox: options[:sandbox], force_get_deps: false}
+    %Command.RunBuild{targets: targets, force: options[:force], sandbox: options[:sandbox], get_deps_only: false}
   end
 
   def parse(["build", "outdated" | args]) do
