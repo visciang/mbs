@@ -19,6 +19,13 @@ To summarize:
 - sandboxed build
 - no development environment on your machine, just docker
 
+## Vision
+
+Imagine a place where:
+- you can define in a single repository all the pieces of a project (or multiple projects): infrastructure, applications, ops tools, toolchains to build or deploy everything in the repo. All these pieces versioned together so that you can easily work orthogonally through the stack with a single view, atomic commits, explicit dependencies and no versioning.
+- you can onboard in almost zero time: get access to the code, clone it on a dev machine with docker, build / test / develop everything in the repo, no matter the language, runtime, framework... without the need too install any software on the host.
+- you can have (if you want) a very consistent way of doing things (no snowflakes).
+
 ## Documentation
   * [Introduction](docs/introduction.md)
   * [Architecture and workflow](docs/architecture-and-workflow.md)
