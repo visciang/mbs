@@ -1,10 +1,13 @@
 ## Getting Started
 
-Prerequisite: docker installed
 
-### Init a new repo
+### Install
 
 As describe in the introduction, `mbs` is distributed as a docker image, so you don't need to install any executable.
+
+The only prerequisite is docker.
+
+### Init a new repo
 
 To initialize a new repository:
 
@@ -21,19 +24,17 @@ docker run --rm -ti -v $PWD:/repo -w /repo visciang/mbs:$MBS_VERSION init projec
 The `docker run` command will pull the mbs image and run it with the `init` command in the repository directory.
 It will setup the repository directory with a couple of config file (`.mbs-config.json`, `.mbs-project.json`) and `mbs.sh` script.
 
-- more details about the config files in [Configuration](configuration.md).
-- `mbs.sh` script is a convenient wrapper around the `docker run` command (you can also source it and you will have an `mbs` alias in the shell).
+More details about the config files in [Configuration](configuration.md).
+`mbs.sh` script is a convenient wrapper around the `docker run` command (you can also source it and you will have an `mbs` alias in the shell).
 
-You will have:
+After the init command we have:
 
 ```sh
 ls -a
 .mbs-config.json  .mbs-project.json  mbs.sh*
 ```
 
-These files should be git committed in your repo.
-
-Now you should be able to run mbs:
+Now we should be able to run mbs:
 
 ```sh
 ./mbs.sh --help
@@ -50,14 +51,14 @@ Since the `mbs` github repository includes some examples under `example/monorepo
 
 This will be the same onboarding experience you will have joining the development of an `mbs` managed monorepo.
 
-The below example won't install anything on your machine, but it will download and create docker images and two docker volumes (where it caches artifacts and releases).
+The below example won't install anything on your machine, but it will download and create docker images and two docker volumes for the artifact cache and releases.
 
 ```sh
 MBS_VERSION=vA.B.C  # NOTE: here the MBS version you want to use
 git clone --depth 1 -b $MBS_VERSION https://github.com/visciang/mbs-monorepo
 ```
 
-and
+
 
 ```sh
 cd mbs-monorepo
@@ -65,7 +66,7 @@ source ./mbs.sh
 mbs --help
 ```
 
-Lets' see the available component
+Let's list the available components:
 
 ```sh
 mbs build ls
@@ -121,9 +122,9 @@ mbs build graph
 ![Alt text](graph.svg)
 
 Now, we can build only a subset of the components, for instance `c_native_binary`.
-If you check the deps graph you will see it depends on `c_shared_library` that depends on `c_shared_sub_library`, and they all depends on the `toolchain-build-cmake`.
+If we check the deps graph you will see it depends on `c_shared_library` that depends on `c_shared_sub_library`, and they all depends on the `toolchain-build-cmake`.
 
-Alternativelly, you can see the dependency tree also in the CLI:
+Alternativelly, we can see the dependency tree also in the CLI:
 
 ```sh
 mbs build tree c_native_binary
@@ -139,7 +140,7 @@ mbs build tree c_native_binary
 Completed (0 jobs) (0.056 sec)
 ```
 
-Before running the build, let's get more info about `c_native_binary` component:
+Before we run the build, let's get more info about `c_native_binary` component:
 
 ```sh
 mbs build ls --verbose c_native_binary
@@ -186,7 +187,7 @@ mbs build run --verbose c_native_binary
 Completed (7 jobs) (46.843 sec)
 ```
 
-When the build is complete, let's run again the build (it will be a fully cached run):
+When the build is complete, let's run it again (it will be a fully cached run):
 
 ```sh
 mbs build run --verbose c_native_binary
@@ -200,7 +201,7 @@ mbs build run --verbose c_native_binary
 Completed (4 jobs) (0.091 sec)
 ```
 
-If you look at the `c_native_binary` components directory you will see the intermediate build files.
+If we look at the `c_native_binary` components directory we will see the intermediate build files.
 
 The same build can be run in sandbox mode:
 
@@ -210,8 +211,8 @@ mbs build run --verbose --sandbox c_native_binary
 
 and in this case the directory will remain clean.
 
-Now let's change some code, for instance edit `examples/monorepo/components/c_examples/c_shared_library/lib.c` (introduce a change to the "Hello!\n" string).
-Then run again the build (it will rebuild only `c_shared_library` -> `c_native_binary`)
+Now let's change some code, for instance we can edit `examples/monorepo/components/c_examples/c_shared_library/lib.c` (introduce a change to the "Hello!\n" string).
+If we run again the build it will rebuild only `c_shared_library` -> `c_native_binary`
 
 ```sh
 mbs build run --verbose c_native_binary
@@ -233,7 +234,7 @@ mbs build run --verbose c_native_binary
 ✔ - c_native_binary   (0.964 sec) ~ KGKJ6WES7BRUW5UFTSE2GG2QZONVGDB6PKTCEEEQ7XAT63XQBM4A
 ```
 
-If you revert the change just made in `examples/monorepo/components/c_examples/c_shared_library/lib.c` and run again the build, you will see it's fully cached.
+If we revert the change just made in `examples/monorepo/components/c_examples/c_shared_library/lib.c` and run again the build, we will see it's fully cached.
 
 Let's go on building all the components (it will take a while):
 
@@ -241,7 +242,7 @@ Let's go on building all the components (it will take a while):
 mbs build run --verbose
 ```
 
-You will see the build of indipendent components running in parallel.
+We will see the build of indipendent components running in parallel.
 When it's ready, let's use another command to check that nothing is outdated.
 
 ```sh
