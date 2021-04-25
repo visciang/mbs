@@ -15,7 +15,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
   alias MBS.{CLI, Config, Utils, Workflow}
   alias MBS.Manifest.BuildDeploy
 
-  @spec run(Command.RunBuild.t(), Config.Data.t()) :: :ok | :error | :timeout
+  @spec run(Command.RunBuild.t(), Config.Data.t()) :: Command.on_run()
   def run(
         %Command.RunBuild{targets: target_ids, force: force, get_deps_only: get_deps_only, sandbox: sandbox},
         %Config.Data{} = config

@@ -14,7 +14,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
   alias MBS.{Config, Const, Workflow}
   alias MBS.Manifest.BuildDeploy
 
-  @spec run(Command.Graph.t(), Config.Data.t()) :: :ok | :error
+  @spec run(Command.Graph.t(), Config.Data.t()) :: Command.on_run()
   def run(%Command.Graph{type: type, targets: target_ids, output_filename: output_filename}, %Config.Data{} = config) do
     if dot_command_installed?() do
       File.mkdir_p!(Const.graph_dir())

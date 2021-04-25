@@ -98,7 +98,7 @@ defmodule MBS.Workflow.Job.Release do
       checksum: checksum
     }
 
-    File.write!(release_metadata_path, Jason.encode!(release_metadata, pretty: true))
+    File.write!(release_metadata_path, Jason.encode!(release_metadata, pretty: true), [:utf8])
   end
 
   @spec release_copy_mbs_toolchain_manifest(Path.t(), Path.t()) :: :ok

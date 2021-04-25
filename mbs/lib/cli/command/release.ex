@@ -14,7 +14,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
   alias MBS.{CLI, Config, Const, Utils, Workflow}
   alias MBS.Manifest.{BuildDeploy, Project, Release}
 
-  @spec run(Command.MakeRelease.t(), Config.Data.t()) :: :ok | :error | :timeout
+  @spec run(Command.MakeRelease.t(), Config.Data.t()) :: Command.on_run()
   def run(
         %Command.MakeRelease{id: id, targets: target_ids, metadata: metadata},
         %Config.Data{} = config

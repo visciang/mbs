@@ -192,7 +192,7 @@ defmodule MBS.Toolchain do
         {"MBS_CHECKSUM_#{shell_dep_id}", dep_checksum}
       end)
 
-    [{"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
+    [{"MBS_PROJECT_ID", Const.project_id()}, {"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
   end
 
   @spec run_deploy_env_vars(BuildDeploy.Component.t(), String.t()) :: env_list()

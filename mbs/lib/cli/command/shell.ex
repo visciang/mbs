@@ -13,7 +13,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   alias MBS.{CLI, Config, Utils, Workflow}
   alias MBS.Manifest.BuildDeploy
 
-  @spec run(Command.Shell.t(), Config.Data.t()) :: :ok | :error | :timeout
+  @spec run(Command.Shell.t(), Config.Data.t()) :: Command.on_run()
   def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config) do
     manifests = BuildDeploy.find_all(:build, config)
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)

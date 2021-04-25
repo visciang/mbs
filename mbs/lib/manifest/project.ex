@@ -32,7 +32,8 @@ defmodule MBS.Manifest.Project do
 
     File.write!(
       Path.join(release_dir, Const.manifest_project_filename()),
-      Jason.encode!(%{dirs: components_id}, pretty: true)
+      Jason.encode!(%{dirs: components_id}, pretty: true),
+      [:utf8]
     )
   end
 

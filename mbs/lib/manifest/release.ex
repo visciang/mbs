@@ -59,7 +59,8 @@ defmodule MBS.Manifest.Release do
 
     File.write!(
       Path.join(release_dir, Const.manifest_release_filename()),
-      release_manifest |> Map.from_struct() |> Jason.encode!(pretty: true)
+      release_manifest |> Map.from_struct() |> Jason.encode!(pretty: true),
+      [:utf8]
     )
   end
 

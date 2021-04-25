@@ -1,4 +1,6 @@
 defprotocol MBS.CLI.Command do
-  @spec run(t(), MBS.Config.Data.t()) :: :ok | :error | :timeout
+  @type on_run :: :ok | :error | :timeout
+
+  @spec run(t(), MBS.Config.Data.t()) :: on_run()
   def run(args, config)
 end

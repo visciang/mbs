@@ -12,7 +12,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Destroy do
   alias MBS.{Config, Utils, Workflow}
   alias MBS.Manifest.{BuildDeploy, Release}
 
-  @spec run(Command.Destroy.t(), Config.Data.t()) :: :ok | :error | :timeout
+  @spec run(Command.Destroy.t(), Config.Data.t()) :: Command.on_run()
   def run(%Command.Destroy{release_id: release_id}, %Config.Data{} = config) do
     {release, release_dir} = Release.get_release(release_id)
 
