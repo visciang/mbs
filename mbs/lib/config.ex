@@ -26,8 +26,6 @@ defmodule MBS.Config do
   Global config
   """
 
-  require Logger
-
   alias MBS.Config.Data
   alias MBS.{Const, Utils}
 

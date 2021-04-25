@@ -14,11 +14,9 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
   alias MBS.Manifest.BuildDeploy
   alias MBS.Workflow.Job
 
-  require Logger
-
   @spec run(CLI.Command.Tree.t(), Config.Data.t()) :: :ok
   def run(%Command.Tree{type: type, targets: target_ids}, %Config.Data{} = config) do
-    Logger.info("")
+    IO.puts("")
 
     manifests = BuildDeploy.find_all(type, config)
 
@@ -43,7 +41,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
     |> Enum.with_index(1)
     |> Enum.each(fn {id, idx} ->
       guide = if idx == names_length, do: "└── ", else: "├── "
-      Logger.info(IO.ANSI.format([indent, guide, :bright, id]))
+      IO.puts(IO.ANSI.format([indent, guide, :bright, id]))
 
       dependencies = Job.Utils.component_dependencies(manifests_map[id])
       guide = if idx == names_length, do: "    ", else: "│   "

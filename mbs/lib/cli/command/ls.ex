@@ -14,11 +14,9 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   alias MBS.Config
   alias MBS.Manifest.BuildDeploy
 
-  require Logger
-
   @spec run(Command.Ls.t(), Config.Data.t()) :: :ok
   def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{} = config) do
-    Logger.info("")
+    IO.puts("")
 
     BuildDeploy.find_all(type, config)
     |> Enum.filter(&Utils.filter_manifest_by_id(&1.id, target_ids))
@@ -30,80 +28,80 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
 
   @spec print_ls(BuildDeploy.Component.t(), BuildDeploy.Type.type(), boolean()) :: :ok
   defp print_ls(%BuildDeploy.Component{} = component, type, true) do
-    Logger.info(IO.ANSI.format([:bright, "#{component.id}", :normal, "  (component)", ":"]))
-    Logger.info("  dir:")
-    Logger.info("    #{component.dir}")
-    Logger.info("  timeout:")
-    Logger.info("    #{component.timeout}")
-    Logger.info("  toolchain:")
-    Logger.info("    #{component.toolchain.id}")
-    Logger.info("  targets:")
+    IO.puts(IO.ANSI.format([:bright, "#{component.id}", :normal, "  (component)", ":"]))
+    IO.puts("  dir:")
+    IO.puts("    #{component.dir}")
+    IO.puts("  timeout:")
+    IO.puts("    #{component.timeout}")
+    IO.puts("  toolchain:")
+    IO.puts("    #{component.toolchain.id}")
+    IO.puts("  targets:")
 
-    Enum.each(component.targets, &Logger.info("    - #{target_to_str(&1)}"))
+    Enum.each(component.targets, &IO.puts("    - #{target_to_str(&1)}"))
 
-    Logger.info("  files:")
+    IO.puts("  files:")
 
     component.files
     |> Enum.sort()
     |> Enum.each(
       &case type do
-        :build -> Logger.info("    - #{&1}")
-        :deploy -> Logger.info("    - #{target_to_str(&1)}")
+        :build -> IO.puts("    - #{&1}")
+        :deploy -> IO.puts("    - #{target_to_str(&1)}")
       end
     )
 
     if component.dependencies != [] do
-      Logger.info("  dependencies:")
-      Enum.each(component.dependencies, &Logger.info("    - #{&1}"))
+      IO.puts("  dependencies:")
+      Enum.each(component.dependencies, &IO.puts("    - #{&1}"))
     end
 
     if component.services != nil do
-      Logger.info("  services:")
-      Logger.info("    #{component.services}")
+      IO.puts("  services:")
+      IO.puts("    #{component.services}")
     end
 
     if component.docker_opts != [] do
-      Logger.info("  docker_opts:")
-      Enum.each(component.docker_opts, &Logger.info("    - #{&1}"))
+      IO.puts("  docker_opts:")
+      Enum.each(component.docker_opts, &IO.puts("    - #{&1}"))
     end
 
-    Logger.info("")
+    IO.puts("")
   end
 
   defp print_ls(%BuildDeploy.Toolchain{} = toolchain, _type, true) do
-    Logger.info(IO.ANSI.format([:bright, "#{toolchain.id}", :normal, "  (toolchain)", ":"]))
-    Logger.info("  dir:")
-    Logger.info("    #{toolchain.dir}")
-    Logger.info("  timeout:")
-    Logger.info("    #{toolchain.timeout}")
-    Logger.info("  dockerfile:")
-    Logger.info("    #{toolchain.dockerfile}")
-    Logger.info("  steps:")
-    Enum.each(toolchain.steps, &Logger.info("    - #{&1}"))
+    IO.puts(IO.ANSI.format([:bright, "#{toolchain.id}", :normal, "  (toolchain)", ":"]))
+    IO.puts("  dir:")
+    IO.puts("    #{toolchain.dir}")
+    IO.puts("  timeout:")
+    IO.puts("    #{toolchain.timeout}")
+    IO.puts("  dockerfile:")
+    IO.puts("    #{toolchain.dockerfile}")
+    IO.puts("  steps:")
+    Enum.each(toolchain.steps, &IO.puts("    - #{&1}"))
 
     if toolchain.deps_change_step != nil do
-      Logger.info("  deps_change_step:")
-      Logger.info("    #{toolchain.deps_change_step}")
+      IO.puts("  deps_change_step:")
+      IO.puts("    #{toolchain.deps_change_step}")
     end
 
     if toolchain.destroy_steps != [] do
-      Logger.info("  destroy_steps:")
-      Enum.each(toolchain.destroy_steps, &Logger.info("    - #{&1}"))
+      IO.puts("  destroy_steps:")
+      Enum.each(toolchain.destroy_steps, &IO.puts("    - #{&1}"))
     end
 
-    Logger.info("  files:")
-    toolchain.files |> Enum.sort() |> Enum.each(&Logger.info("    - #{&1}"))
+    IO.puts("  files:")
+    toolchain.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
 
     if toolchain.docker_opts != [] do
-      Logger.info("  docker_opts:")
-      Enum.each(toolchain.docker_opts, &Logger.info("    - #{&1}"))
+      IO.puts("  docker_opts:")
+      Enum.each(toolchain.docker_opts, &IO.puts("    - #{&1}"))
     end
 
-    Logger.info("")
+    IO.puts("")
   end
 
   defp print_ls(manifest, _type, false) do
-    Logger.info(IO.ANSI.format([:bright, manifest.id, :normal, "  (", flavor(manifest), ")"]))
+    IO.puts(IO.ANSI.format([:bright, manifest.id, :normal, "  (", flavor(manifest), ")"]))
   end
 
   defp target_to_str(target) do

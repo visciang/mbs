@@ -13,13 +13,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunDeploy do
   alias MBS.{Config, Utils, Workflow}
   alias MBS.Manifest.{BuildDeploy, Release}
 
-  require Logger
-
   @spec run(Command.RunDeploy.t(), Config.Data.t()) :: Command.on_run()
   def run(%Command.RunDeploy{release_id: release_id, force: force}, %Config.Data{} = config) do
     {release, release_dir} = Release.get_release(release_id)
 
-    Logger.info("\nRunning release '#{release.id}' deploy (#{release.checksum})\n")
+    IO.puts("\nRunning release '#{release.id}' deploy (#{release.checksum})\n")
 
     dask =
       BuildDeploy.find_all(:deploy, config, release_dir)

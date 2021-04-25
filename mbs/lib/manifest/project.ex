@@ -3,8 +3,6 @@ defmodule MBS.Manifest.Project do
   MBS project manifest
   """
 
-  require Logger
-
   alias MBS.{Const, Utils}
   alias MBS.Manifest.BuildDeploy
 

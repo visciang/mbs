@@ -12,13 +12,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Destroy do
   alias MBS.{Config, Utils, Workflow}
   alias MBS.Manifest.{BuildDeploy, Release}
 
-  require Logger
-
   @spec run(Command.Destroy.t(), Config.Data.t()) :: Command.on_run()
   def run(%Command.Destroy{release_id: release_id}, %Config.Data{} = config) do
     {release, release_dir} = Release.get_release(release_id)
 
-    Logger.info("\nDestroying deploy release '#{release.id}' (#{release.checksum})\n")
+    IO.puts("\nDestroying deploy release '#{release.id}' (#{release.checksum})\n")
 
     manifests = BuildDeploy.find_all(:deploy, config, release_dir)
 
