@@ -13,9 +13,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
   alias MBS.Config
   alias MBS.Manifest.Release
 
+  require Logger
+
   @spec run(Command.LsRelease.t(), Config.Data.t()) :: :ok
   def run(%Command.LsRelease{verbose: verbose, targets: target_ids}, %Config.Data{}) do
-    IO.puts("")
+    Logger.info("")
 
     Release.find_all()
     |> Enum.filter(&Utils.filter_manifest_by_id(&1.id, target_ids))
@@ -27,25 +29,25 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
 
   @spec print_ls(Release.Type.t(), boolean()) :: :ok
   defp print_ls(%Release.Type{} = release, true) do
-    IO.puts(IO.ANSI.format([:bright, "#{release.id}", :normal, ":"]))
-    IO.puts("  checksum:")
-    IO.puts("    #{release.checksum}")
+    Logger.info(IO.ANSI.format([:bright, "#{release.id}", :normal, ":"]))
+    Logger.info("  checksum:")
+    Logger.info("    #{release.checksum}")
 
     if release.metadata do
-      IO.puts("  metadata:")
-      IO.puts("    #{release.metadata}")
+      Logger.info("  metadata:")
+      Logger.info("    #{release.metadata}")
     end
 
-    IO.puts("  components:")
+    Logger.info("  components:")
 
     Release.find_all_metadata(release.id)
     |> Enum.sort_by(& &1["id"])
-    |> Enum.each(&IO.puts("  - #{&1["id"]}  (#{&1["checksum"]})"))
+    |> Enum.each(&Logger.info("  - #{&1["id"]}  (#{&1["checksum"]})"))
 
-    IO.puts("")
+    Logger.info("")
   end
 
   defp print_ls(%Release.Type{} = release, false) do
-    IO.puts(IO.ANSI.format([:bright, "#{release.id}"]))
+    Logger.info(IO.ANSI.format([:bright, "#{release.id}"]))
   end
 end

@@ -6,7 +6,9 @@ defmodule MBS.CLI.Reporter do
   use GenServer
 
   alias MBS.CLI.Reporter.{Report, Status}
+
   require MBS.CLI.Reporter.Status
+  require Logger
 
   @name __MODULE__
 
@@ -132,6 +134,8 @@ defmodule MBS.CLI.Reporter do
 
     puts("\n#{log_message} (#{duration})")
 
+    Logger.flush()
+
     {:stop, :normal, :ok, state}
   end
 
@@ -165,7 +169,7 @@ defmodule MBS.CLI.Reporter do
   @spec puts(IO.chardata()) :: :ok
   defp puts(message) do
     unless :ets.lookup_element(@name, :muted, 2) do
-      IO.puts(message)
+      Logger.info(message)
     end
 
     :ok

@@ -14,6 +14,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
   alias MBS.{Config, Const, Workflow}
   alias MBS.Manifest.BuildDeploy
 
+  require Logger
+
   @spec run(Command.Graph.t(), Config.Data.t()) :: Command.on_run()
   def run(%Command.Graph{type: type, targets: target_ids, output_filename: output_filename}, %Config.Data{} = config) do
     if dot_command_installed?() do
@@ -25,7 +27,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
       |> Dask.Dot.export()
       |> Dask.Utils.dot_to_svg(output_filename)
 
-      IO.puts("Produced #{output_filename}")
+      Logger.info("Produced #{output_filename}")
 
       :ok
     else
