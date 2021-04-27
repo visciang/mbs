@@ -237,7 +237,7 @@ defmodule MBS.CLI.Args do
 
         :ok
 
-      not options[:id] ->
+      options[:id] == nil ->
         IO.puts("Missing release --id")
 
         :error

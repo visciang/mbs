@@ -4,7 +4,7 @@ A fully dockerized **Meta Build System** to build, release and deploy a large se
 
 **Containerization** is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
 
-With MBS you can easly define the toolchains to build and deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services. Also the toolchains (used to build your components) should be part of the repository: change a toolchain -> rebuild everything that depends on the toolchain.
+With MBS you can define the toolchains to build and deploy the different type of software components in you mono-repo and express the **dependency graph** among them (DAG), to consistently build only what's really changed (**checksum** based) and **cache** the results, a radically different approach to "git trigger based" pipeline services. Also the toolchains (used to build your components) should be part of the repository: change a toolchain -> rebuild everything that depends on the toolchain.
 
 ![image info](./docs/schema-deps-graph.png)
 
