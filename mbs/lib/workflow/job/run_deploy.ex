@@ -61,16 +61,10 @@ defmodule MBS.Workflow.Job.RunDeploy do
             {Reporter.Status.error(reason), nil}
         end
 
-      # define "deploy state" (environment should be supported)
-      # Check deploy state to determine if the component should be deployed
-      # [execute ...]
-      # Update deploy state
-
       end_time = Reporter.time()
 
       Reporter.job_report(job_id, report_status, deploy_checksum, end_time - start_time)
 
-      # unless match?(Reporter.Status.ok(), report_status) or match?(Reporter.Status.uptodate(), report_status) do
       unless match?(Reporter.Status.ok(), report_status) do
         raise "Job failed #{inspect(report_status)}"
       end

@@ -1,9 +1,6 @@
 cache:
   - ? disable remote cache run flag?
 
-deploy:
-- deploy state (to deploy only if needed, we should support multi environment deployments)
-
 execution:
 - pass e json env variable to toolchains run with all the MBS_* vars and metadata
   (should be a better / more flexible contract)
