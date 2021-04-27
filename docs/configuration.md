@@ -2,7 +2,7 @@
 
 ### MBS cache and release persistency
 
-MBS caches **build artificats** and **releases artifacts** in two specific directory (inside the mbs container).
+MBS caches **build artifacts** and **releases artifacts** in two specific directory (inside the mbs container).
 
 - Artifacts local cache: `/.mbs-local-cache`
 - Releases: `/.mbs-releases`
