@@ -18,6 +18,7 @@ defmodule MBS.MixProject do
         "coveralls.html": :test,
         docs: :dev
       ],
+      elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
       aliases: aliases()
     ]
@@ -28,6 +29,9 @@ defmodule MBS.MixProject do
       extra_applications: [:logger, :crypto]
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 
   def deps do
     [

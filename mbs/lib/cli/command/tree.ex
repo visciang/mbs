@@ -14,11 +14,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
   alias MBS.Manifest.BuildDeploy
   alias MBS.Workflow.Job
 
-  @spec run(CLI.Command.Tree.t(), Config.Data.t()) :: :ok
-  def run(%Command.Tree{type: type, targets: target_ids}, %Config.Data{} = config) do
+  @spec run(CLI.Command.Tree.t(), Config.Data.t(), Path.t()) :: :ok
+  def run(%Command.Tree{type: type, targets: target_ids}, %Config.Data{} = config, cwd) do
     IO.puts("")
 
-    manifests = BuildDeploy.find_all(type, config)
+    manifests = BuildDeploy.find_all(type, config, cwd)
 
     target_ids = if target_ids == [], do: Enum.map(manifests, & &1.id), else: target_ids
 

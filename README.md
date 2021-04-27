@@ -15,6 +15,7 @@ The user experience we aim to is a (meta) build system that let you properly wor
 To summarize:
 - build / release / deploy support
 - first class DAG dependencies (parallelized execution)
+- language independent (polyglot monorepo)
 - checksum based diff detection
 - sandboxed build
 - no development environment on your machine, just docker

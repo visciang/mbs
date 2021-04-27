@@ -13,12 +13,12 @@ defmodule MBS do
     |> exit_with()
   end
 
-  @spec run([String.t()]) :: Command.on_run()
-  def run(args) do
+  @spec run([String.t()], Path.t()) :: Command.on_run()
+  def run(args, cwd \\ ".") do
     :ok = Reporter.start_link()
 
     :ok = Env.validate()
-    config = Config.load()
+    config = Config.load(cwd)
 
     workflow_status =
       args
@@ -26,7 +26,7 @@ defmodule MBS do
       |> case do
         :ok -> :ok
         :error -> :error
-        command -> Command.run(command, config)
+        command -> Command.run(command, config, cwd)
       end
 
     Reporter.stop(workflow_status)

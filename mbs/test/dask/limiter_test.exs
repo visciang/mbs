@@ -1,4 +1,4 @@
-defmodule Test.Limiter do
+defmodule Test.Dask.Limiter do
   use ExUnit.Case, async: true
 
   test "workflow limiter" do

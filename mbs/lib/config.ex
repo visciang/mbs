@@ -29,9 +29,9 @@ defmodule MBS.Config do
   alias MBS.Config.Data
   alias MBS.{Const, Utils}
 
-  @spec load :: Data.t()
-  def load do
-    Const.config_file()
+  @spec load(Path.t()) :: Data.t()
+  def load(cwd) do
+    Path.join(cwd, Const.config_file())
     |> File.read()
     |> case do
       {:ok, conf_data} ->

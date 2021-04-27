@@ -14,24 +14,25 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
   alias MBS.{CLI, Config, Const, Utils, Workflow}
   alias MBS.Manifest.{BuildDeploy, Project, Release}
 
-  @spec run(Command.MakeRelease.t(), Config.Data.t()) :: Command.on_run()
+  @spec run(Command.MakeRelease.t(), Config.Data.t(), Path.t()) :: Command.on_run()
   def run(
         %Command.MakeRelease{id: id, targets: target_ids, metadata: metadata},
-        %Config.Data{} = config
+        %Config.Data{} = config,
+        cwd
       ) do
     output_dir = Path.join(Const.releases_dir(), id)
 
     File.mkdir_p!(output_dir)
 
     deploy_manifests =
-      BuildDeploy.find_all(:deploy, config)
+      BuildDeploy.find_all(:deploy, config, cwd)
       |> filter_used_toolchains()
       |> CLI.Utils.transitive_dependencies_closure(target_ids)
 
     build_targets_id = Enum.map(deploy_manifests, & &1.id)
 
     build_manifests =
-      BuildDeploy.find_all(:build, config)
+      BuildDeploy.find_all(:build, config, cwd)
       |> CLI.Utils.transitive_dependencies_closure(build_targets_id)
 
     validate_deploy_files(build_manifests, deploy_manifests)

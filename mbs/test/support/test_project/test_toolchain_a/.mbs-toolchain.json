@@ -1,0 +1,13 @@
+{
+    "id": "test_toolchain_a",
+    "toolchain": {
+        "dockerfile": "Dockerfile",
+        "files": [
+            "build.sh"
+        ],
+        "steps": [
+            "step_1",
+            "step_2"
+        ]
+    }
+}

@@ -1,0 +1,13 @@
+{
+    "id": "test_component_a",
+    "component": {
+        "toolchain": "test_toolchain_a",
+        "files": [
+            "file_*.txt"
+        ],
+        "targets": [
+            "test_component_a.target_1",
+            "test_component_a.target_2"
+        ]
+    }
+}

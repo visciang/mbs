@@ -10,10 +10,10 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Outdated do
   alias MBS.{Config, Utils, Workflow}
   alias MBS.Manifest.BuildDeploy
 
-  @spec run(Command.Outdated.t(), Config.Data.t()) :: Command.on_run()
-  def run(%Command.Outdated{}, %Config.Data{} = config) do
+  @spec run(Command.Outdated.t(), Config.Data.t(), Path.t()) :: Command.on_run()
+  def run(%Command.Outdated{}, %Config.Data{} = config, cwd) do
     dask =
-      BuildDeploy.find_all(:build, config)
+      BuildDeploy.find_all(:build, config, cwd)
       |> Workflow.workflow(config, &Workflow.Job.Outdated.fun/2)
 
     dask_exec =

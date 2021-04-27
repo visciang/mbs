@@ -13,8 +13,8 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunDeploy do
   alias MBS.{Config, Utils, Workflow}
   alias MBS.Manifest.{BuildDeploy, Release}
 
-  @spec run(Command.RunDeploy.t(), Config.Data.t()) :: Command.on_run()
-  def run(%Command.RunDeploy{release_id: release_id, force: force}, %Config.Data{} = config) do
+  @spec run(Command.RunDeploy.t(), Config.Data.t(), Path.t()) :: Command.on_run()
+  def run(%Command.RunDeploy{release_id: release_id, force: force}, %Config.Data{} = config, _cwd) do
     {release, release_dir} = Release.get_release(release_id)
 
     IO.puts("\nRunning release '#{release.id}' deploy (#{release.checksum})\n")

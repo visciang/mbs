@@ -14,12 +14,16 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Graph do
   alias MBS.{Config, Const, Workflow}
   alias MBS.Manifest.BuildDeploy
 
-  @spec run(Command.Graph.t(), Config.Data.t()) :: Command.on_run()
-  def run(%Command.Graph{type: type, targets: target_ids, output_filename: output_filename}, %Config.Data{} = config) do
+  @spec run(Command.Graph.t(), Config.Data.t(), Path.t()) :: Command.on_run()
+  def run(
+        %Command.Graph{type: type, targets: target_ids, output_filename: output_filename},
+        %Config.Data{} = config,
+        cwd
+      ) do
     if dot_command_installed?() do
       File.mkdir_p!(Const.graph_dir())
 
-      BuildDeploy.find_all(type, config)
+      BuildDeploy.find_all(type, config, cwd)
       |> Utils.transitive_dependencies_closure(target_ids)
       |> Workflow.workflow(config, &null_fun/2)
       |> Dask.Dot.export()

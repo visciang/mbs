@@ -13,26 +13,26 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   alias MBS.{CLI, Config, Utils, Workflow}
   alias MBS.Manifest.BuildDeploy
 
-  @spec run(Command.Shell.t(), Config.Data.t()) :: Command.on_run()
-  def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config) do
-    manifests = BuildDeploy.find_all(:build, config)
+  @spec run(Command.Shell.t(), Config.Data.t(), Path.t()) :: Command.on_run()
+  def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config, cwd) do
+    manifests = BuildDeploy.find_all(:build, config, cwd)
     target_direct_dependencies = target_component_direct_dependencies(manifests, target)
 
     build_direct_deps = %Command.RunBuild{targets: target_direct_dependencies, force: false, sandbox: true}
     get_component_deps_only = %Command.RunBuild{targets: [target], force: false, sandbox: false, get_deps_only: true}
 
-    with :ok <- CLI.Command.run(build_direct_deps, config),
-         :ok <- CLI.Command.run(get_component_deps_only, config) do
+    with :ok <- CLI.Command.run(build_direct_deps, config, cwd),
+         :ok <- CLI.Command.run(get_component_deps_only, config, cwd) do
       :ok
     else
       err -> err
     end
   end
 
-  def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config) do
+  def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, cwd) do
     Reporter.mute(true)
 
-    manifests = BuildDeploy.find_all(:build, config)
+    manifests = BuildDeploy.find_all(:build, config, cwd)
 
     dask =
       manifests

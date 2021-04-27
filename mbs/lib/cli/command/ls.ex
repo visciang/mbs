@@ -14,11 +14,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   alias MBS.Config
   alias MBS.Manifest.BuildDeploy
 
-  @spec run(Command.Ls.t(), Config.Data.t()) :: :ok
-  def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{} = config) do
+  @spec run(Command.Ls.t(), Config.Data.t(), Path.t()) :: :ok
+  def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{} = config, cwd) do
     IO.puts("")
 
-    BuildDeploy.find_all(type, config)
+    BuildDeploy.find_all(type, config, cwd)
     |> Enum.filter(&Utils.filter_manifest_by_id(&1.id, target_ids))
     |> Enum.sort_by(& &1.id)
     |> Enum.each(&print_ls(&1, type, verbose))

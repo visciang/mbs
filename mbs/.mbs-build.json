@@ -6,5 +6,17 @@
         "targets": [
             "mbs"
         ]
-    }
+    },
+    "docker_opts": [
+        "-v", "mbs-test-tmp:/mbs-tmp",
+        "-v", "mbs-test-local-cache:/.mbs-local-cache",
+        "-v", "mbs-test-releases:/.mbs-releases",
+        "-v", "mbs-test-graph:/.mbs-graph",
+        "-e", "LOG_COLOR=false",
+        "-e", "MBS_PROJECT_ID=test",
+        "-e", "MBS_PUSH=false",
+        "-e", "MBS_TMP_VOLUME=mbs-test-tmp",
+        "-e", "MBS_LOCAL_CACHE_VOLUME=mbs-test-local-cache",
+        "-e", "MBS_RELEASES_VOLUME=mbs-test-releases"
+    ]
 }
