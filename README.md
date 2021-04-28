@@ -36,3 +36,25 @@ Imagine a place where:
   * [Configuration](docs/configuration.md)
   * [Toolchains development](docs/toolchains-development.md)
   * [Components development](docs/components-development.md)
+
+## Live demo
+
+### Basic build
+
+[![asciicast](https://asciinema.org/a/N49g0amze1Xlar9JGiDSZOeqd.svg)](https://asciinema.org/a/N49g0amze1Xlar9JGiDSZOeqd)
+
+### Dependencies and changes
+
+[![asciicast](https://asciinema.org/a/t6BVEg3a6kHuidnrL2ltZ9dLt.svg)](https://asciinema.org/a/t6BVEg3a6kHuidnrL2ltZ9dLt)
+
+### Sandboxed execution
+
+[![asciicast](https://asciinema.org/a/E8w6AN4jYK8pbnhut2um3L0eE.svg)](https://asciinema.org/a/E8w6AN4jYK8pbnhut2um3L0eE)
+
+### Build development shell
+
+[![asciicast](https://asciinema.org/a/buMFZXSSFZZJOwPCRRgMtXU1G.svg)](https://asciinema.org/a/buMFZXSSFZZJOwPCRRgMtXU1G)
+
+### Release, deploy, destroy
+
+[![asciicast](https://asciinema.org/a/nVjC7YifZ5LWIhWi1qOAqd0uP.svg)](https://asciinema.org/a/nVjC7YifZ5LWIhWi1qOAqd0uP)
