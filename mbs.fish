@@ -35,7 +35,7 @@ alias mbs="\
     --net host \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $MBS_CACHE_VOLUME:/mbs-cache \
-    -v $MBS_SANDBOX_VOLUME:/mbs-sandbox-volume \
+    -v $MBS_SANDBOX_VOLUME:/mbs-sandbox \
     -v $MBS_LOCAL_CACHE_VOLUME:/.mbs-local-cache \
     -v $MBS_RELEASES_VOLUME:/.mbs-releases \
     -v $MBS_GRAPH_VOLUME:/.mbs-graph \

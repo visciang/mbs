@@ -41,7 +41,7 @@ defmodule MBS.Const do
   end
 
   @spec sandbox_dir :: Path.t()
-  def sandbox_dir, do: "/mbs-sandbox-volume"
+  def sandbox_dir, do: "/mbs-sandbox"
 
   @spec sandbox_volume :: String.t()
   def sandbox_volume, do: System.fetch_env!("MBS_SANDBOX_VOLUME")

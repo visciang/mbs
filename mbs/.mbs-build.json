@@ -8,14 +8,14 @@
         ]
     },
     "docker_opts": [
-        "-v", "mbs-test-tmp:/mbs-sandbox-volume",
+        "-v", "mbs-test-sandbox:/mbs-sandbox",
         "-v", "mbs-test-local-cache:/.mbs-local-cache",
         "-v", "mbs-test-releases:/.mbs-releases",
         "-v", "mbs-test-graph:/.mbs-graph",
         "-e", "LOG_COLOR=false",
         "-e", "MBS_PROJECT_ID=test",
         "-e", "MBS_PUSH=false",
-        "-e", "MBS_SANDBOX_VOLUME=mbs-test-tmp",
+        "-e", "MBS_SANDBOX_VOLUME=mbs-test-sandbox",
         "-e", "MBS_LOCAL_CACHE_VOLUME=mbs-test-local-cache",
         "-e", "MBS_RELEASES_VOLUME=mbs-test-releases"
     ]
