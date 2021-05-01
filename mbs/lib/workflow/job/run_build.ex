@@ -44,7 +44,12 @@ defmodule MBS.Workflow.Job.RunBuild do
         raise "Job failed #{inspect(report_status)}"
       end
 
-      %Job.FunResult{cached: cached, checksum: checksum, targets: MapSet.new()}
+      %Job.FunResult{
+        cached: cached,
+        checksum: checksum,
+        upstream_components: MapSet.new(),
+        upstream_cached_targets: MapSet.new()
+      }
     end
   end
 
@@ -75,7 +80,8 @@ defmodule MBS.Workflow.Job.RunBuild do
       %Job.FunResult{
         cached: cached,
         checksum: checksum,
-        targets: transitive_targets(id, checksum, sandboxed_component.targets, upstream_results)
+        upstream_components: transitive_components(sandboxed_component, upstream_results),
+        upstream_cached_targets: transitive_cached_targets(sandboxed_component, checksum, upstream_results)
       }
     end
   end
@@ -114,7 +120,7 @@ defmodule MBS.Workflow.Job.RunBuild do
          sandboxed
        ) do
     get_dependencies(sandboxed_component, upstream_results, true)
-    put_files(sandboxed, component, sandboxed_component)
+    put_files(sandboxed, component, sandboxed_component, upstream_results)
   end
 
   @spec run(
@@ -142,7 +148,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
     with :cache_miss <- cache_result,
          changed_deps = get_dependencies(sandboxed_component, upstream_results, force),
-         :ok <- put_files(sandboxed, component, sandboxed_component),
+         :ok <- put_files(sandboxed, component, sandboxed_component, upstream_results),
          :ok <- Toolchain.exec_build(sandboxed_component, checksum, upstream_results, changed_deps, sandboxed),
          :ok <- assert_targets(targets, checksum),
          :ok <- Job.Cache.put_targets(id, checksum, sandboxed_component.targets) do
@@ -165,23 +171,24 @@ defmodule MBS.Workflow.Job.RunBuild do
     changed_deps
   end
 
-  @spec transitive_targets(String.t(), String.t(), [BuildDeploy.Target.t()], Job.upstream_results()) ::
-          MapSet.t(BuildDeploy.Target.t())
-  defp transitive_targets(id, checksum, targets, upstream_results) do
-    expanded_targets = Job.Cache.expand_targets_path(id, checksum, targets)
+  @spec transitive_components(BuildDeploy.Component.t(), Job.upstream_results()) :: MapSet.t(BuildDeploy.Component.t())
+  defp transitive_components(component, upstream_results) do
+    upstream_results
+    |> merge_upstream_components()
+    |> MapSet.put(component)
+  end
 
+  @spec transitive_cached_targets(BuildDeploy.Component.t(), String.t(), Job.upstream_results()) ::
+          MapSet.t(Job.FunResult.UpstreamCachedTarget.t())
+  defp transitive_cached_targets(%BuildDeploy.Component{id: id, targets: targets}, checksum, upstream_results) do
     expanded_targets_set =
-      expanded_targets
-      |> Enum.map(&{id, &1})
+      Job.Cache.expand_targets_path(id, checksum, targets)
+      |> Enum.map(&%Job.FunResult.UpstreamCachedTarget{component_id: id, target: &1})
       |> MapSet.new()
 
-    expanded_upstream_targets_set =
-      upstream_results
-      |> Map.values()
-      |> Enum.map(& &1.targets)
-      |> Utils.union_mapsets()
-
-    MapSet.union(expanded_targets_set, expanded_upstream_targets_set)
+    upstream_results
+    |> merge_upstream_cached_targets
+    |> MapSet.union(expanded_targets_set)
   end
 
   @spec cache_get_toolchain(String.t(), String.t(), boolean()) :: Job.Cache.cache_result()
@@ -202,15 +209,15 @@ defmodule MBS.Workflow.Job.RunBuild do
        ) do
     local_deps_dir = Path.join(component_dir, Const.local_dependencies_targets_dir())
 
-    upstream_targets_set =
-      upstream_results
-      |> Map.values()
-      |> Enum.map(& &1.targets)
-      |> Utils.union_mapsets()
+    upstream_targets_set = merge_upstream_cached_targets(upstream_results)
 
     res_deps_changed =
       Enum.reduce(upstream_targets_set, [], fn
-        {dep_id, %BuildDeploy.Target{type: :file, target: target_cache_path}}, acc ->
+        %Job.FunResult.UpstreamCachedTarget{
+          component_id: dep_id,
+          target: %BuildDeploy.Target{type: :file, target: target_cache_path}
+        },
+        acc ->
           target_checksum = target_cache_path |> Path.dirname() |> Path.basename()
           dependency_manifest_path = Path.join([local_deps_dir, dep_id, Const.manifest_dependency_filename()])
 
@@ -221,7 +228,7 @@ defmodule MBS.Workflow.Job.RunBuild do
             acc
           end
 
-        {_dep_id, %BuildDeploy.Target{type: :docker}}, acc ->
+        %Job.FunResult.UpstreamCachedTarget{target: %BuildDeploy.Target{type: :docker}}, acc ->
           acc
       end)
 
@@ -247,10 +254,15 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec put_files(boolean(), BuildDeploy.Component.t(), BuildDeploy.Component.t()) :: :ok
-  def put_files(false, _component, _sandboxed_component), do: :ok
+  @spec put_files(boolean(), BuildDeploy.Component.t(), BuildDeploy.Component.t(), Job.upstream_results()) :: :ok
+  def put_files(false, _component, _sandboxed_component, _upstream_results), do: :ok
 
-  def put_files(true, %BuildDeploy.Component{files: files}, %BuildDeploy.Component{files: sandbox_files}) do
+  def put_files(
+        true,
+        %BuildDeploy.Component{files: files},
+        %BuildDeploy.Component{files: sandbox_files},
+        _upstream_results
+      ) do
     sandbox_files
     |> paths_dirname()
     |> Enum.each(&File.mkdir_p!/1)
@@ -302,5 +314,21 @@ defmodule MBS.Workflow.Job.RunBuild do
     targets
     |> Enum.filter(&match?(%BuildDeploy.Target{type: ^type}, &1))
     |> Enum.map(& &1.target)
+  end
+
+  @spec merge_upstream_components(Job.upstream_results()) :: MapSet.t(BuildDeploy.Component.t())
+  defp merge_upstream_components(upstream_results) do
+    upstream_results
+    |> Map.values()
+    |> Enum.map(& &1.upstream_components)
+    |> Utils.union_mapsets()
+  end
+
+  @spec merge_upstream_cached_targets(Job.upstream_results()) :: MapSet.t(Job.FunResult.UpstreamCachedTarget.t())
+  defp merge_upstream_cached_targets(upstream_results) do
+    upstream_results
+    |> Map.values()
+    |> Enum.map(& &1.upstream_cached_targets)
+    |> Utils.union_mapsets()
   end
 end

@@ -14,4 +14,4 @@ In non sandbox mode the build run in the repository context. Every component bui
 
 The non-sandbox mode is the default and is tipically used during development.
 
-The sandbox mode is what should be used in CI or even during development to check that our build is hermetic and consistent.
+The sandbox mode is what should be used in CI or even during development to check that the build is hermetic and consistent.

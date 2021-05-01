@@ -1,6 +1,3 @@
-cache:
-  - ? disable remote cache run flag?
-
 execution:
 - pass e json env variable to toolchains run with all the MBS_* vars and metadata
   (should be a better / more flexible contract)
@@ -14,10 +11,7 @@ misc
 - git://... dependencies
 
 cli
-- global docker_opts option in .mbs-config.json
-- pass secrets in mbs
 - cache command (purge | size | info ... ?)
-- Job logs on files option?
 
 support / doc
 - Documentation

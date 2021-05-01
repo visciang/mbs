@@ -40,11 +40,11 @@ defmodule MBS.Const do
     end
   end
 
-  @spec tmp_dir :: Path.t()
-  def tmp_dir, do: "/mbs-tmp"
+  @spec sandbox_dir :: Path.t()
+  def sandbox_dir, do: "/mbs-sandbox-volume"
 
-  @spec tmp_volume :: String.t()
-  def tmp_volume, do: System.fetch_env!("MBS_TMP_VOLUME")
+  @spec sandbox_volume :: String.t()
+  def sandbox_volume, do: System.fetch_env!("MBS_SANDBOX_VOLUME")
 
   @spec cache_dir :: Path.t()
   def cache_dir, do: "/mbs-cache"

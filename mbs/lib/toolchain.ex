@@ -147,7 +147,7 @@ defmodule MBS.Toolchain do
 
     opts_dir_mount =
       if sandboxed do
-        ["-v", "#{Const.tmp_volume()}:#{Const.tmp_dir()}"]
+        ["-v", "#{Const.sandbox_volume()}:#{Const.sandbox_dir()}"]
       else
         ["-v", "#{component_dir}:#{component_dir}"]
       end

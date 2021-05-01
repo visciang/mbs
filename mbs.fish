@@ -9,7 +9,7 @@ set LOG_LEVEL "info"
 set LOG_COLOR "true"
 
 set MBS_PROJECT_ID "mbs"
-set MBS_TMP_VOLUME "mbs-$MBS_PROJECT_ID-tmp"
+set MBS_SANDBOX_VOLUME "mbs-$MBS_PROJECT_ID-sandbox"
 set MBS_LOCAL_CACHE_VOLUME "mbs-$MBS_PROJECT_ID-local-cache"
 set MBS_RELEASES_VOLUME "mbs-$MBS_PROJECT_ID-releases"
 set MBS_GRAPH_VOLUME "$ABS_BASEDIR/.mbs-graph"
@@ -35,7 +35,7 @@ alias mbs="\
     --net host \
     -v /var/run/docker.sock:/var/run/docker.sock \
     -v $MBS_CACHE_VOLUME:/mbs-cache \
-    -v $MBS_TMP_VOLUME:/mbs-tmp \
+    -v $MBS_SANDBOX_VOLUME:/mbs-sandbox-volume \
     -v $MBS_LOCAL_CACHE_VOLUME:/.mbs-local-cache \
     -v $MBS_RELEASES_VOLUME:/.mbs-releases \
     -v $MBS_GRAPH_VOLUME:/.mbs-graph \
@@ -46,7 +46,7 @@ alias mbs="\
     -e MBS_PROJECT_ID=$MBS_PROJECT_ID \
     -e MBS_PUSH=$MBS_PUSH \
     -e MBS_DOCKER_REGISTRY=$MBS_DOCKER_REGISTRY \
-    -e MBS_TMP_VOLUME=$MBS_TMP_VOLUME \
+    -e MBS_SANDBOX_VOLUME=$MBS_SANDBOX_VOLUME \
     -e MBS_LOCAL_CACHE_VOLUME=$MBS_LOCAL_CACHE_VOLUME \
     -e MBS_RELEASES_VOLUME=$MBS_RELEASES_VOLUME \
     visciang/mbs:$MBS_VERSION"
