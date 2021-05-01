@@ -3,7 +3,7 @@
     "toolchain": {
         "dockerfile": "Dockerfile",
         "files": [
-            "build.sh"
+            "toolchain.sh"
         ],
         "steps": [
             "step_1",

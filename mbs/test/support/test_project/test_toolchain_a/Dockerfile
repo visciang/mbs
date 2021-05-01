@@ -1,5 +1,5 @@
 FROM alpine:3.13.5
 
-ADD build.sh /toolchain/build.sh
+ADD toolchain.sh /toolchain.sh
 
-ENTRYPOINT [ "/toolchain/build.sh" ]
+ENTRYPOINT [ "/toolchain.sh" ]

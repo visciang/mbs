@@ -1,6 +1,6 @@
 FROM python:3.9.2-slim
 
 RUN pip install build
-ADD build.sh /toolchain/build.sh
+ADD toolchain.sh /toolchain.sh
 
-ENTRYPOINT [ "/toolchain/build.sh" ]
+ENTRYPOINT [ "/toolchain.sh" ]

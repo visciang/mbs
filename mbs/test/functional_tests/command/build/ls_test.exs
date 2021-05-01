@@ -79,7 +79,7 @@ defmodule Test.Command.Build.Ls do
       files:
         - #{@toolchain_a_dir}/.mbs-toolchain.json
         - #{@toolchain_a_dir}/Dockerfile
-        - #{@toolchain_a_dir}/build.sh
+        - #{@toolchain_a_dir}/toolchain.sh
     """
 
     assert msg =~ expected_output

@@ -69,7 +69,7 @@ mbs_manifest = ~s(
     "toolchain": {
       "dockerfile": "Dockerfile",
       "files": [
-          "build.sh"
+          "toolchain.sh"
       ],
       "steps": [
         "build"
@@ -86,12 +86,12 @@ echo "CATTER BUILD ..."
 cat *.txt > ./${MBS_ID}.target
 echo "BUILT ${MBS_ID}.target"
 )
-File.write!("build.sh", script)
-File.chmod!("build.sh", 0o400 + 0o100)
+File.write!("toolchain.sh", script)
+File.chmod!("toolchain.sh", 0o400 + 0o100)
 
 dockerfile = ~s(
   FROM alpine:3.13.2
-  ADD build.sh /build.sh
-  ENTRYPOINT [ "sh", "/build.sh" ]
+  ADD toolchain.sh /toolchain.sh
+  ENTRYPOINT [ "sh", "/toolchain.sh" ]
 )
 File.write!("Dockerfile", dockerfile)

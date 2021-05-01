@@ -7,8 +7,8 @@ RUN wget https://github.com/Kitware/CMake/releases/download/v3.19.6/cmake-3.19.6
       && /tmp/cmake-install.sh --skip-license --prefix=/usr/bin/cmake \
       && rm /tmp/cmake-install.sh
 
-ADD build.sh /toolchain/build.sh
+ADD toolchain.sh /toolchain.sh
 
 ENV PATH="/usr/bin/cmake/bin:${PATH}"
 
-ENTRYPOINT [ "/toolchain/build.sh" ]
+ENTRYPOINT [ "/toolchain.sh" ]

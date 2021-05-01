@@ -3,7 +3,7 @@
     "toolchain": {
         "dockerfile": "Dockerfile",
         "files": [
-            "build.sh"
+            "toolchain.sh"
         ],
         "deps_change_step": "deps_change",
         "steps": [
