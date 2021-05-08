@@ -16,11 +16,11 @@ jobs:
             refs/heads/main)
               export MBS_VERSION=latest
               ;;
-            refs/heads/*)
-              export MBS_VERSION=development
-              ;;
             refs/tags/v*)
               export MBS_VERSION=${GITHUB_REF#refs/tags/v}
+              ;;
+            *)
+              export MBS_VERSION=development
               ;;
           esac
 
@@ -43,4 +43,5 @@ jobs:
           DOCKER_IMAGE_TAG=$DOCKER_IMAGE_REPO:$MBS_VERSION
 
           echo "$DOCKERHUB_TOKEN" | docker login -u visciang --password-stdin
+          echo "Push docker image $DOCKER_IMAGE_TAG"
           docker push $DOCKER_IMAGE_TAG
