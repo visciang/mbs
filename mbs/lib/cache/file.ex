@@ -1,7 +1,5 @@
 defmodule MBS.Cache.File do
-  @moduledoc """
-  Artifact Cache for files
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.Const

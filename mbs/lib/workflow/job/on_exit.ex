@@ -1,7 +1,5 @@
 defmodule MBS.Workflow.Job.OnExit do
-  @moduledoc """
-  Workflow job logic - on exit callback function
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.Config

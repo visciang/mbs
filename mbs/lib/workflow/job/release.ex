@@ -1,7 +1,5 @@
 defmodule MBS.Workflow.Job.Release do
-  @moduledoc """
-  Workflow job logic for "release" command
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.{Config, Const}
@@ -40,12 +38,9 @@ defmodule MBS.Workflow.Job.Release do
       end
 
       end_time = Reporter.time()
-
       Reporter.job_report(job_id, report_status, report_desc, end_time - start_time)
 
-      unless match?(Reporter.Status.ok(), report_status) do
-        raise "Job failed #{inspect(report_status)}"
-      end
+      Job.Common.stop_on_failure(report_status)
 
       :ok
     end
@@ -78,12 +73,9 @@ defmodule MBS.Workflow.Job.Release do
       end
 
       end_time = Reporter.time()
-
       Reporter.job_report(job_id, report_status, report_desc, end_time - start_time)
 
-      unless match?(Reporter.Status.ok(), report_status) do
-        raise "Job failed #{inspect(report_status)}"
-      end
+      Job.Common.stop_on_failure(report_status)
 
       :ok
     end

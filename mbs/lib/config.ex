@@ -22,23 +22,23 @@ defmodule MBS.Config.Data do
 end
 
 defmodule MBS.Config do
-  @moduledoc """
-  Global config
-  """
+  @moduledoc false
 
   alias MBS.Config.Data
   alias MBS.{Const, Utils}
 
   @spec load(Path.t()) :: Data.t()
   def load(cwd) do
-    Path.join(cwd, Const.config_file())
+    config_file = Path.join(cwd, Const.config_file())
+
+    config_file
     |> File.read()
     |> case do
       {:ok, conf_data} ->
         conf_data
 
       {:error, reason} ->
-        Utils.halt("Cannot read configuration file #{Const.config_file()} (#{reason})")
+        Utils.halt("Cannot read configuration file #{config_file} (#{reason})")
     end
     |> decode()
     |> add_defaults()
@@ -75,7 +75,7 @@ defmodule MBS.Config do
     conf
   end
 
-  @spec validate_parallelism(non_neg_integer()) :: nil
+  @spec validate_parallelism(pos_integer()) :: nil
   defp validate_parallelism(parallelism) do
     unless is_integer(parallelism) and parallelism > 0 do
       Utils.halt("Bad parallelism in #{Const.config_file()}")

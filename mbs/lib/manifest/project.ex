@@ -1,7 +1,5 @@
 defmodule MBS.Manifest.Project do
-  @moduledoc """
-  MBS project manifest
-  """
+  @moduledoc false
 
   alias MBS.{Const, Utils}
   alias MBS.Manifest.BuildDeploy

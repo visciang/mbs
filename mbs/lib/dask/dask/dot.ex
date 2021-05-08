@@ -1,13 +1,9 @@
 defmodule Dask.Dot do
-  @moduledoc """
-  Dask to dot (https://graphviz.org/)
-  """
+  @moduledoc false
+
   alias Dask.Job
 
-  @doc """
-  Export a workflow to dot graph.
-  """
-  @spec export(Dask.t()) :: iodata()
+  @spec export(Dask.t()) :: [String.t()]
   def export(%Dask{jobs: jobs}) do
     ["strict digraph {\n", Enum.flat_map(Map.values(jobs), &job_edge/1), "}\n"]
   end
@@ -17,9 +13,7 @@ defmodule Dask.Dot do
     if MapSet.size(job.downstream_jobs) == 0 do
       [~s/#{inspect(job.id)}\n/]
     else
-      Enum.map(job.downstream_jobs, fn downstream_job_id ->
-        ~s/#{inspect(job.id)} -> #{inspect(downstream_job_id)}\n/
-      end)
+      Enum.map(job.downstream_jobs, &~s/#{inspect(job.id)} -> #{inspect(&1)}\n/)
     end
   end
 end

@@ -1,7 +1,5 @@
 defmodule MBS.Manifest.BuildDeploy.Validator do
-  @moduledoc """
-  Manifest file validator
-  """
+  @moduledoc false
 
   alias MBS.Utils
 

@@ -1,5 +1,6 @@
 defmodule MBS.CLI.Reporter.Log do
   @moduledoc false
+
   defstruct [:job_id]
 
   @type t :: %__MODULE__{

@@ -1,7 +1,5 @@
 defmodule Dask.Utils do
-  @moduledoc """
-  Dask utilities
-  """
+  @moduledoc false
 
   @minute 60
   @hour @minute * 60
@@ -9,12 +7,6 @@ defmodule Dask.Utils do
   @week @day * 7
   @divisor [@week, @day, @hour, @minute, 1]
 
-  @doc """
-  Seconds duration to compound representation
-
-    ex> Dask.Utils.seconds_to_compound_duration(12034)
-    "3 hr, 20 min, 34 sec"
-  """
   @spec seconds_to_compound_duration(number(), non_neg_integer()) :: String.t()
   def seconds_to_compound_duration(sec, precision \\ 3) do
     sec_int = trunc(sec)
@@ -36,10 +28,6 @@ defmodule Dask.Utils do
 
   # coveralls-ignore-start
 
-  @doc """
-  Convert a workflow dot graph to SVG.
-  It uses the `dot` program, so it should be installed and available.
-  """
   @spec dot_to_svg(iodata(), Path.t()) :: :ok
   def dot_to_svg(dot, out_file) do
     dot_tmp_file = "#{Path.rootname(out_file)}.dot"

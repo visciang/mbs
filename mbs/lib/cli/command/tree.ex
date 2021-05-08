@@ -1,5 +1,6 @@
 defmodule MBS.CLI.Command.Tree do
   @moduledoc false
+
   defstruct [:type, :targets]
 
   @type t :: %__MODULE__{

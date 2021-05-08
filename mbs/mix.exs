@@ -45,7 +45,8 @@ defmodule MBS.MixProject do
   defp dialyzer do
     [
       plt_core_path: ".plts",
-      plt_file: {:no_warn, ".plts/dialyzer.plt"}
+      plt_file: {:no_warn, ".plts/dialyzer.plt"},
+      flags: [:error_handling, :race_conditions, :underspecs]
     ]
   end
 

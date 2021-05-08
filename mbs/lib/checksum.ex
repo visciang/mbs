@@ -1,7 +1,5 @@
 defmodule MBS.Checksum do
-  @moduledoc """
-  Checksums functions
-  """
+  @moduledoc false
 
   @spec files_checksum([Path.t()], Path.t()) :: String.t()
   def files_checksum(files, relative_to_dir) do

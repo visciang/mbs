@@ -1,7 +1,5 @@
 defmodule MBS.Workflow do
-  @moduledoc """
-  Workflow DAG builder
-  """
+  @moduledoc false
 
   alias MBS.{Config, Utils}
   alias MBS.Manifest.BuildDeploy

@@ -1,7 +1,5 @@
 defmodule MBS.Workflow.Job.Outdated do
-  @moduledoc """
-  Workflow job logic for "outdated" command
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.Config

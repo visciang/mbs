@@ -1,7 +1,5 @@
 defmodule MBS.CLI.Reporter.Status do
-  @moduledoc """
-  Reporter job status
-  """
+  @moduledoc false
 
   @type t :: :ok | :uptodate | :outdated | :timeout | :log | {:error, term()}
 

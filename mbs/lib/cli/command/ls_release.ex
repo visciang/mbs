@@ -1,5 +1,6 @@
 defmodule MBS.CLI.Command.LsRelease do
   @moduledoc false
+
   defstruct [:type, :verbose, :targets]
 
   @type t :: %__MODULE__{

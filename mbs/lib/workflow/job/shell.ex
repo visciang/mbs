@@ -1,7 +1,5 @@
 defmodule MBS.Workflow.Job.Shell do
-  @moduledoc """
-  Workflow job logic for "shell" command
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.Config
@@ -26,7 +24,7 @@ defmodule MBS.Workflow.Job.Shell do
         dependencies = Job.Utils.component_dependencies(component)
         upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
 
-        Toolchain.shell_cmd(component, checksum, upstream_results)
+        Toolchain.Shell.cmd(component, checksum, upstream_results)
         |> IO.puts()
       end
 

@@ -1,7 +1,5 @@
 defmodule MBS.Manifest.Release do
-  @moduledoc """
-  MBS release manifest functions
-  """
+  @moduledoc false
 
   alias MBS.{Checksum, Const, Utils}
   alias MBS.Manifest.BuildDeploy

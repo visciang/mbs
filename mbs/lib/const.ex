@@ -1,7 +1,5 @@
 defmodule MBS.Const do
-  @moduledoc """
-  MBS constants
-  """
+  @moduledoc false
 
   @spec project_id :: String.t()
   def project_id, do: System.fetch_env!("MBS_PROJECT_ID")
@@ -39,12 +37,6 @@ defmodule MBS.Const do
       unknown -> raise "MBS_PUSH bad value: #{unknown}"
     end
   end
-
-  @spec sandbox_dir :: Path.t()
-  def sandbox_dir, do: "/mbs-sandbox"
-
-  @spec sandbox_volume :: String.t()
-  def sandbox_volume, do: System.fetch_env!("MBS_SANDBOX_VOLUME")
 
   @spec cache_dir :: Path.t()
   def cache_dir, do: "/mbs-cache"

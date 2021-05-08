@@ -1,7 +1,5 @@
 defmodule MBS.Workflow.Job.Checksums do
-  @moduledoc """
-  Workflow job logic for "checksums" command
-  """
+  @moduledoc false
 
   alias MBS.{Config, Utils}
   alias MBS.Manifest.BuildDeploy

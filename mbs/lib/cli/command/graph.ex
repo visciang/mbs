@@ -1,5 +1,6 @@
 defmodule MBS.CLI.Command.Graph do
   @moduledoc false
+
   defstruct [:type, :targets, :output_filename]
 
   @type t :: %__MODULE__{

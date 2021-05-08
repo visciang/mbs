@@ -1,7 +1,5 @@
 defmodule MBS.CLI.Reporter do
-  @moduledoc """
-  CLI information reporter
-  """
+  @moduledoc false
 
   use GenServer
 
@@ -85,8 +83,8 @@ defmodule MBS.CLI.Reporter do
       ) do
     {status_icon, status_info} = status_icon_info(status)
 
-    duration = if elapsed != nil, do: " (#{delta_time_string(elapsed)})", else: ""
-    description = if description != nil, do: "~ #{description}", else: ""
+    duration = if elapsed != nil, do: " (#{delta_time_string(elapsed)}) ", else: ""
+    description = if description != nil, do: "| #{description}", else: ""
 
     job_id =
       if status == Status.log() do

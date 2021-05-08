@@ -1,21 +1,17 @@
 defmodule MBS.Workflow.Job do
-  @moduledoc """
-  Workflow job logic
-  """
+  @moduledoc false
 
   alias MBS.Manifest.BuildDeploy
 
   defmodule FunResult do
-    @moduledoc """
-    Job function result data
-    """
+    @moduledoc false
 
-    defstruct [:cached, :checksum, :upstream_components, :upstream_cached_targets]
+    defstruct [:cached, :checksum, :component, :upstream_cached_targets]
 
     @type t :: %__MODULE__{
             cached: boolean(),
             checksum: String.t(),
-            upstream_components: MapSet.t(BuildDeploy.Component.t()),
+            component: nil | BuildDeploy.Component.t(),
             upstream_cached_targets: MapSet.t(FunResult.UpstreamCachedTarget.t())
           }
   end

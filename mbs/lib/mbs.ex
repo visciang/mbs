@@ -1,7 +1,5 @@
 defmodule MBS do
-  @moduledoc """
-  a Meta Build System
-  """
+  @moduledoc false
 
   alias MBS.{Config, Env, Utils}
   alias MBS.CLI.{Args, Command, Reporter}
