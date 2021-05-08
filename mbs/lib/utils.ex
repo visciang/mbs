@@ -1,7 +1,5 @@
 defmodule MBS.Utils do
-  @moduledoc """
-  Utilities
-  """
+  @moduledoc false
 
   @dialyzer {:nowarn_function, halt: 1}
 
@@ -30,5 +28,12 @@ defmodule MBS.Utils do
     |> File.stream!([:compressed], 2048)
     |> Stream.into(File.stream!(dest, [], 2048))
     |> Stream.run()
+  end
+
+  @spec mktemp :: String.t()
+  def mktemp do
+    temp_dir = Path.join(System.tmp_dir!(), inspect(make_ref()))
+    File.mkdir!(temp_dir)
+    temp_dir
   end
 end

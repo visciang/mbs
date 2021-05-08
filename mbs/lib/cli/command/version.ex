@@ -1,5 +1,6 @@
 defmodule MBS.CLI.Command.Version do
   @moduledoc false
+
   defstruct []
 
   @type t :: %__MODULE__{}

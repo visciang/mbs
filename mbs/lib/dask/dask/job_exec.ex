@@ -68,7 +68,7 @@ defmodule Dask.JobExec do
     end
   end
 
-  @spec timed((() -> any()), timeout()) :: {any(), float()}
+  @spec timed((() -> Job.job_exec_result()), timeout()) :: {any(), float()}
   defp timed(fun, timeout) do
     start_time = System.monotonic_time(:microsecond)
 

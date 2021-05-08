@@ -1,7 +1,6 @@
 defmodule Dask do
-  @moduledoc """
-  Workflow DAG
-  """
+  @moduledoc false
+
   defmodule Error do
     defexception [:message]
   end

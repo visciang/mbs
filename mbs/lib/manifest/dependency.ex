@@ -1,7 +1,5 @@
 defmodule MBS.Manifest.Dependency do
-  @moduledoc """
-  MBS dependency manifest functions
-  """
+  @moduledoc false
 
   alias MBS.Manifest.Dependency.Type
 

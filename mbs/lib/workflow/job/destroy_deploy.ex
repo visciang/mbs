@@ -1,7 +1,5 @@
 defmodule MBS.Workflow.Job.DestroyDeploy do
-  @moduledoc """
-  Workflow job logic for "deploy destroy" command
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.{Config, Toolchain}
@@ -12,7 +10,7 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
 
   @spec fun(Config.Data.t(), BuildDeploy.Type.t()) :: Job.fun()
   def fun(%Config.Data{} = conf, %BuildDeploy.Toolchain{} = toolchain) do
-    Job.RunDeploy.fun(conf, toolchain, true)
+    Job.RunDeploy.fun(conf, toolchain)
   end
 
   def fun(
@@ -26,7 +24,8 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
         with {:ok, build_checksum} <- Job.RunDeploy.build_checksum(component_dir),
              {:ok, toolchain_checksum} <- Job.RunDeploy.build_checksum(toolchain_dir),
              component = put_in(component.toolchain.checksum, toolchain_checksum),
-             :ok <- Toolchain.exec_destroy(component, build_checksum) do
+             {:ok, envs} <- Toolchain.RunDeploy.up(component, build_checksum),
+             :ok <- Toolchain.RunDeploy.exec_destroy(component, envs) do
           Reporter.Status.ok()
         else
           {:error, reason} ->
@@ -43,5 +42,10 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
 
       %Job.FunResult{}
     end
+  end
+
+  @spec fun_on_exit(Config.Data.t(), BuildDeploy.Type.t()) :: Dask.Job.on_exit()
+  def fun_on_exit(config, toolchain) do
+    Job.RunDeploy.fun_on_exit(config, toolchain)
   end
 end

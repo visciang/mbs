@@ -1,7 +1,5 @@
 defmodule MBS.Workflow.Job.Utils do
-  @moduledoc """
-  Workflow job utils
-  """
+  @moduledoc false
 
   alias MBS.{Checksum, Const}
   alias MBS.Manifest.BuildDeploy.{Component, Toolchain, Type}

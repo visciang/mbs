@@ -1,7 +1,5 @@
 defmodule MBS.Workflow.Job.Cache do
-  @moduledoc """
-  Workflow job cache utils
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.{Cache, Docker}

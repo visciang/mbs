@@ -9,7 +9,7 @@ defmodule Test.Utils do
 
   def setup_volume_dirs do
     Enum.each(
-      [Const.sandbox_dir(), Const.local_cache_dir(), Const.releases_dir(), Const.graph_dir()],
+      [Const.local_cache_dir(), Const.releases_dir(), Const.graph_dir()],
       &rm_dir_content/1
     )
   end

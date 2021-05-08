@@ -1,5 +1,6 @@
 defmodule MBS.CLI.Command.Shell do
   @moduledoc false
+
   defstruct [:target, :docker_cmd]
 
   @type t :: %__MODULE__{

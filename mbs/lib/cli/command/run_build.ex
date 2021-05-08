@@ -1,5 +1,6 @@
 defmodule MBS.CLI.Command.RunBuild do
   @moduledoc false
+
   defstruct [:targets, :force, :sandbox, :get_deps_only]
 
   @type t :: %__MODULE__{
@@ -27,7 +28,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunBuild do
       |> Workflow.workflow(
         config,
         &Workflow.Job.RunBuild.fun(&1, &2, force, get_deps_only, sandbox),
-        &Workflow.Job.RunBuild.fun_on_exit(&1, &2, sandbox)
+        &Workflow.Job.RunBuild.fun_on_exit/2
       )
 
     dask_exec =

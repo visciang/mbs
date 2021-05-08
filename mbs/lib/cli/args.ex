@@ -1,7 +1,5 @@
 defmodule MBS.CLI.Args do
-  @moduledoc """
-  Cli arguments
-  """
+  @moduledoc false
 
   alias MBS.CLI.{Command, Reporter}
   alias MBS.{Const, Utils}
@@ -279,9 +277,7 @@ defmodule MBS.CLI.Args do
   end
 
   def parse(["deploy", "run" | args]) do
-    defaults = [force: false]
-
-    {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean, force: :boolean])
+    {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
 
     if options[:help] do
       IO.puts("\nUsage:  mbs deploy run --help | [OPTIONS] RELEASE-ID")
@@ -290,7 +286,6 @@ defmodule MBS.CLI.Args do
       IO.puts("  The release identifier (ref. 'mbs release --id=RELEASE-ID')")
       IO.puts("\nOptions:")
       IO.puts("  --verbose    Stream jobs log to the console")
-      IO.puts("  --force      Force a re-run")
 
       :ok
     else
@@ -300,8 +295,7 @@ defmodule MBS.CLI.Args do
             Reporter.logs(options[:verbose])
           end
 
-          options = Keyword.merge(defaults, options)
-          %Command.RunDeploy{release_id: release_id, force: options[:force]}
+          %Command.RunDeploy{release_id: release_id}
 
         _ ->
           IO.puts("Expected exactly one release-id")

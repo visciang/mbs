@@ -1,7 +1,5 @@
 defmodule MBS.Cache.Docker do
-  @moduledoc """
-  Artifact Cache for docker
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.{Const, Docker}

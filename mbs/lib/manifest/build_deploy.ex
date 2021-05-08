@@ -1,15 +1,13 @@
 defmodule MBS.Manifest.BuildDeploy do
-  @moduledoc """
-  MBS build/deploy manifest functions
-  """
+  @moduledoc false
 
   alias MBS.{Checksum, Config, Const, Utils}
   alias MBS.Manifest.BuildDeploy.{Component, Target, Toolchain, Type, Validator}
   alias MBS.Manifest.Project
 
   @spec find_all(Type.type(), Config.Data.t(), Path.t()) :: [Type.t()]
-  def find_all(type, %Config.Data{files_profile: files_profile}, in_dir \\ ".") do
-    project_manifest_path = Path.join(in_dir, Const.manifest_project_filename())
+  def find_all(type, %Config.Data{files_profile: files_profile}, project_dir \\ ".") do
+    project_manifest_path = Path.join(project_dir, Const.manifest_project_filename())
     available_files_profiles = Map.keys(files_profile)
 
     project_manifest_path
@@ -17,7 +15,7 @@ defmodule MBS.Manifest.BuildDeploy do
     |> Enum.map(fn manifest_path ->
       manifest_path
       |> decode()
-      |> add_defaults(manifest_path)
+      |> add_defaults(project_dir, manifest_path)
     end)
     |> Validator.validate(available_files_profiles)
     |> Enum.map(&to_struct(type, &1, files_profile))
@@ -45,10 +43,11 @@ defmodule MBS.Manifest.BuildDeploy do
     end
   end
 
-  @spec add_defaults(map(), Path.t()) :: map()
-  defp add_defaults(manifest, manifest_path) do
+  @spec add_defaults(map(), Path.t(), Path.t()) :: map()
+  defp add_defaults(manifest, project_dir, manifest_path) do
     manifest =
       manifest
+      |> put_in(["project_dir"], Path.expand(project_dir))
       |> put_in(["dir"], Path.dirname(Path.expand(manifest_path)))
       |> put_in(["timeout"], manifest["timeout"] || :infinity)
       |> put_in(["docker_opts"], manifest["docker_opts"] || [])
@@ -89,6 +88,7 @@ defmodule MBS.Manifest.BuildDeploy do
            "__schema__" => "component",
            "id" => id,
            "dir" => dir,
+           "project_dir" => project_dir,
            "timeout" => timeout,
            "component" => component,
            "docker_opts" => docker_opts
@@ -102,6 +102,7 @@ defmodule MBS.Manifest.BuildDeploy do
       type: type,
       id: id,
       dir: dir,
+      project_dir: project_dir,
       timeout: timeout,
       toolchain: component["toolchain"],
       toolchain_opts: component["toolchain_opts"],
@@ -119,6 +120,7 @@ defmodule MBS.Manifest.BuildDeploy do
            "__schema__" => "toolchain",
            "id" => id,
            "dir" => dir,
+           "project_dir" => project_dir,
            "timeout" => timeout,
            "toolchain" => toolchain,
            "docker_opts" => docker_opts
@@ -132,6 +134,7 @@ defmodule MBS.Manifest.BuildDeploy do
       type: type,
       id: id,
       dir: dir,
+      project_dir: project_dir,
       timeout: timeout,
       checksum: Checksum.files_checksum(files_, dir),
       dockerfile: Path.join(dir, toolchain["dockerfile"]),

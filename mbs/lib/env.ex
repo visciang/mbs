@@ -1,14 +1,11 @@
 defmodule MBS.Env do
-  @moduledoc """
-  Environment variable validator
-  """
+  @moduledoc false
 
   alias MBS.Utils
 
   @spec validate :: :ok
   def validate do
     exist_env("MBS_PROJECT_ID")
-    exist_env("MBS_SANDBOX_VOLUME")
     exist_env("MBS_LOCAL_CACHE_VOLUME")
     exist_env("MBS_RELEASES_VOLUME")
 

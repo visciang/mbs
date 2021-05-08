@@ -1,5 +1,6 @@
 defmodule MBS.CLI.Command.Destroy do
   @moduledoc false
+
   defstruct [:release_id]
 
   @type t :: %__MODULE__{
@@ -42,7 +43,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Destroy do
         manifests,
         config,
         &Workflow.Job.DestroyDeploy.fun/2,
-        &Workflow.default_job_fun_on_exit/2,
+        &Workflow.Job.DestroyDeploy.fun_on_exit/2,
         :downward
       )
 

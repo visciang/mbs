@@ -32,8 +32,8 @@ defmodule Test.Command.Build.Run do
     test "first time build" do
       msg = capture_io(fn -> assert :ok == MBS.run(["build", "outdated"], Utils.test_project_dir()) end)
 
-      assert msg =~ ~r/! - #{@test_component_a_id}   ~ \w+/
-      assert msg =~ ~r/! - #{@test_toolchain_a_id}   ~ \w+/
+      assert msg =~ ~r/! - #{@test_component_a_id}\s+\|\s+\w+/
+      assert msg =~ ~r/! - #{@test_toolchain_a_id}\s+\|\s+\w+/
     end
   end
 
@@ -45,13 +45,13 @@ defmodule Test.Command.Build.Run do
     end
 
     defp build_run do
-      msg = capture_io(fn -> assert :ok == MBS.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> MBS.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
-      ✔ - #{@test_toolchain_a_id}   \(.+ sec\) ~ (?<toolchain_a_checksum>\w+)
-      ✔ - #{@test_component_a_id}:step_1   \(.+ sec\)\s+
-      ✔ - #{@test_component_a_id}:step_2   \(.+ sec\)\s+
-      ✔ - #{@test_component_a_id}   \(.+ sec\) ~ (?<component_a_checksum>\w+)
+      ✔ - #{@test_toolchain_a_id}\s+\(.+ sec\)\s+\|\s+(?<toolchain_a_checksum>\w+)
+      ✔ - #{@test_component_a_id}:step_1\s+\(.+ sec\)\s+
+      ✔ - #{@test_component_a_id}:step_2\s+\(.+ sec\)\s+
+      ✔ - #{@test_component_a_id}\s+\(.+ sec\)\s+\|\s+(?<component_a_checksum>\w+)
 
       Completed \(4 jobs\) \(.* sec\)
       """
@@ -85,8 +85,8 @@ defmodule Test.Command.Build.Run do
       msg = capture_io(fn -> assert :ok == MBS.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
-      ✔ - #{@test_toolchain_a_id}   \(.+ sec\) ~ #{toolchain_a_checksum}
-      ✔ - #{@test_component_a_id}   \(.+ sec\) ~ #{component_a_checksum}
+      ✔ - #{@test_toolchain_a_id}\s+\(.+ sec\)\s+\|\s+#{toolchain_a_checksum}
+      ✔ - #{@test_component_a_id}\s+\(.+ sec\)\s+\|\s+#{component_a_checksum}
 
       Completed \(2 jobs\) \(.* sec\)
       """
@@ -111,15 +111,15 @@ defmodule Test.Command.Build.Run do
 
       msg = capture_io(fn -> assert :ok == MBS.run(["build", "outdated"], Utils.test_project_dir()) end)
 
-      assert msg =~ ~r/! - #{@test_component_a_id}   ~ #{component_a_checksum}/
+      assert msg =~ ~r/! - #{@test_component_a_id}   \| #{component_a_checksum}/
 
       msg = capture_io(fn -> assert :ok == MBS.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
-      ✔ - #{@test_toolchain_a_id}   \(.+ sec\) ~ #{toolchain_a_checksum}
+      ✔ - #{@test_toolchain_a_id}\s+\(.+ sec\)\s+\|\s+#{toolchain_a_checksum}
       ✔ - #{@test_component_a_id}:step_1   \(.+ sec\)\s+
       ✔ - #{@test_component_a_id}:step_2   \(.+ sec\)\s+
-      ✔ - #{@test_component_a_id}   \(.+ sec\) ~ #{component_a_checksum}
+      ✔ - #{@test_component_a_id}\s+\(.+ sec\)\s+\|\s+#{component_a_checksum}
 
       Completed \(4 jobs\) \(.* sec\)
       """
@@ -140,7 +140,7 @@ defmodule Test.Command.Build.Run do
 
       msg = capture_io(fn -> assert :ok == MBS.run(["build", "outdated"], Utils.test_project_dir()) end)
 
-      expected_msg = ~r/! - #{@test_component_a_id}   ~ (?<new_component_a_checksum>\w+)/
+      expected_msg = ~r/! - #{@test_component_a_id}\s+\|\s+(?<new_component_a_checksum>\w+)/
 
       assert msg =~ expected_msg
 

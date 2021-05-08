@@ -1,7 +1,5 @@
 defmodule MBS.DockerCompose do
-  @moduledoc """
-  Docker sidecar services "supervisor"
-  """
+  @moduledoc false
 
   alias MBS.CLI.Reporter
   alias MBS.Docker
@@ -19,8 +17,7 @@ defmodule MBS.DockerCompose do
     end
   end
 
-  @spec compose_cmd(compose_action(), Path.t(), Docker.env_list(), String.t()) ::
-          {:ok, String.t(), String.t()} | {:error, term()}
+  @spec compose_cmd(compose_action(), Path.t(), Docker.env_list(), String.t()) :: {:ok, String.t(), String.t()}
   def compose_cmd(action, compose_file, env, job_id) do
     {cmd_args, docker_network_name} = args(action, compose_file, job_id)
     env_cmd = Enum.map(env, fn {name, value} -> "#{name}='#{value}'" end)
