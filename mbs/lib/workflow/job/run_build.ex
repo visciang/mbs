@@ -18,7 +18,7 @@ defmodule MBS.Workflow.Job.RunBuild do
         _get_deps_only,
         _sandboxed
       ) do
-    fn job_id, _upstream_results ->
+    fn _job_id, _upstream_results ->
       start_time = Reporter.time()
 
       {cached, report_status, report_desc} =
@@ -35,7 +35,7 @@ defmodule MBS.Workflow.Job.RunBuild do
         end
 
       end_time = Reporter.time()
-      Reporter.job_report(job_id, report_status, report_desc, end_time - start_time)
+      Reporter.job_report(id, report_status, report_desc, end_time - start_time)
 
       Job.Common.stop_on_failure(report_status)
 

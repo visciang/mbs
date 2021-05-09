@@ -1,16 +1,18 @@
 defmodule MBS.Workflow.Job.RunBuild.Context.Targets do
   @moduledoc false
 
+  alias MBS.CLI.Reporter
   alias MBS.Docker
   alias MBS.Manifest.BuildDeploy
   alias MBS.Utils
+
+  require Reporter.Status
 
   @spec get(BuildDeploy.Component.t(), String.t(), boolean()) :: {:ok, Path.t()} | {:error, String.t()}
   def get(%BuildDeploy.Component{id: id, targets: targets}, checksum, true) do
     temp_dir = Utils.mktemp()
 
-    _get(targets, checksum, &(Docker.container_get(id, &1, temp_dir, id) != :ok))
-    |> case do
+    case _get(targets, id, checksum, &(Docker.container_get(id, &1, temp_dir, id) != :ok)) do
       {:ok, targets} ->
         targets = Enum.map(targets, &put_in(&1.target, Path.join(temp_dir, Path.basename(&1.target))))
         {:ok, targets}
@@ -20,12 +22,13 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Targets do
     end
   end
 
-  def get(%BuildDeploy.Component{targets: targets}, checksum, false) do
-    _get(targets, checksum, &(not File.exists?(&1)))
+  def get(%BuildDeploy.Component{id: id, targets: targets}, checksum, false) do
+    _get(targets, id, checksum, &(not File.exists?(&1)))
   end
 
-  @spec _get([BuildDeploy.Target.t()], String.t(), (Path.t() -> boolean())) :: {:ok, Path.t()} | {:error, String.t()}
-  defp _get(targets, checksum, copy_fun) do
+  @spec _get([BuildDeploy.Target.t()], String.t(), String.t(), (Path.t() -> boolean())) ::
+          {:ok, Path.t()} | {:error, String.t()}
+  defp _get(targets, id, checksum, copy_fun) do
     missing_docker_targets =
       targets
       |> filter_targets(:docker)
@@ -41,6 +44,8 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Targets do
     if length(missing_targets) != 0 do
       {:error, "Missing targets #{inspect(missing_targets)}"}
     else
+      Enum.each(targets, &Reporter.job_report(id, Reporter.Status.log(), "Get target: #{inspect(&1)}", nil))
+
       {:ok, targets}
     end
   end
