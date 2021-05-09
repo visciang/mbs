@@ -8,7 +8,7 @@
             "go.mod"
         ],
         "targets": [
-            ".build/golib.go.tgz"
+            ".build/golib.ar"
         ]
     }
 }

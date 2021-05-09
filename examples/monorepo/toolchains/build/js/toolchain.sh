@@ -3,22 +3,13 @@
 set -e
 
 mkdir -p .build
-mkdir -p node_modules
 
 case $1 in
-    deps_change)
-        rm -rf .build/
-        mkdir .build/
-
-        find .deps/ -name '*.js.tgz' -exec \
-            npm install --prefix=.build/ "{}" ";"
-        ;;
     build)
         npm ci
         npm pack
 
-        find . -maxdepth 1 -name '*.tgz' -exec \
-            sh -c 'mv {} node_modules/$(basename {} .tgz).js.tgz' ";"
+        mv $MBS_ID-*.tgz .build/
         ;;
     *)
         echo "bad target: $1"

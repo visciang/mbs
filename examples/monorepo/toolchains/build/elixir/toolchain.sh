@@ -59,27 +59,9 @@ args()
     done
 }
 
-mbs_deps_change()
-{
-    find .deps/ -name '*.ex.tgz' -exec sh -c \
-        '
-        DEP_EX_TGZ="{}"
-        DEP_ID=$(basename $DEP_EX_TGZ .ex.tgz)
-        DEP_INSTALL_DIR=_build/deps/$DEP_ID
-
-        rm -rf $DEP_INSTALL_DIR && mkdir -p $DEP_INSTALL_DIR
-        tar -xzf $DEP_EX_TGZ -C $DEP_INSTALL_DIR
-
-        echo "Extracted dependency $DEP_ID in $DEP_INSTALL_DIR"
-        ' ";"
-}
-
 args $0 "$@"
 
 case $1 in
-    deps_change)
-        mbs_deps_change
-        ;;
     deps.get)
         mix deps.get
         ;;
@@ -126,7 +108,10 @@ case $1 in
                 MIX_ENV=prod mix escript.build
                 ;;
             lib)
-                tar --exclude='_build' --exclude='deps' -czf _build/$MBS_ID.ex.tgz *
+                # Since we use "source dependencies" in our mix.exs deps
+                # we don't actually need any artifact.
+                # As a convention we output a "dummy" artifact, ie. the component checksum
+                echo "$MBS_CHECKSUM" > _build/$MBS_ID
                 ;;
             *)
                 echo "Unknown build type: $TYPE"

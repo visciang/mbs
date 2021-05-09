@@ -8,7 +8,7 @@ defmodule ExLib.MixProject do
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
       deps: [
-        {:ex_sublib, path: "_build/deps/ex_sublib"}
+        {:ex_sublib, path: "../ex_sublib"}
       ]
     ]
   end
