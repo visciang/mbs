@@ -12,7 +12,7 @@
             "mix.lock"
         ],
         "targets": [
-            "_build/ex_lib.ex.tgz"
+            "_build/ex_lib"
         ],
         "dependencies": [
             "ex_sublib"

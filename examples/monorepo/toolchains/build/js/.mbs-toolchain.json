@@ -5,7 +5,6 @@
         "files": [
             "toolchain.sh"
         ],
-        "deps_change_step": "deps_change",
         "steps": [
             "build"
         ]

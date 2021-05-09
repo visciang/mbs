@@ -1,17 +1,14 @@
 # The directory Mix will write compiled artifacts to.
-*/_build/
+**/_build/
 
 # If you run "mix test --cover", coverage assets end up here.
-*/cover/
+**/cover/
 
 # The directory Mix downloads your dependencies sources to.
-*/deps/
-
-# Where third-party dependencies like ExDoc output generated docs.
-/doc/
+**/deps/
 
 # Ignore .fetch files in case you like to edit your project deps locally.
-/.fetch
+**/.fetch/
 
 # If the VM crashes, it generates a dump, let's ignore it too.
 erl_crash.dump
@@ -22,13 +19,13 @@ erl_crash.dump
 # Ignore package tarball (built via "mix hex.build").
 mbs-*.tar
 
-# Temporary files for e.g. tests
-/tmp
+**/.elixir_ls/
 
 .mbs-local-cache/
 .mbs-graph/
 .mbs-releases/
-.deps/
+**/.deps/
+**/.build
 
 **/.elixir_ls
 **/.plts/
@@ -36,7 +33,8 @@ coveralls.json
 
 mbs/mbs
 
-**/gopath/bin
-**/gopath/pkg
+**/go_examples/bin
+**/go_examples/pkg
 examples/generated_monorepo
-.mbs-graph/*.svg
+**/.terraform
+**/node_modules

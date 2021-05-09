@@ -7,8 +7,6 @@ elixir_examples/**/deps/
 go_examples/bin
 go_examples/pkg
 
-js_*/**/*.tgz
-
 node_modules/
 
 python*/**/*.egg-info/

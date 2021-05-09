@@ -6,7 +6,7 @@
     "js_app": "index.js"
   },
   "dependencies": {
-    "js_library": "file:.build/node_modules/js_library"
+    "js_library": "file:../js_library"
   },
   "bundleDependencies": [
     "js_library"

@@ -9,7 +9,7 @@
             ".npmignore"
         ],
         "targets": [
-            "node_modules/js_app-0.0.0.js.tgz"
+            ".build/js_app-0.0.0.tgz"
         ],
         "dependencies": [
             "js_library"

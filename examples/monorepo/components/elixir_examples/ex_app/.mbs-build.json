@@ -15,6 +15,7 @@
             "_build/ex_app.ex.tgz"
         ],
         "dependencies": [
+            "ex_sublib",
             "ex_lib"
         ]
     }

@@ -46,20 +46,13 @@ mkdir -p $GOPATH/bin
 mkdir -p $GOPATH/pkg
 mkdir -p $GOPATH/src
 
-# Install dependencies
-find .deps/ -name '*.go.tgz' -exec \
-    tar -xzf "{}" -C $GOPATH/ ";"
-
 case $1 in
     build)
         rm -rf .build/ && mkdir .build/
 
         case $TYPE in
             lib)
-                go build
-
-                cd .. && tar czf /tmp/$MBS_ID.go.tgz $MBS_ID && cd -
-                mv /tmp/$MBS_ID.go.tgz .build/
+                go build -o .build/$MBS_ID.ar
                 ;;
             app)
                 go build -o .build/$MBS_ID
@@ -68,6 +61,7 @@ case $1 in
         ;;
     lint)
         RES=$(gofmt -l .)
+
         if [ "$RES" != "" ]; then
             echo "FILES NOT FORMATTED (goftm):"
             echo $RES
