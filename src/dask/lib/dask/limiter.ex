@@ -70,7 +70,7 @@ defmodule Dask.Limiter do
     else
       monitor = Process.monitor(process)
 
-      state = put_in(state.running_jobs, Map.put(state.running_jobs, process, monitor))
+      state = put_in(state.running_jobs[process], monitor)
       {:reply, :ok, state}
     end
   end
@@ -84,7 +84,7 @@ defmodule Dask.Limiter do
   def handle_info({:DOWN, _ref, :process, process, _reason}, %State{} = state) do
     Logger.debug("[process=#{inspect(process)}] job_end #{inspect(state, pretty: true)}")
 
-    state = put_in(state.running_jobs, Map.delete(state.running_jobs, process))
+    {_, state} = pop_in(state.running_jobs[process])
 
     state =
       if state.waiting_list != [] do
@@ -97,7 +97,7 @@ defmodule Dask.Limiter do
         state = put_in(state.waiting_list, waiting_list)
 
         monitor = Process.monitor(waiting_process)
-        put_in(state.running_jobs, Map.put(state.running_jobs, waiting_process, monitor))
+        put_in(state.running_jobs[waiting_process], monitor)
       else
         state
       end

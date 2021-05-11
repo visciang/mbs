@@ -5,13 +5,12 @@ defmodule Dask do
     defexception [:message]
   end
 
-  alias __MODULE__, as: M
   alias Dask.Exec
   alias Dask.Job
   alias Dask.Limiter
 
   defstruct [:jobs]
-  @type t :: %M{jobs: %{Job.id() => Job.t()}}
+  @type t :: %Dask{jobs: %{Job.id() => Job.t()}}
 
   @type await_result :: {:ok, term()} | {:error, term()} | :timeout
 
@@ -21,27 +20,27 @@ defmodule Dask do
   @spec end_job_id :: :__end_job__
   def end_job_id, do: :__end_job__
 
-  @spec new :: M.t()
+  @spec new :: Dask.t()
   def new do
-    %M{jobs: %{}}
+    %Dask{jobs: %{}}
   end
 
-  @spec job(M.t(), Job.id(), Job.fun(), timeout(), Job.on_exit()) :: M.t()
-  def job(%M{} = workflow, job_id, job_fun, job_timeout \\ :infinity, on_exit \\ fn _, _, _, _ -> :ok end) do
+  @spec job(Dask.t(), Job.id(), Job.fun(), timeout(), Job.on_exit()) :: Dask.t()
+  def job(%Dask{} = workflow, job_id, job_fun, job_timeout \\ :infinity, on_exit \\ fn _, _, _, _ -> :ok end) do
     j = %Job{id: job_id, fun: job_fun, timeout: job_timeout, downstream_jobs: MapSet.new(), on_exit: on_exit}
-    put_in(workflow.jobs, Map.put(workflow.jobs, job_id, j))
+    put_in(workflow.jobs[job_id], j)
   end
 
-  @spec flow(M.t(), Job.id() | [Job.id()], Job.id() | [Job.id()]) :: M.t()
-  def flow(%M{} = workflow, job_up, jobs_down) when is_list(jobs_down) do
+  @spec flow(Dask.t(), Job.id() | [Job.id()], Job.id() | [Job.id()]) :: Dask.t()
+  def flow(%Dask{} = workflow, job_up, jobs_down) when is_list(jobs_down) do
     Enum.reduce(jobs_down, workflow, &flow(&2, job_up, &1))
   end
 
-  def flow(%M{} = workflow, jobs_up, job_down) when is_list(jobs_up) do
+  def flow(%Dask{} = workflow, jobs_up, job_down) when is_list(jobs_up) do
     Enum.reduce(jobs_up, workflow, &flow(&2, &1, job_down))
   end
 
-  def flow(%M{} = workflow, job_up, job_down) do
+  def flow(%Dask{} = workflow, job_up, job_down) do
     if not Map.has_key?(workflow.jobs, job_up) do
       raise Error, "Unknown job #{inspect(job_up)}"
     end
@@ -50,16 +49,17 @@ defmodule Dask do
       raise Error, "Unknown job #{inspect(job_down)}"
     end
 
-    put_in(workflow.jobs[job_up].downstream_jobs, MapSet.put(workflow.jobs[job_up].downstream_jobs, job_down))
+    downstream_jobs = MapSet.put(workflow.jobs[job_up].downstream_jobs, job_down)
+    put_in(workflow.jobs[job_up].downstream_jobs, downstream_jobs)
   end
 
-  @spec depends_on(M.t(), Job.id() | [Job.id()], Job.id() | [Job.id()]) :: M.t()
-  def depends_on(%M{} = workflow, job, depends_on_job) do
+  @spec depends_on(Dask.t(), Job.id() | [Job.id()], Job.id() | [Job.id()]) :: Dask.t()
+  def depends_on(%Dask{} = workflow, job, depends_on_job) do
     flow(workflow, depends_on_job, job)
   end
 
-  @spec async(M.t(), Limiter.max_concurrency()) :: Exec.t()
-  def async(%M{} = workflow, max_concurrency \\ nil) do
+  @spec async(Dask.t(), Limiter.max_concurrency()) :: Exec.t()
+  def async(%Dask{} = workflow, max_concurrency \\ nil) do
     {graph, end_job} = build_workflow_graph(workflow)
     exec_async_workflow(graph, end_job, max_concurrency)
   end
@@ -78,7 +78,7 @@ defmodule Dask do
   end
 
   @spec build_workflow_graph(Dask.t()) :: {:digraph.graph(), Job.t()}
-  defp build_workflow_graph(%M{jobs: jobs}) do
+  defp build_workflow_graph(%Dask{jobs: jobs}) do
     graph = :digraph.new([:acyclic])
 
     Enum.each(jobs, fn {_job_id, %Job{} = job} ->
