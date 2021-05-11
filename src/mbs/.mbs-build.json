@@ -11,6 +11,9 @@
         ],
         "targets": [
             "mbs"
+        ],
+        "dependencies": [
+            "dask"
         ]
     },
     "docker_opts": [

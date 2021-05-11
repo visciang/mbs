@@ -1,7 +1,8 @@
 {
     "dirs": [
-        "mbs",
-        "toolchain",
+        "src/dask",
+        "src/mbs",
+        "src/toolchain",
         "examples/monorepo/components/aws_example/infrastructure_terraform_state",
         "examples/monorepo/components/aws_example/infrastructure_via_terraform",
         "examples/monorepo/components/aws_example/localstack",

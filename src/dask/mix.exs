@@ -1,13 +1,12 @@
-defmodule MBS.MixProject do
+defmodule Dask.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :mbs,
+      app: :dask,
       version: "0.0.0",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
-      escript: [main_module: MBS],
       deps: deps(),
       dialyzer: dialyzer(),
       preferred_cli_env: [
@@ -18,7 +17,6 @@ defmodule MBS.MixProject do
         "coveralls.html": :test,
         docs: :dev
       ],
-      elixirc_paths: elixirc_paths(Mix.env()),
       test_coverage: [tool: ExCoveralls],
       aliases: aliases()
     ]
@@ -26,16 +24,12 @@ defmodule MBS.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :crypto]
+      extra_applications: [:logger]
     ]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
-  defp elixirc_paths(_), do: ["lib"]
-
   def deps do
     [
-      {:jason, "~> 1.2"},
       {:excoveralls, "~> 0.12", only: :test},
       {:credo, "~> 1.0", only: [:dev], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
