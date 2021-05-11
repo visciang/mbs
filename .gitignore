@@ -31,7 +31,7 @@ mbs-*.tar
 **/.plts/
 coveralls.json
 
-mbs/mbs
+src/mbs/mbs
 
 **/go_examples/bin
 **/go_examples/pkg

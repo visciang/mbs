@@ -1,0 +1,11 @@
+{
+    "id": "dask",
+    "component": {
+        "toolchain": "toolchain-mbs",
+        "toolchain_opts": ["--type", "lib"],
+        "files_profile": "elixir",
+        "targets": [
+            "_build/dask"
+        ]
+    }
+}

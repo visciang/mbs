@@ -2,13 +2,14 @@ FROM elixir:1.11.4-alpine AS builder
 ENV MIX_ENV prod
 RUN mix local.rebar --force
 RUN mix local.hex --force
-WORKDIR /mbs/
-COPY mbs/mix.exs mbs/mix.lock ./
-RUN mix deps.get
-COPY mbs/config ./config
-COPY mbs/lib ./lib
-COPY mbs/test ./test
-COPY mbs/.formatter.exs ./
+RUN mkdir /mbs /dask
+COPY src/mbs/mix.exs src/mbs/mix.lock /mbs/
+RUN cd /mbs && mix deps.get
+COPY src/dask/mix.exs src/dask/mix.lock /dask/
+RUN cd /dask && mix deps.get
+COPY src/dask /dask
+COPY src/mbs /mbs
+WORKDIR /mbs
 RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
@@ -18,7 +19,7 @@ COPY dockerfiles/entrypoint.sh /entrypoint.sh
 COPY --from=builder /mbs/mbs /usr/local/bin/
 ARG MBS_VERSION=latest
 ENV MBS_VERSION=${MBS_VERSION}
-COPY examples/repo_init /repo_init
+COPY dockerfiles/repo_init /repo_init
 COPY mbs.sh mbs.fish /repo_init/
 RUN sed -i "s/latest/$MBS_VERSION/g" /repo_init/mbs.sh
 RUN sed -i "s/latest/$MBS_VERSION/g" /repo_init/mbs.fish
