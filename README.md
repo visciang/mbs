@@ -45,7 +45,7 @@ Imagine a place where:
 
 ### Dependencies and changes
 
-[![asciicast](https://asciinema.org/a/t6BVEg3a6kHuidnrL2ltZ9dLt.svg)](https://asciinema.org/a/t6BVEg3a6kHuidnrL2ltZ9dLt)
+<script id="asciicast-t6BVEg3a6kHuidnrL2ltZ9dLt" src="https://asciinema.org/a/t6BVEg3a6kHuidnrL2ltZ9dLt.js" async></script>
 
 ### Sandboxed execution
 
