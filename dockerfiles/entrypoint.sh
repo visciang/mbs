@@ -25,8 +25,8 @@ elif [ "$CMD" == "init" ]; then
 
     cp -r -i /repo_init/. .
 
-    sed -i "s/MBS_PROJECT_ID=mbs/MBS_PROJECT_ID=$SUBCMD/g" ./mbs.sh
-    sed -i "s/MBS_PROJECT_ID mbs/MBS_PROJECT_ID $SUBCMD/g" ./mbs.fish
+    sed -i "s/MBS_PROJECT_ID=\"mbs\"/MBS_PROJECT_ID=\"$SUBCMD\"/g" ./mbs.sh
+    sed -i "s/MBS_PROJECT_ID \"mbs\"/MBS_PROJECT_ID \"$SUBCMD\"/g" ./mbs.fish
 
     echo "DONE"
     echo ""
