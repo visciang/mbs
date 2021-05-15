@@ -93,8 +93,7 @@ defmodule MBS.Toolchain.RunBuild do
         shell_dep_id =
           dep_id
           |> String.upcase()
-          |> String.replace(":", "_")
-          |> String.replace("-", "_")
+          |> String.replace([":", "-"], "_")
 
         {"MBS_CHECKSUM_#{shell_dep_id}", dep_checksum}
       end)

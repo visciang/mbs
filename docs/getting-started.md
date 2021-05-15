@@ -47,21 +47,19 @@ mbs --help
 
 ### Let's play
 
-Since the `mbs` github repository includes some examples under `example/monorepo`, it's convenient to play there to get the feeling of how you can use `mbs` in different contexts.
+The github repository `visciang/mbs-example-monorepo` includes some examples, so it's convenient to play there to get the feeling of how you can use `mbs` in different contexts.
 
 This will be the same onboarding experience you will have joining the development of an `mbs` managed monorepo.
 
-The below example won't install anything on your machine, but it will download and create docker images and two docker volumes for the artifact cache and releases.
+The below example won't install anything on your machine, but it will download and create docker images and two docker volumes for the artifacts cache and releases.
 
 ```sh
-MBS_VERSION=vA.B.C  # NOTE: here the MBS version you want to use
-git clone --depth 1 -b $MBS_VERSION https://github.com/visciang/mbs-monorepo
+cd /tmp
+git clone --depth 1 https://github.com/visciang/mbs-example-monorepo
 ```
 
-
-
 ```sh
-cd mbs-monorepo
+cd /tmp/mbs-example-monorepo
 source ./mbs.sh
 mbs --help
 ```
@@ -88,7 +86,6 @@ js_app  (component)
 js_library  (component)
 localstack  (component)
 localstack_wait  (component)
-mbs  (component)
 python_library  (component)
 python_native_app  (component)
 python_native_app_dockerized  (component)
@@ -104,7 +101,6 @@ toolchain-build-terraform  (toolchain)
 toolchain-deploy-awscli  (toolchain)
 toolchain-deploy-docker_compose  (toolchain)
 toolchain-deploy-terraform  (toolchain)
-toolchain-mbs  (toolchain)
 toolchain-meta-sh  (toolchain)
 
 Completed (0 jobs) (0.053 sec)
@@ -148,17 +144,17 @@ mbs build ls --verbose c_native_binary
 # OUTPUT
 c_native_binary  (component):
   dir:
-    /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary
+    /tmp/mbs-example-monorepo/examples/monorepo/components/c_examples/c_native_binary
   timeout:
     infinity
   toolchain:
     toolchain-build-cmake
   targets:
-    - /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary/.build/c_native_binary
+    - /tmp/mbs-example-monorepo/examples/monorepo/components/c_examples/c_native_binary/.build/c_native_binary
   files:
-    - /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary/.mbs-build.json
-    - /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary/CMakeLists.txt
-    - /tmp/mbs-monorepo/examples/monorepo/components/c_examples/c_native_binary/main.c
+    - /tmp/mbs-example-monorepo/examples/monorepo/components/c_examples/c_native_binary/.mbs-build.json
+    - /tmp/mbs-example-monorepo/examples/monorepo/components/c_examples/c_native_binary/CMakeLists.txt
+    - /tmp/mbs-example-monorepo/examples/monorepo/components/c_examples/c_native_binary/main.c
   dependencies:
     - c_shared_library
 ```
