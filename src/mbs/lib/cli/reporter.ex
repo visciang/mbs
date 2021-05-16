@@ -93,7 +93,7 @@ defmodule MBS.CLI.Reporter do
         job_id
       end
 
-    puts(IO.ANSI.format([status_icon, " - ", :bright, job_id, :normal, "  ", duration, " ", description]))
+    puts(IO.ANSI.format([status_icon, " - ", :bright, job_id, :normal, "  ", duration, " ", :faint, description]))
 
     if status_info, do: puts("  - #{status_info}")
 
