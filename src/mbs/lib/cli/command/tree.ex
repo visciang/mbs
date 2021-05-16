@@ -15,7 +15,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
   alias MBS.Manifest.BuildDeploy
   alias MBS.Workflow.Job
 
-  @spec run(CLI.Command.Tree.t(), Config.Data.t(), Path.t()) :: :ok
+  @spec run(CLI.Command.Tree.t(), Config.Data.t(), Path.t()) :: Command.on_run()
   def run(%Command.Tree{type: type, targets: target_ids}, %Config.Data{} = config, cwd) do
     IO.puts("")
 

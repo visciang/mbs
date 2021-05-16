@@ -14,7 +14,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
   alias MBS.Config
   alias MBS.Manifest.Release
 
-  @spec run(Command.LsRelease.t(), Config.Data.t(), Path.t()) :: :ok
+  @spec run(Command.LsRelease.t(), Config.Data.t(), Path.t()) :: Command.on_run()
   def run(%Command.LsRelease{verbose: verbose, targets: target_ids}, %Config.Data{}, _cwd) do
     IO.puts("")
 

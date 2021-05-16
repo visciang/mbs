@@ -15,7 +15,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
   alias MBS.Config
   alias MBS.Manifest.BuildDeploy
 
-  @spec run(Command.Ls.t(), Config.Data.t(), Path.t()) :: :ok
+  @spec run(Command.Ls.t(), Config.Data.t(), Path.t()) :: Command.on_run()
   def run(%Command.Ls{type: type, verbose: verbose, targets: target_ids}, %Config.Data{} = config, cwd) do
     IO.puts("")
 
