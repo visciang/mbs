@@ -2,7 +2,7 @@ defmodule MBS.Toolchain.Common do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.Docker
+  alias MBS.{Const, Docker}
   alias MBS.Manifest.BuildDeploy
 
   require Reporter.Status
@@ -19,6 +19,9 @@ defmodule MBS.Toolchain.Common do
         dockerfile: dockerfile,
         docker_opts: docker_opts
       }) do
+    docker_labels = ["--label", "MBS_PROJECT_ID=#{Const.project_id()}", "--label", "MBS_CHECKSUM=#{checksum}"]
+    docker_opts = docker_opts ++ docker_labels
+
     with {:build, :ok} <- {:build, Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")},
          {:entrypoint, {:ok, [@default_entrypoint]}} <- {:entrypoint, Docker.image_entrypoint(id, checksum)} do
       :ok
