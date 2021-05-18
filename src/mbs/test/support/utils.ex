@@ -40,10 +40,9 @@ defmodule Test.Utils do
 
     defp wipe_all_image_tags do
       # credo:disable-for-next-line
-      :os.cmd(~c"""
-      docker image ls --filter="label=#{@toolchains_label}" --format='{{.Repository}}:{{.Tag}}'
-      | xargs docker image rm
-      """)
+      :os.cmd(
+        ~c/docker image ls --filter="label=#{@toolchains_label}" --format='{{.Repository}}:{{.Tag}}' | xargs docker image rm/
+      )
     end
   end
 end

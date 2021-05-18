@@ -40,7 +40,6 @@ defmodule Test.Command.Build.Run do
   describe "run" do
     setup do
       Utils.Cache.wipe_local_cache()
-
       on_exit(&Utils.Cache.wipe_local_cache/0)
     end
 
