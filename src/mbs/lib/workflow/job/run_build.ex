@@ -23,7 +23,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       {cached, report_status, report_desc} =
         with :cache_miss <- if(force, do: :cache_miss, else: Job.Cache.get_toolchain(id, checksum)),
-             :ok <- Toolchain.Common.build(toolchain),
+             :ok <- Toolchain.Common.build(toolchain, force),
              :ok <- Job.Cache.put_toolchain(id, checksum) do
           {false, Reporter.Status.ok(), checksum}
         else

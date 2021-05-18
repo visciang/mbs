@@ -11,16 +11,20 @@ defmodule MBS.Toolchain.Common do
 
   @default_entrypoint "/toolchain.sh"
 
-  @spec build(BuildDeploy.Toolchain.t()) :: :ok | {:error, term()}
-  def build(%BuildDeploy.Toolchain{
-        id: id,
-        dir: dir,
-        checksum: checksum,
-        dockerfile: dockerfile,
-        docker_opts: docker_opts
-      }) do
+  @spec build(BuildDeploy.Toolchain.t(), boolean()) :: :ok | {:error, term()}
+  def build(
+        %BuildDeploy.Toolchain{
+          id: id,
+          dir: dir,
+          checksum: checksum,
+          dockerfile: dockerfile,
+          docker_opts: docker_opts
+        },
+        force
+      ) do
+    docker_no_cache = if force, do: ["--no-cache"], else: []
     docker_labels = ["--label", "MBS_PROJECT_ID=#{Const.project_id()}", "--label", "MBS_CHECKSUM=#{checksum}"]
-    docker_opts = docker_opts ++ docker_labels
+    docker_opts = docker_opts ++ docker_no_cache ++ docker_labels
 
     with {:build, :ok} <- {:build, Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")},
          {:entrypoint, {:ok, [@default_entrypoint]}} <- {:entrypoint, Docker.image_entrypoint(id, checksum)} do
