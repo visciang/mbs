@@ -82,7 +82,7 @@ defmodule MBS.Docker do
 
   @spec image_build([String.t()], String.t(), String.t(), Path.t(), String.t(), String.t()) :: :ok | {:error, term()}
   def image_build(docker_opts, repository, tag, dir, dockerfile, job_id) do
-    cmd_args = ["image", "build", "--rm", "-t"] ++ docker_opts ++ ["#{repository}:#{tag}", "-f", dockerfile, "."]
+    cmd_args = ["image", "build", "--rm"] ++ docker_opts ++ ["--tag", "#{repository}:#{tag}", "-f", dockerfile, "."]
     cmd_into = %Reporter.Log{job_id: job_id}
 
     docker_debug(job_id, cmd_args)
