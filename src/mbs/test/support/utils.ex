@@ -23,4 +23,26 @@ defmodule Test.Utils do
   def setup_env_vars do
     System.put_env("MBS_VERSION", test_mbs_version())
   end
+
+  defmodule Cache do
+    @moduledoc false
+
+    @toolchains_label "MBS_TEST_TOOLCHAIN=true"
+
+    def wipe_local_cache do
+      wipe_files_cache()
+      wipe_all_image_tags()
+    end
+
+    defp wipe_files_cache do
+      Test.Utils.rm_dir_content(Const.local_cache_dir())
+    end
+
+    defp wipe_all_image_tags do
+      # credo:disable-for-next-line
+      :os.cmd(
+        ~c/docker image ls --filter="label=#{@toolchains_label}" --format='{{.Repository}}:{{.Tag}}' | xargs docker image rm/
+      )
+    end
+  end
 end

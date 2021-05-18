@@ -25,8 +25,8 @@ defmodule Test.Command.Build.Run do
 
   describe "outdated" do
     setup do
-      wipe_local_cache()
-      on_exit(&wipe_local_cache/0)
+      Utils.Cache.wipe_local_cache()
+      on_exit(&Utils.Cache.wipe_local_cache/0)
     end
 
     test "first time build" do
@@ -39,9 +39,8 @@ defmodule Test.Command.Build.Run do
 
   describe "run" do
     setup do
-      wipe_local_cache()
-
-      on_exit(&wipe_local_cache/0)
+      Utils.Cache.wipe_local_cache()
+      on_exit(&Utils.Cache.wipe_local_cache/0)
     end
 
     defp build_run do
@@ -157,19 +156,5 @@ defmodule Test.Command.Build.Run do
 
       assert msg =~ ~r/Completed \(0 jobs\)/
     end
-  end
-
-  defp wipe_local_cache do
-    wipe_files_cache()
-    docker_rm_all_image_tags(@test_toolchain_a_id)
-  end
-
-  defp wipe_files_cache do
-    Utils.rm_dir_content(Const.local_cache_dir())
-  end
-
-  def docker_rm_all_image_tags(image) do
-    # credo:disable-for-next-line
-    :os.cmd(~c/docker images --filter='reference=#{image}' --format='{{.Repository}}:{{.Tag}}' | xargs docker rmi/)
   end
 end
