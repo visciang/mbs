@@ -49,8 +49,8 @@ defmodule MBS.Manifest.BuildDeploy do
       manifest
       |> put_in(["project_dir"], Path.expand(project_dir))
       |> put_in(["dir"], Path.dirname(Path.expand(manifest_path)))
-      |> put_in(["timeout"], manifest["timeout"] || :infinity)
-      |> put_in(["docker_opts"], manifest["docker_opts"] || [])
+      |> update_in(["timeout"], &(&1 || :infinity))
+      |> update_in(["docker_opts"], &(&1 || []))
 
     manifest_build_filename = Const.manifest_build_filename()
     manifest_deploy_filename = Const.manifest_deploy_filename()
@@ -67,18 +67,18 @@ defmodule MBS.Manifest.BuildDeploy do
   defp add_defaults_build(manifest) do
     manifest
     |> Map.put("__schema__", "component")
-    |> put_in(["component", "toolchain_opts"], manifest["component"]["toolchain_opts"] || [])
-    |> put_in(["component", "targets"], manifest["component"]["targets"] || [])
-    |> put_in(["component", "files"], manifest["component"]["files"] || [])
-    |> put_in(["component", "dependencies"], manifest["component"]["dependencies"] || [])
+    |> update_in(["component", "toolchain_opts"], &(&1 || []))
+    |> update_in(["component", "targets"], &(&1 || []))
+    |> update_in(["component", "files"], &(&1 || []))
+    |> update_in(["component", "dependencies"], &(&1 || []))
   end
 
   @spec add_defaults_toolchain(map()) :: map()
   defp add_defaults_toolchain(manifest) do
     manifest
     |> Map.put("__schema__", "toolchain")
-    |> put_in(["toolchain", "files"], manifest["toolchain"]["files"] || [])
-    |> put_in(["toolchain", "destroy_steps"], manifest["toolchain"]["destroy_steps"] || [])
+    |> update_in(["toolchain", "files"], &(&1 || []))
+    |> update_in(["toolchain", "destroy_steps"], &(&1 || []))
   end
 
   @spec to_struct(Type.type(), map(), Config.Data.files_profiles()) :: Type.t()

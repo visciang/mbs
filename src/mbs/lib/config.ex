@@ -62,9 +62,9 @@ defmodule MBS.Config do
   @spec add_defaults(map()) :: map()
   defp add_defaults(conf) do
     conf
-    |> put_in(["parallelism"], conf["parallelism"] || :erlang.system_info(:logical_processors))
-    |> put_in(["timeout"], conf["timeout"] || :infinity)
-    |> put_in(["files_profile"], conf["files_profile"] || %{})
+    |> update_in(["parallelism"], &(&1 || :erlang.system_info(:logical_processors)))
+    |> update_in(["timeout"], &(&1 || :infinity))
+    |> update_in(["files_profile"], &(&1 || %{}))
   end
 
   @spec validate(map()) :: map()

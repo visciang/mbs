@@ -9,8 +9,5 @@
             "step_1",
             "step_2"
         ]
-    },
-    "docker_opts": [
-        "--label", "MBS_TEST_TOOLCHAIN=true"
-    ]
+    }
 }

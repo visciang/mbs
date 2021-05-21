@@ -7,6 +7,7 @@ defmodule MBS.CLI.Args do
   @type t ::
           :ok
           | :error
+          | %Command.CacheSize{}
           | %Command.Graph{}
           | %Command.Destroy{}
           | %Command.Ls{}
@@ -25,32 +26,41 @@ defmodule MBS.CLI.Args do
   end
 
   def parse(["--help"]) do
-    IO.puts("\nUsage:  mbs --help | (build | deploy) [SUBCOMMAND] | version")
-    IO.puts("\nA Meta Build System")
-    IO.puts("\nCommands:")
-    IO.puts("")
-    IO.puts("  ---------------------------------------------")
-    IO.puts("  version           Show the mbs version")
-    IO.puts("  ---------------------------------------------")
-    IO.puts("  build graph       Generate dependency graph")
-    IO.puts("  build ls          List available targets")
-    IO.puts("  build outdated    Show outdated targets")
-    IO.puts("  build run         Run a target build")
-    IO.puts("  build shell       Interactive toolchain shell")
-    IO.puts("  build tree        Display a dependency tree")
-    IO.puts("  ---------------------------------------------")
-    IO.puts("  release ls        List available releases")
-    IO.puts("  release make      Make a deployable release")
-    IO.puts("  release rm        Delete a release")
-    IO.puts("  ---------------------------------------------")
-    IO.puts("  deploy destroy    Destroy a release deploy")
-    IO.puts("  deploy graph      Generate dependency graph")
-    IO.puts("  deploy ls         List available targets")
-    IO.puts("  deploy run        Run a release deploy")
-    IO.puts("  deploy tree       Display a dependency tree")
-    IO.puts("  ---------------------------------------------")
-    IO.puts("")
-    IO.puts("\nRun 'mbs COMMAND [SUBCOMMAND] --help' for more information.")
+    IO.puts("""
+
+    Usage:  mbs --help | (build | deploy) [SUBCOMMAND] | version")
+
+    A Meta Build System
+
+    Commands:
+
+      ---------------------------------------------
+      version           Show the mbs version
+      ---------------------------------------------
+      build graph       Generate dependency graph
+      build ls          List available targets
+      build outdated    Show outdated targets
+      build run         Run a target build
+      build shell       Interactive toolchain shell
+      build tree        Display a dependency tree
+      ---------------------------------------------
+      release ls        List available releases
+      release make      Make a deployable release
+      release rm        Delete a release
+      ---------------------------------------------
+      deploy destroy    Destroy a release deploy
+      deploy graph      Generate dependency graph
+      deploy ls         List available targets
+      deploy run        Run a release deploy
+      deploy tree       Display a dependency tree
+      ---------------------------------------------
+      cache size        Used disk space
+      cache prune       Remove cache
+      ---------------------------------------------
+
+
+    Run 'mbs COMMAND [SUBCOMMAND] --help' for more information.
+    """)
 
     :ok
   end
@@ -59,12 +69,58 @@ defmodule MBS.CLI.Args do
     %Command.Version{}
   end
 
+  def parse(["cache", "size" | args]) do
+    {options, _} = OptionParser.parse!(args, strict: [help: :boolean])
+
+    if options[:help] do
+      IO.puts("""
+
+      Usage:  mbs cache size
+
+      Show cache used disk space
+      """)
+
+      :ok
+    else
+      %Command.CacheSize{}
+    end
+  rescue
+    e in [OptionParser.ParseError] ->
+      IO.puts(e.message)
+      :error
+  end
+
+  def parse(["cache", "prune" | args]) do
+    {options, _} = OptionParser.parse!(args, strict: [help: :boolean])
+
+    if options[:help] do
+      IO.puts("""
+
+      Usage:  mbs cache size
+
+      Prune the local file cache and the docker registry
+      """)
+
+      :ok
+    else
+      %Command.CachePrune{}
+    end
+  rescue
+    e in [OptionParser.ParseError] ->
+      IO.puts(e.message)
+      :error
+  end
+
   def parse([type, "tree" | args]) when type == "build" or type == "deploy" do
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs #{type} tree --help | [TARGETS...]")
-      IO.puts("\nDisplay the dependency tree for the provided targets (default: all targets)")
+      IO.puts("""
+
+      Usage:  mbs #{type} tree [TARGETS...]
+
+      Display the dependency tree for the provided targets (default: all targets)
+      """)
 
       :ok
     else
@@ -82,10 +138,15 @@ defmodule MBS.CLI.Args do
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs #{type} ls --help | [OPTIONS] [TARGETS...]")
-      IO.puts("\nList available targets (default: all targets)")
-      IO.puts("\nOptions:")
-      IO.puts("  --verbose    Show target details")
+      IO.puts("""
+
+      Usage:  mbs #{type} ls [OPTIONS] [TARGETS...]
+
+      List available targets (default: all targets)
+
+      Options:
+        --verbose    Show target details
+      """)
 
       :ok
     else
@@ -105,15 +166,20 @@ defmodule MBS.CLI.Args do
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, output_filename: :string])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs #{type} graph --help | [OPTIONS] [TARGETS...]")
-      IO.puts("\nGenerate SVG dependency graph for the requested targets (default: all targets)")
-      IO.puts("\nOptions:")
-      IO.puts("  --output-filename    Output file (default: '#{default_output_filename}')")
+      IO.puts("""
+
+      Usage:  mbs #{type} graph [OPTIONS] [TARGETS...]
+
+      Generate SVG dependency graph for the requested targets (default: all targets)
+
+      Options:
+        --output-filename    Output file (default: '#{default_output_filename}')
+      """)
 
       :ok
     else
       options = Keyword.merge(defaults, options)
-      options = put_in(options[:output_filename], Path.join(Const.graph_dir(), options[:output_filename]))
+      options = update_in(options[:output_filename], &Path.join(Const.graph_dir(), &1))
 
       %Command.Graph{type: String.to_atom(type), targets: targets, output_filename: options[:output_filename]}
     end
@@ -130,12 +196,17 @@ defmodule MBS.CLI.Args do
       OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean, force: :boolean, sandbox: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs build run --help | [OPTIONS] [TARGETS...]")
-      IO.puts("\nRun a target(s) build (default: all targets)")
-      IO.puts("\nOptions:")
-      IO.puts("  --verbose    Stream jobs log to the console")
-      IO.puts("  --force      Skip cache and force a re-run")
-      IO.puts("  --sandbox    Filesystem sandbox mode (default: no sandbox)")
+      IO.puts("""
+
+      Usage:  mbs build run [OPTIONS] [TARGETS...]
+
+      Run a target(s) build (default: all targets)
+
+      Options:
+        --verbose    Stream jobs log to the console
+        --force      Skip cache and force a re-run
+        --sandbox    Filesystem sandbox mode (default: no sandbox)
+      """)
 
       :ok
     else
@@ -156,8 +227,12 @@ defmodule MBS.CLI.Args do
     {options, _} = OptionParser.parse!(args, strict: [help: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs build outdated --help")
-      IO.puts("\nShow outdated targets")
+      IO.puts("""
+
+      Usage:  mbs build outdated --help
+
+      Show outdated targets
+      """)
 
       :ok
     else
@@ -173,8 +248,12 @@ defmodule MBS.CLI.Args do
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, docker_cmd: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs build shell --help | TARGET")
-      IO.puts("\nInteractive toolchain shell")
+      IO.puts("""
+
+      Usage:  mbs build shell TARGET
+
+      Interactive toolchain shell
+      """)
 
       :ok
     else
@@ -200,10 +279,15 @@ defmodule MBS.CLI.Args do
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs release ls --help | [OPTIONS] [TARGETS...]")
-      IO.puts("\nList available releases (default: all targets)")
-      IO.puts("\nOptions:")
-      IO.puts("  --verbose    Show release details")
+      IO.puts("""
+
+      Usage:  mbs release ls [OPTIONS] [TARGETS...]
+
+      List available releases (default: all targets)
+
+      Options:
+        --verbose    Show release details
+      """)
 
       :ok
     else
@@ -225,13 +309,18 @@ defmodule MBS.CLI.Args do
 
     cond do
       options[:help] ->
-        IO.puts("\nUsage:  mbs release make --help | [OPTIONS] [TARGETS...]")
-        IO.puts("\nMake a release (default: all targets) - output dir '#{Const.releases_dir()}/<id>/')")
-        IO.puts("\nOptions:")
-        IO.puts("  --id          release identifier")
-        IO.puts("  --verbose     Stream jobs log to the console")
-        IO.puts("  --metadata    Extra metadata to include in the release manifest")
-        IO.puts("                ex: --metadata='git_commit=...'")
+        IO.puts("""
+
+        Usage:  mbs release make [OPTIONS] [TARGETS...]
+
+        Make a release (default: all targets) - output dir '#{Const.releases_dir()}/<id>/')
+
+        Options:
+          --id          release identifier
+          --verbose     Stream jobs log to the console
+          --metadata    Extra metadata to include in the release manifest
+                        ex: --metadata='git_commit=...'
+        """)
 
         :ok
 
@@ -257,8 +346,12 @@ defmodule MBS.CLI.Args do
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs release rm --help | TARGET")
-      IO.puts("\nDelete a release")
+      IO.puts("""
+
+      Usage:  mbs release rm TARGET
+
+      Delete a release
+      """)
 
       :ok
     else
@@ -280,12 +373,18 @@ defmodule MBS.CLI.Args do
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs deploy run --help | [OPTIONS] RELEASE-ID")
-      IO.puts("\nRun a release deploy")
-      IO.puts("\nRelease id:")
-      IO.puts("  The release identifier (ref. 'mbs release --id=RELEASE-ID')")
-      IO.puts("\nOptions:")
-      IO.puts("  --verbose    Stream jobs log to the console")
+      IO.puts("""
+
+      Usage:  mbs deploy run [OPTIONS] RELEASE-ID
+
+      Run a release deploy
+
+      Release id:
+        The release identifier (ref. 'mbs release --id=RELEASE-ID')
+
+      Options:
+        --verbose    Stream jobs log to the console
+      """)
 
       :ok
     else
@@ -313,12 +412,18 @@ defmodule MBS.CLI.Args do
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
 
     if options[:help] do
-      IO.puts("\nUsage:  mbs deploy destroy --help | [OPTIONS] RELEASE-ID")
-      IO.puts("\nDestroy a release deploy")
-      IO.puts("\nRelease id:")
-      IO.puts("  The release identifier (ref. 'mbs release --id=RELEASE-ID')")
-      IO.puts("\nOptions:")
-      IO.puts("  --verbose    Stream jobs log to the console")
+      IO.puts("""
+
+      Usage:  mbs deploy destroy [OPTIONS] RELEASE-ID
+
+      Destroy a release deploy
+
+      Release id:
+        The release identifier (ref. 'mbs release --id=RELEASE-ID')
+
+      Options:
+        --verbose    Stream jobs log to the console
+      """)
 
       :ok
     else

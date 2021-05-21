@@ -24,10 +24,7 @@ defmodule Test.Command.Build.Run do
   end
 
   describe "outdated" do
-    setup do
-      Utils.Cache.wipe_local_cache()
-      on_exit(&Utils.Cache.wipe_local_cache/0)
-    end
+    setup :setup_clean_cache
 
     test "first time build" do
       msg = capture_io(fn -> assert :ok == MBS.run(["build", "outdated"], Utils.test_project_dir()) end)
@@ -38,10 +35,7 @@ defmodule Test.Command.Build.Run do
   end
 
   describe "run" do
-    setup do
-      Utils.Cache.wipe_local_cache()
-      on_exit(&Utils.Cache.wipe_local_cache/0)
-    end
+    setup :setup_clean_cache
 
     defp build_run do
       msg = capture_io(fn -> MBS.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
@@ -157,4 +151,6 @@ defmodule Test.Command.Build.Run do
       assert msg =~ ~r/Completed \(0 jobs\)/
     end
   end
+
+  defp setup_clean_cache(context), do: Utils.setup_clean_cache(context)
 end

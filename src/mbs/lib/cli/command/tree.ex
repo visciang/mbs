@@ -41,11 +41,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
     |> Enum.sort()
     |> Enum.with_index(1)
     |> Enum.each(fn {id, idx} ->
-      guide = if idx == names_length, do: "└── ", else: "├── "
+      guide = if idx == names_length, do: ["└── "], else: ["├── "]
       IO.puts(IO.ANSI.format([indent, guide, :bright, id]))
 
       dependencies = Job.Utils.component_dependencies(manifests_map[id])
-      guide = if idx == names_length, do: "    ", else: "│   "
+      guide = if idx == names_length, do: ["    "], else: ["│   "]
 
       print_tree(dependencies, manifests_map, [indent | guide])
     end)
