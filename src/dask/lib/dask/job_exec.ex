@@ -19,9 +19,7 @@ defmodule Dask.JobExec do
       Enum.each(downstream_job_pid_set, &send(&1, {job.id, job_status}))
 
       Logger.debug(
-        "END #{inspect(job.id)}  job_status: #{inspect(job_status)}  -  job_elapsed_time: #{
-          Utils.seconds_to_compound_duration(elapsed_time)
-        }"
+        "END #{inspect(job.id)}  job_status: #{inspect(job_status)}  -  job_elapsed_time: #{Utils.seconds_to_compound_duration(elapsed_time)}"
       )
 
       job_status

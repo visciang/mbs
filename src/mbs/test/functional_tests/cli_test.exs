@@ -12,6 +12,7 @@ defmodule Test.CLI do
     "build run",
     "build shell",
     "build tree",
+    "cache size",
     "release ls",
     "release make",
     "release rm",
@@ -30,7 +31,7 @@ defmodule Test.CLI do
             assert :ok == MBS.run(String.split(subcommand) ++ ["--help"], Utils.test_project_dir())
           end)
 
-        assert msg =~ ~r/Usage:  mbs #{subcommand}\s*--help/
+        assert msg =~ ~r/Usage:  mbs #{subcommand}\s*/
       end)
     end
 

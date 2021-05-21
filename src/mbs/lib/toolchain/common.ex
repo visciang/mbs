@@ -23,7 +23,16 @@ defmodule MBS.Toolchain.Common do
         force
       ) do
     docker_no_cache = if force, do: ["--no-cache"], else: []
-    docker_labels = ["--label", "MBS_PROJECT_ID=#{Const.project_id()}", "--label", "MBS_CHECKSUM=#{checksum}"]
+
+    docker_labels = [
+      "--label",
+      "MBS_PROJECT_ID=#{Const.project_id()}",
+      "--label",
+      "MBS_ID=#{id}",
+      "--label",
+      "MBS_CHECKSUM=#{checksum}"
+    ]
+
     docker_opts = docker_opts ++ docker_no_cache ++ docker_labels
 
     with {:build, :ok} <- {:build, Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")},
