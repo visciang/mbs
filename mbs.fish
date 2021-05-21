@@ -15,12 +15,13 @@ set MBS_GRAPH_VOLUME "$ABS_BASEDIR/.mbs-graph"
 
 # [OPTIONAL] external cache for artifacts files and docker images
 set -q MBS_PUSH || set MBS_PUSH "false"
-set MBS_CACHE_VOLUME ""
+set V_MBS_CACHE_VOLUME ""
 set MBS_DOCKER_REGISTRY ""
 
 if test "$MBS_PUSH" = "true"
     # Set with your endpoints
     set MBS_CACHE_VOLUME "/nfs_share/mbs-$MBS_PROJECT_ID-cache"
+    set V_MBS_CACHE_VOLUME "-v $MBS_CACHE_VOLUME:/mbs-cache"
     set MBS_DOCKER_REGISTRY "http://localhost:5000"
 end
 
@@ -33,7 +34,7 @@ alias mbs="\
     docker run --init --rm $TTY \
     --net host \
     -v /var/run/docker.sock:/var/run/docker.sock \
-    -v $MBS_CACHE_VOLUME:/mbs-cache \
+    $V_MBS_CACHE_VOLUME \
     -v $MBS_LOCAL_CACHE_VOLUME:/.mbs-local-cache \
     -v $MBS_RELEASES_VOLUME:/.mbs-releases \
     -v $MBS_GRAPH_VOLUME:/.mbs-graph \
