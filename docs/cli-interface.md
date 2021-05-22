@@ -19,3 +19,5 @@ The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMA
 - **deploy ls**:         List available targets
 - **deploy run**:        Run a release deploy
 - **deploy tree**:       Display a dependency tree
+- **cache size**:        Used disk space
+- **cache prune**:       Remove cache

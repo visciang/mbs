@@ -1,4 +1,5 @@
 {
+    "timeout": 600,
     "files_profile": {
         "elixir": [
             ".formatter.exs",
