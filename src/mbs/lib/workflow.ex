@@ -49,10 +49,12 @@ defmodule MBS.Workflow do
     end)
   end
 
+  @spec default_job_fun_on_exit(Config.Data.t(), BuildDeploy.Type.t()) :: Dask.Job.on_exit()
   def default_job_fun_on_exit(_, _) do
     fn _, _, _, _ -> :ok end
   end
 
+  @spec convert_timeout_s_to_ms(timeout()) :: timeout()
   defp convert_timeout_s_to_ms(:infinity), do: :infinity
   defp convert_timeout_s_to_ms(seconds), do: seconds * 1_000
 end

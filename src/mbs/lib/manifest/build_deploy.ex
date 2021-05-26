@@ -190,7 +190,7 @@ defmodule MBS.Manifest.BuildDeploy do
     components =
       manifests
       |> Enum.filter(&match?(%Component{}, &1))
-      |> Enum.map(&put_in(&1.toolchain, get_toolchain[&1.toolchain]))
+      |> Enum.map(&put_in(&1.toolchain, Map.fetch!(get_toolchain, &1.toolchain)))
 
     toolchains ++ components
   end
