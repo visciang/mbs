@@ -2,9 +2,9 @@
 
 ### What MBS is not
 
-Well, first it is not Bazel :) .. joking.
+Well, first it is neither Bazel nor a buildkit frontend :) .. joking.
 
-It's all about **tradeoff**. We should do one thing and do it well. This can't be considered without a clear context that defines where we would like to operate; and different context means different requirements, different expectations and so different definition of "one thing done well".
+It's all about **tradeoff**. We should do one thing and do it well. This can't be considered without a clear context that defines where we would like to operate; and different context means different requirements, different expectations and so different definitions of "one thing done well".
 
 What we are trying to target here is a simple thing to operate in the context of project oriented monorepositories with a number N of components where N is such that you can run a full build of it on a single machine (you can run means you accept the time it could take to complete a full build on you n-cpu-core host).
 

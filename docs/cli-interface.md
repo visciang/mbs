@@ -1,6 +1,6 @@
 ## CLI interface
 
-The information below are available via `mbs --help` or `mbs <COMMAND> <SUBCOMMAND> --help`.
+The information below are available via `./mbs.sh --help` or `./mbs.sh <COMMAND> <SUBCOMMAND> --help`.
 
 ### Commands
 
