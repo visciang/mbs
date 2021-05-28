@@ -46,7 +46,7 @@ that is build with the cmake toolchain:
 }
 ```
 
-When we `mbs build run make_coffee`, `mbs` will apply the toolchain recipe to build the component (after building any upstream dependency, toolchain included, if needed).
+When we `./mbs.sh build run make_coffee`, `mbs` will apply the toolchain recipe to build the component (after building any upstream dependency, toolchain included, if needed).
 
 By abstraction, if we think the toolchain as an "executable binary", the build process will be:
 

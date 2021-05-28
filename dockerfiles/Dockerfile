@@ -14,13 +14,13 @@ RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
 FROM elixir:1.12.0-alpine
-RUN apk add --no-cache docker docker-compose graphviz git
+RUN apk add --no-cache docker docker-compose graphviz git jq gettext
 COPY dockerfiles/entrypoint.sh /entrypoint.sh
+COPY dockerfiles/bootstrap.template.sh /bootstrap.template.sh
 COPY --from=builder /mbs/mbs /usr/local/bin/
 ARG MBS_VERSION=latest
 ENV MBS_VERSION=${MBS_VERSION}
 COPY dockerfiles/repo_init /repo_init
-COPY mbs.sh mbs.fish /repo_init/
+COPY mbs.sh /repo_init/
 RUN sed -i "s/latest/$MBS_VERSION/g" /repo_init/mbs.sh
-RUN sed -i "s/latest/$MBS_VERSION/g" /repo_init/mbs.fish
 ENTRYPOINT [ "/entrypoint.sh" ]
