@@ -2,46 +2,46 @@ defmodule MBS.Workflow.Job.Cache do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.{Cache, Docker}
+  alias MBS.{Cache, Config, Docker}
   alias MBS.Manifest.BuildDeploy.Target
 
   require MBS.CLI.Reporter.Status
 
   @type cache_result :: :cache_miss | :cached
 
-  @spec hit_toolchain(String.t(), String.t()) :: boolean()
-  def hit_toolchain(id, checksum) do
-    Cache.Docker.hit(checksum, id)
+  @spec hit_toolchain(Config.Data.t(), String.t(), String.t()) :: boolean()
+  def hit_toolchain(%Config.Data{} = config, id, checksum) do
+    Cache.Docker.hit(config, checksum, id)
   end
 
-  @spec hit_targets(String.t(), String.t(), [Target.t()]) :: boolean
-  def hit_targets(id, checksum, targets) do
+  @spec hit_targets(Config.Data.t(), String.t(), String.t(), [Target.t()]) :: boolean
+  def hit_targets(%Config.Data{} = config, id, checksum, targets) do
     Enum.all?(targets, fn
       %Target{type: :file, target: target} ->
         Cache.File.hit(id, checksum, target)
 
       %Target{type: :docker, target: target} ->
-        Cache.Docker.hit(checksum, target)
+        Cache.Docker.hit(config, checksum, target)
     end)
   end
 
-  @spec get_toolchain(String.t(), String.t()) :: cache_result()
-  def get_toolchain(id, checksum) do
-    case Cache.Docker.get(checksum, id) do
+  @spec get_toolchain(Config.Data.t(), String.t(), String.t()) :: cache_result()
+  def get_toolchain(%Config.Data{} = config, id, checksum) do
+    case Cache.Docker.get(config, checksum, id) do
       :ok -> :cached
       :error -> :cache_miss
     end
   end
 
-  @spec get_targets(String.t(), String.t(), [Target.t()]) :: cache_result()
-  def get_targets(id, checksum, targets) do
+  @spec get_targets(Config.Data.t(), String.t(), String.t(), [Target.t()]) :: cache_result()
+  def get_targets(%Config.Data{} = config, id, checksum, targets) do
     found_all_targets =
       Enum.all?(targets, fn
         %Target{type: :file, target: target} ->
           match?({:ok, _}, Cache.File.get(id, checksum, target))
 
         %Target{type: :docker, target: target} ->
-          :ok == Cache.Docker.get(checksum, target)
+          :ok == Cache.Docker.get(config, checksum, target)
       end)
 
     if found_all_targets do
@@ -64,24 +64,24 @@ defmodule MBS.Workflow.Job.Cache do
     end)
   end
 
-  @spec put_targets(String.t(), String.t(), [Target.t()]) :: :ok
-  def put_targets(id, checksum, targets) do
+  @spec put_targets(Config.Data.t(), String.t(), String.t(), [Target.t()]) :: :ok
+  def put_targets(%Config.Data{} = config, id, checksum, targets) do
     Enum.each(targets, fn
       %Target{type: :file, target: target} ->
-        Cache.File.put(id, checksum, target)
+        Cache.File.put(config, id, checksum, target)
 
       %Target{type: :docker, target: target} ->
-        Cache.Docker.put(checksum, target)
+        Cache.Docker.put(config, checksum, target)
     end)
   end
 
-  @spec put_toolchain(String.t(), String.t()) :: :ok
-  def put_toolchain(id, checksum) do
-    Cache.Docker.put(checksum, id)
+  @spec put_toolchain(Config.Data.t(), String.t(), String.t()) :: :ok
+  def put_toolchain(%Config.Data{} = config, id, checksum) do
+    Cache.Docker.put(config, checksum, id)
   end
 
-  @spec copy_targets(String.t(), String.t(), [Target.t()], Path.t()) :: :ok | {:error, term()}
-  def copy_targets(id, checksum, targets, output_dir) do
+  @spec copy_targets(Config.Data.t(), String.t(), String.t(), [Target.t()], Path.t()) :: :ok | {:error, term()}
+  def copy_targets(%Config.Data{} = config, id, checksum, targets, output_dir) do
     File.mkdir_p!(output_dir)
 
     Enum.reduce_while(targets, :ok, fn
@@ -101,7 +101,7 @@ defmodule MBS.Workflow.Job.Cache do
         end
 
       %Target{type: :docker, target: target}, _ ->
-        with true <- Cache.Docker.hit(checksum, target),
+        with true <- Cache.Docker.hit(config, checksum, target),
              :ok <- Docker.image_save(target, checksum, output_dir, id) do
           {:cont, :ok}
         else

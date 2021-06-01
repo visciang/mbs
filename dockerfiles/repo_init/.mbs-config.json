@@ -4,19 +4,10 @@
         "level": "info",
         "color": true
     },
-    "volume": {
-        "releases": "mbs-MBS_PROJECT_ID-releases",
-        "graph": "$BASEDIR/.mbs-graph"
-    },
     "cache": {
-        "local": {
-            "volume": "mbs-MBS_PROJECT_ID-local-cache"
-        },
-        "remote": {
-            "push": false,
-            "volume": "",
-            "docker_registry": ""
-        }
+        "push": false,
+        "volume": null,
+        "docker_registry": null
     },
     "timeout": 3600,
     "files_profile": {}

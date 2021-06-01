@@ -63,7 +63,7 @@ And at the end it expect to find the component target `build/make_coffee`.
 
 ### Environment variables
 
-A set of predefined environment variables are available in the toolchain run context:
+A set of predefined environment variables are available in the toolchain execution context:
 
 - `MBS_PROJECT_ID`: the project identifier
 - `MBS_ID`: the component identifier (ref .mbs-*.json `id` field)

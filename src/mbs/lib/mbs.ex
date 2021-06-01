@@ -1,7 +1,7 @@
 defmodule MBS do
   @moduledoc false
 
-  alias MBS.{Config, Env, Utils}
+  alias MBS.{Config, Utils}
   alias MBS.CLI.{Args, Command, Reporter}
 
   @spec main([String.t()]) :: :ok
@@ -15,8 +15,8 @@ defmodule MBS do
   def run(args, cwd \\ ".") do
     :ok = Reporter.start_link()
 
-    :ok = Env.validate()
     config = Config.load(cwd)
+    Config.logger(config)
 
     workflow_status =
       args

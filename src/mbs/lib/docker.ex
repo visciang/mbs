@@ -2,7 +2,7 @@ defmodule MBS.Docker do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.{Const, Utils}
+  alias MBS.Utils
   require MBS.CLI.Reporter.Status
 
   @type env_list :: [{String.t(), String.t()}]
@@ -113,50 +113,13 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec image_ls_project :: {:ok, [%{String.t() => String.t()}]} | {:error, term()}
-  def image_ls_project do
-    cmd_args = ["image", "ls", "--filter", "label=MBS_PROJECT_ID=#{Const.project_id()}", "--format", "{{json .}}"]
+  @spec image_ls_project(String.t()) :: {:ok, [%{String.t() => String.t()}]} | {:error, term()}
+  def image_ls_project(project) do
+    cmd_args = ["image", "ls", "--filter", "label=MBS_PROJECT_ID=#{project}", "--format", "{{json .}}"]
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
       {res, 0} -> {:ok, res |> String.split("\n", trim: true) |> Enum.map(&Jason.decode!/1)}
       {res, _} -> {:error, res}
-    end
-  end
-
-  @spec image_rm_project :: :ok
-  def image_rm_project do
-    cmd_args = [
-      "image",
-      "ls",
-      "--filter",
-      "label=MBS_PROJECT_ID=#{Const.project_id()}",
-      "--format",
-      "{{.Repository}}:{{.Tag}}"
-    ]
-
-    case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
-      {res, 0} ->
-        res
-        |> String.split("\n", trim: true)
-        |> Enum.each(fn image ->
-          [repository, tag] = String.split(image, ":", parts: 2, trim: true)
-          image_rm(repository, tag)
-        end)
-
-      {res, _} ->
-        IO.puts("Error:\n#{inspect(res)}")
-    end
-
-    :ok
-  end
-
-  @spec image_rm(String.t(), String.t()) :: :ok | {:error, term()}
-  def image_rm(repository, tag) do
-    cmd_args = ["image", "rm", "--force", "#{repository}:#{tag}"]
-
-    case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
-      {_, 0} -> :ok
-      {res, exit_status} -> {:error, {res, exit_status}}
     end
   end
 
@@ -243,6 +206,16 @@ defmodule MBS.Docker do
     docker_debug(job_id, cmd_args)
 
     case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
+      {_, 0} -> :ok
+      {res, exit_status} -> {:error, {res, exit_status}}
+    end
+  end
+
+  @spec system_prune :: :ok | {:error, {term(), pos_integer()}}
+  def system_prune do
+    cmd_args = ["system", "prune", "--force", "--all", "--volumes"]
+
+    case System.cmd("docker", cmd_args, stderr_to_stdout: true) do
       {_, 0} -> :ok
       {res, exit_status} -> {:error, {res, exit_status}}
     end

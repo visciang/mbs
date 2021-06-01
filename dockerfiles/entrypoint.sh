@@ -7,25 +7,13 @@ CMD=$1
 SUBCMD=$2
 
 if [ "$CMD" == "bootstrap" ]; then
-    LOG_LEVEL=$(jq -r '.log.level' .mbs-config.json) \
-    LOG_COLOR=$(jq -r '.log.color' .mbs-config.json) \
     MBS_PROJECT_ID=$(jq -r '.project' .mbs-config.json) \
-    MBS_RELEASES_VOLUME=$(jq -r '.volume.releases' .mbs-config.json) \
-    MBS_GRAPH_VOLUME=$(jq -r '.volume.graph' .mbs-config.json) \
-    MBS_PUSH=$(jq -r '.cache.remote.push' .mbs-config.json) \
-    MBS_REMOTE_CACHE_VOLUME=$(jq -r '.cache.remote.volume' .mbs-config.json) \
-    MBS_DOCKER_REGISTRY=$(jq -r '.cache.remote.docker_registry' .mbs-config.json) \
-    MBS_LOCAL_CACHE_VOLUME=$(jq -r '.cache.local.volume' .mbs-config.json) \
+    MBS_PUSH=$(jq -r '.cache.push' .mbs-config.json) \
+    MBS_REMOTE_CACHE_VOLUME=$(jq -r '.cache.volume' .mbs-config.json) \
     envsubst '
-        ${LOG_LEVEL}
-        ${LOG_COLOR}
         ${MBS_PROJECT_ID}
-        ${MBS_RELEASES_VOLUME}
-        ${MBS_GRAPH_VOLUME}
         ${MBS_PUSH}
-        ${MBS_REMOTE_CACHE_VOLUME}
-        ${MBS_DOCKER_REGISTRY}
-        ${MBS_LOCAL_CACHE_VOLUME}' \
+        ${MBS_REMOTE_CACHE_VOLUME}' \
         < /bootstrap.template.sh
 elif [ "$CMD" == "build" ] && [ "$SUBCMD" == "shell" ]; then
     $MBS $@

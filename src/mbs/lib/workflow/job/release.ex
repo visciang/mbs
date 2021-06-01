@@ -12,7 +12,7 @@ defmodule MBS.Workflow.Job.Release do
 
   @spec fun(Config.Data.t(), BuildDeploy.Type.t(), Path.t(), %{String.t() => String.t()}) :: fun()
   def fun(
-        %Config.Data{},
+        %Config.Data{} = config,
         %BuildDeploy.Toolchain{type: :deploy, dir: toolchain_dir, id: id, checksum: checksum},
         release_dir,
         _build_checksums
@@ -24,7 +24,7 @@ defmodule MBS.Workflow.Job.Release do
       target = %BuildDeploy.Target{type: :docker, target: id}
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(id, checksum, [target], targets_dir) do
+        case Job.Cache.copy_targets(config, id, checksum, [target], targets_dir) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 
@@ -47,7 +47,7 @@ defmodule MBS.Workflow.Job.Release do
   end
 
   def fun(
-        %Config.Data{},
+        %Config.Data{} = config,
         %BuildDeploy.Component{type: :deploy, id: id, dir: component_dir, files: deploy_targets},
         release_dir,
         build_checksums
@@ -59,7 +59,7 @@ defmodule MBS.Workflow.Job.Release do
       targets_dir = Path.join(release_dir, id)
 
       {report_status, report_desc} =
-        case Job.Cache.copy_targets(id, build_checksum, deploy_targets, targets_dir) do
+        case Job.Cache.copy_targets(config, id, build_checksum, deploy_targets, targets_dir) do
           :ok ->
             {Reporter.Status.ok(), targets_dir}
 

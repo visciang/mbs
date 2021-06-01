@@ -17,11 +17,6 @@
         ]
     },
     "docker_opts": [
-        "-v", "mbs-test-local-cache:/.mbs-local-cache",
-        "-v", "mbs-test-releases:/.mbs-releases",
-        "-v", "mbs-test-graph:/.mbs-graph",
-        "-e", "LOG_COLOR=false",
-        "-e", "MBS_LOCAL_CACHE_VOLUME=mbs-test-local-cache",
-        "-e", "MBS_RELEASES_VOLUME=mbs-test-releases"
+        "-v", "mbs-test-dind-artifacts:/mbs"
     ]
 }

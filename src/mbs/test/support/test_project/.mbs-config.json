@@ -1,2 +1,13 @@
 {
+    "project": "test",
+    "log": {
+        "level": "info",
+        "color": false
+    },
+    "cache": {
+        "push": false,
+        "volume": null,
+        "docker_registry": null
+    },
+    "timeout": 600
 }

@@ -40,15 +40,7 @@ defmodule MBS.Toolchain.RunDeploy do
   defp run_opts(%BuildDeploy.Component{docker_opts: docker_opts, dir: component_dir}) do
     opts = ["--rm", "-t" | docker_opts]
     opts_work_dir = ["-w", "#{component_dir}"]
-
-    # NOTE:
-    # mbs container will run the toolchain in "docker-in-docker".
-    # A Docker container in a Docker container uses the parent HOST's Docker daemon and hence,
-    # any volumes that are mounted in the  "docker-in-docker" case is still referenced from the HOST,
-    # and not from the container.
-    # That's why we mount the original host docker volume.
-
-    opts_dir_mount = ["-v", "#{Const.release_volume()}:#{Const.releases_dir()}:ro"]
+    opts_dir_mount = ["-v", "#{Const.releases_dir()}:#{Const.releases_dir()}:ro"]
 
     opts ++ opts_work_dir ++ opts_dir_mount
   end

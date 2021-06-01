@@ -2,7 +2,7 @@ defmodule MBS.Toolchain.Common do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.{Const, Docker}
+  alias MBS.{Config, Docker}
   alias MBS.Manifest.BuildDeploy
 
   require Reporter.Status
@@ -11,8 +11,9 @@ defmodule MBS.Toolchain.Common do
 
   @default_entrypoint "/toolchain.sh"
 
-  @spec build(BuildDeploy.Toolchain.t(), boolean()) :: :ok | {:error, term()}
+  @spec build(%Config.Data{}, BuildDeploy.Toolchain.t(), boolean()) :: :ok | {:error, term()}
   def build(
+        %Config.Data{project: project},
         %BuildDeploy.Toolchain{
           id: id,
           dir: dir,
@@ -26,7 +27,7 @@ defmodule MBS.Toolchain.Common do
 
     docker_labels = [
       "--label",
-      "MBS_PROJECT_ID=#{Const.project_id()}",
+      "MBS_PROJECT_ID=#{project}",
       "--label",
       "MBS_ID=#{id}",
       "--label",

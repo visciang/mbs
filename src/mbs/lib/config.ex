@@ -3,18 +3,33 @@ defmodule MBS.Config.Data do
 
   defmodule Cache do
     @moduledoc false
-    defstruct [:dir]
+    defstruct [:push, :volume, :docker_registry]
 
     @type t :: %__MODULE__{
-            dir: Path.t()
+            push: boolean(),
+            volume: nil | String.t(),
+            docker_registry: nil | String.t()
           }
   end
 
-  defstruct [:parallelism, :timeout, :files_profile]
+  defmodule Log do
+    @moduledoc false
+    defstruct [:level, :color]
+
+    @type t :: %__MODULE__{
+            level: Logger.level(),
+            color: boolean()
+          }
+  end
+
+  defstruct [:project, :log, :cache, :parallelism, :timeout, :files_profile]
 
   @type files_profiles :: %{String.t() => [String.t()]}
 
   @type t :: %__MODULE__{
+          project: String.t(),
+          log: __MODULE__.Log.t(),
+          cache: __MODULE__.Cache.t(),
           parallelism: non_neg_integer(),
           timeout: timeout(),
           files_profile: files_profiles()
@@ -26,6 +41,12 @@ defmodule MBS.Config do
 
   alias MBS.Config.Data
   alias MBS.{Const, Utils}
+
+  @spec logger(Data.t()) :: :ok
+  def logger(%Data{log: %Data.Log{level: level, color: color}}) do
+    Logger.configure(level: level)
+    Application.put_env(:elixir, :ansi_enabled, color)
+  end
 
   @spec load(Path.t()) :: Data.t()
   def load(cwd) do
@@ -62,6 +83,7 @@ defmodule MBS.Config do
   @spec add_defaults(map()) :: map()
   defp add_defaults(conf) do
     conf
+    |> update_in(["cache"], &(&1 || %{"push" => false, "volume" => nil, "docker_registry" => nil}))
     |> update_in(["parallelism"], &(&1 || :erlang.system_info(:logical_processors)))
     |> update_in(["timeout"], &(&1 || :infinity))
     |> update_in(["files_profile"], &(&1 || %{}))
@@ -69,10 +91,54 @@ defmodule MBS.Config do
 
   @spec validate(map()) :: map()
   defp validate(conf) do
+    validate_project(conf["project"])
+    validate_log(conf["log"])
+    validate_cache(conf["cache"])
     validate_parallelism(conf["parallelism"])
     validate_timeout(conf["timeout"])
     validate_files_profile(conf["files_profile"])
     conf
+  end
+
+  @spec validate_project(String.t()) :: nil
+  defp validate_project(project) do
+    unless is_binary(project) do
+      Utils.halt("Bad project in #{Const.config_file()}")
+    end
+  end
+
+  @spec validate_log(map()) :: nil
+  defp validate_log(log) do
+    unless is_map(log) do
+      Utils.halt("Bad log in #{Const.config_file()}")
+    end
+
+    unless is_binary(log["level"]) do
+      Utils.halt("Bad log.color in #{Const.config_file()}")
+    end
+
+    unless is_boolean(log["color"]) do
+      Utils.halt("Bad log.color in #{Const.config_file()}")
+    end
+  end
+
+  @spec validate_cache(map()) :: nil
+  defp validate_cache(cache) do
+    unless is_map(cache) do
+      Utils.halt("Bad cache in #{Const.config_file()}")
+    end
+
+    unless is_boolean(cache["push"]) do
+      Utils.halt("Bad cache.push in #{Const.config_file()}")
+    end
+
+    unless is_nil(cache["volume"]) or is_binary(cache["volume"]) do
+      Utils.halt("Bad cache.volume in #{Const.config_file()}")
+    end
+
+    unless is_nil(cache["docker_registry"]) or is_binary(cache["docker_registry"]) do
+      Utils.halt("Bad cache.docker_registry in #{Const.config_file()}")
+    end
   end
 
   @spec validate_parallelism(pos_integer()) :: nil
@@ -107,6 +173,16 @@ defmodule MBS.Config do
   @spec to_struct(map()) :: Data.t()
   defp to_struct(conf) do
     %Data{
+      project: conf["project"],
+      log: %Data.Log{
+        level: conf["log"]["level"] |> String.to_atom(),
+        color: conf["log"]["color"]
+      },
+      cache: %Data.Cache{
+        push: conf["cache"]["push"],
+        volume: conf["cache"]["volume"],
+        docker_registry: conf["cache"]["docker_registry"]
+      },
       parallelism: conf["parallelism"],
       timeout: conf["timeout"],
       files_profile: conf["files_profile"]

@@ -2,54 +2,59 @@ defmodule MBS.Cache.Docker do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.{Const, Docker}
+  alias MBS.{Config, Docker}
 
   require MBS.CLI.Reporter.Status
 
-  @spec put(String.t(), String.t()) :: :ok
-  def put(checksum, name) do
-    if Const.push() do
+  @spec put(Config.Data.t(), String.t(), String.t()) :: :ok
+  def put(%Config.Data{cache: %Config.Data.Cache{push: push}} = config, checksum, name) do
+    if push do
+      repository_ = repository(config, name)
+
       Reporter.job_report(
         name,
         Reporter.Status.log(),
-        "CACHE: PUSH docker image #{repository(name)}:#{checksum}",
+        "CACHE: PUSH docker image #{repository_}:#{checksum}",
         nil
       )
 
-      :ok = Docker.image_tag(name, checksum, repository(name), checksum)
-      :ok = Docker.image_push(repository(name), checksum)
+      :ok = Docker.image_tag(name, checksum, repository_, checksum)
+      :ok = Docker.image_push(repository_, checksum)
     end
 
     :ok
   end
 
-  @spec get(String.t(), String.t()) :: :ok | :error
-  def get(checksum, name) do
+  @spec get(Config.Data.t(), String.t(), String.t()) :: :ok | :error
+  def get(%Config.Data{} = config, checksum, name) do
     with {:local_cache, false} <- {:local_cache, Docker.image_exists(name, checksum)},
-         {:cache, false} <- {:cache, Docker.image_exists(repository(name), checksum)} do
+         repository_ = repository(config, name),
+         {:cache, false} <- {:cache, Docker.image_exists(repository_, checksum)} do
       :error
     else
       {:local_cache, true} ->
         :ok
 
       {:cache, true} ->
+        repository_ = repository(config, name)
+
         Reporter.job_report(
           name,
           Reporter.Status.log(),
-          "CACHE: PULL docker image #{repository(name)}:#{checksum}",
+          "CACHE: PULL docker image #{repository_}:#{checksum}",
           nil
         )
 
-        :ok = Docker.image_pull(repository(name), checksum)
-        :ok = Docker.image_tag(repository(name), checksum, name, checksum)
+        :ok = Docker.image_pull(repository_, checksum)
+        :ok = Docker.image_tag(repository_, checksum, name, checksum)
 
         :ok
     end
   end
 
-  @spec hit(String.t(), String.t()) :: boolean()
-  def hit(checksum, name) do
-    Docker.image_exists(name, checksum) or Docker.image_exists(repository(name), checksum)
+  @spec hit(Config.Data.t(), String.t(), String.t()) :: boolean()
+  def hit(%Config.Data{} = config, checksum, name) do
+    Docker.image_exists(name, checksum) or Docker.image_exists(repository(config, name), checksum)
   end
 
   @spec path_local(String.t(), String.t()) :: String.t()
@@ -57,8 +62,13 @@ defmodule MBS.Cache.Docker do
     "#{name}:#{checksum}"
   end
 
-  defp repository(name) do
-    authority = URI.parse(Const.docker_registry()).authority
-    "#{authority}/#{name}"
+  @spec repository(Config.Data.t(), String.t()) :: String.t()
+  defp repository(%Config.Data{cache: %Config.Data.Cache{docker_registry: docker_registry}}, name) do
+    if docker_registry != nil do
+      authority = URI.parse(docker_registry).authority
+      "#{authority}/#{name}"
+    else
+      name
+    end
   end
 end

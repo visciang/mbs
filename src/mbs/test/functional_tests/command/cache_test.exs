@@ -15,7 +15,7 @@ defmodule Test.Command.Cache do
       msg = capture_io(fn -> assert :ok == MBS.run(["cache", "size"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
-      Local cache volume:\s+#{System.get_env("MBS_LOCAL_CACHE_VOLUME")}\s+
+      Local cache dir:\s+#{MBS.Const.local_cache_dir()}\s+
       Local docker registry:\s+
       Completed \(0 jobs\)\s+\
       """
@@ -46,7 +46,7 @@ defmodule Test.Command.Cache do
       msg = capture_io(fn -> assert :ok == MBS.run(["cache", "size"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
-      Local cache volume:\s+#{System.get_env("MBS_LOCAL_CACHE_VOLUME")}\s+
+      Local cache dir:\s+#{MBS.Const.local_cache_dir()}\s+
        0.3MB  | #{@test_component_a_id}\s+
        0.3MB  |   - #{component_a_checksum}\s+
       Local docker registry:\s+
