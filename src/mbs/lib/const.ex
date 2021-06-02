@@ -26,7 +26,7 @@ defmodule MBS.Const do
   def release_metadata_filename, do: "metadata.json"
 
   @spec cache_dir :: Path.t()
-  def cache_dir, do: "/mbs/cache"
+  def cache_dir, do: "/mbs/remote_cache"
 
   @spec local_cache_dir :: Path.t()
   def local_cache_dir, do: "/mbs/local_cache"

@@ -20,7 +20,7 @@ In `.mbs-config.json` you can configure them, ref. [Global configuration](#globa
 
 ```js
 {
-    "cache": {
+    "remote_cache": {
         "push": false,
         "volume": "/nfs_share/mbs-myproject-cache",
         "docker_registry": "https://my-private-docker-registry:5000"
@@ -76,12 +76,12 @@ MBS execution global configuration parameters.
         "color": true
     },
     // cache config
-    "cache": {
+    "remote_cache": {
         // remote volume and docker_registry, push enables/disable remote push
-        // leave volume / docker_registry empty to don't use a remote cache at all
+        // leave volume / docker_registry null to don't use a remote cache at all
         "push": false,
-        "volume": "",
-        "docker_registry": ""
+        "volume": null,
+        "docker_registry": null
     },
     // [optional] parallelism: run parallelism
     // [default] n. available cores

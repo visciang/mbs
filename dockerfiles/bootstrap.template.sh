@@ -19,7 +19,7 @@ if [ -z "$DOCKER_DIND_ID" ]; then
 fi
 
 if [ "$MBS_PUSH" = "true" ]; then
-    V_MBS_REMOTE_CACHE_VOLUME="--volume \"$MBS_REMOTE_CACHE_VOLUME\":/mbs-cache"
+    V_MBS_REMOTE_CACHE_VOLUME="--volume \"$MBS_REMOTE_CACHE_VOLUME\":/mbs-remote_cache"
 else
     V_MBS_REMOTE_CACHE_VOLUME=""
 fi

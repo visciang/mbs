@@ -7,7 +7,7 @@ defmodule MBS.Cache.Docker do
   require MBS.CLI.Reporter.Status
 
   @spec put(Config.Data.t(), String.t(), String.t()) :: :ok
-  def put(%Config.Data{cache: %Config.Data.Cache{push: push}} = config, checksum, name) do
+  def put(%Config.Data{remote_cache: %Config.Data.RemoteCache{push: push}} = config, checksum, name) do
     if push do
       repository_ = repository(config, name)
 
@@ -63,7 +63,7 @@ defmodule MBS.Cache.Docker do
   end
 
   @spec repository(Config.Data.t(), String.t()) :: String.t()
-  defp repository(%Config.Data{cache: %Config.Data.Cache{docker_registry: docker_registry}}, name) do
+  defp repository(%Config.Data{remote_cache: %Config.Data.RemoteCache{docker_registry: docker_registry}}, name) do
     if docker_registry != nil do
       authority = URI.parse(docker_registry).authority
       "#{authority}/#{name}"

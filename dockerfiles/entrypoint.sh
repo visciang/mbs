@@ -8,8 +8,8 @@ SUBCMD=$2
 
 if [ "$CMD" == "bootstrap" ]; then
     MBS_PROJECT_ID=$(jq -r '.project' .mbs-config.json) \
-    MBS_PUSH=$(jq -r '.cache.push' .mbs-config.json) \
-    MBS_REMOTE_CACHE_VOLUME=$(jq -r '.cache.volume' .mbs-config.json) \
+    MBS_PUSH=$(jq -r '.remote_cache.push' .mbs-config.json) \
+    MBS_REMOTE_CACHE_VOLUME=$(jq -r '.remote_cache.volume' .mbs-config.json) \
     envsubst '
         ${MBS_PROJECT_ID}
         ${MBS_PUSH}

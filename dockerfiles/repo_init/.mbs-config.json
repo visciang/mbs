@@ -4,7 +4,7 @@
         "level": "info",
         "color": true
     },
-    "cache": {
+    "remote_cache": {
         "push": false,
         "volume": null,
         "docker_registry": null

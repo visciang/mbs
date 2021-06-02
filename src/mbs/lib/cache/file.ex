@@ -7,7 +7,7 @@ defmodule MBS.Cache.File do
   require MBS.CLI.Reporter.Status
 
   @spec put(Config.Data.t(), String.t(), String.t(), String.t()) :: :ok
-  def put(%Config.Data{cache: %Config.Data.Cache{push: push}}, name, checksum, target) do
+  def put(%Config.Data{remote_cache: %Config.Data.RemoteCache{push: push}}, name, checksum, target) do
     local_cache_dest_target = path_local(name, checksum, target)
     local_cache_dest_dir = Path.dirname(local_cache_dest_target)
 
