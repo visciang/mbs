@@ -2,6 +2,8 @@ DOCKER_DIND_NAME="mbs-$MBS_PROJECT_ID-dind"
 DOCKER_DIND_ID="$(docker ps --filter name="^/$DOCKER_DIND_NAME\$" --format "{{ .ID }}")"
 
 if [ -z "$DOCKER_DIND_ID" ]; then
+    echo "Starting Docker DIND daemon ($DOCKER_DIND_NAME), please wait few seconds ...\n"
+
     docker run --detach --privileged --rm \
         --name="$DOCKER_DIND_NAME" --hostname="$DOCKER_DIND_NAME" \
         --env DOCKER_TLS_CERTDIR="" \
@@ -10,8 +12,6 @@ if [ -z "$DOCKER_DIND_ID" ]; then
         --volume="$DOCKER_DIND_NAME-docker":/var/lib/docker \
         --volume="$BASEDIR":"$BASEDIR" \
         docker:20.10.6-dind
-
-    echo "Starting Docker DIND daemon ($DOCKER_DIND_NAME), please wait few seconds ..."
     
     docker exec $DOCKER_DIND_NAME docker version
 

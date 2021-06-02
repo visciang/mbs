@@ -14,7 +14,7 @@ Docker images are stored in your local host docker registry.
 
 MBS will leverage the local caches to rebuild only what's changed.
 
-Optionally it's possible to define "remote caches" to have a cache shareable beetwen the developers and the CI.
+Optionally it's possible to define "remote caches" to have a cache shareable beetween the developers and the CI.
 
 In `.mbs-config.json` you can configure them, ref. [Global configuration](#global-configuration). The relevant part is:
 
@@ -74,11 +74,6 @@ MBS execution global configuration parameters.
     "log": {
         "level": "info",
         "color": true
-    },
-    // volumes to persist releases and graph artifacts
-    "volume": {
-        "releases": "mbs-mbs-releases",
-        "graph": "$BASEDIR/.mbs-graph"
     },
     // cache config
     "cache": {
