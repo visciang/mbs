@@ -12,7 +12,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
   @spec fun(Config.Data.t(), BuildDeploy.Type.t(), boolean(), boolean(), boolean()) :: Job.fun()
   def fun(
-        %Config.Data{},
+        %Config.Data{} = config,
         %BuildDeploy.Toolchain{id: id, checksum: checksum} = toolchain,
         force,
         _get_deps_only,
@@ -22,9 +22,9 @@ defmodule MBS.Workflow.Job.RunBuild do
       start_time = Reporter.time()
 
       {cached, report_status, report_desc} =
-        with :cache_miss <- if(force, do: :cache_miss, else: Job.Cache.get_toolchain(id, checksum)),
-             :ok <- Toolchain.Common.build(toolchain, force),
-             :ok <- Job.Cache.put_toolchain(id, checksum) do
+        with :cache_miss <- if(force, do: :cache_miss, else: Job.Cache.get_toolchain(config, id, checksum)),
+             :ok <- Toolchain.Common.build(config, toolchain, force),
+             :ok <- Job.Cache.put_toolchain(config, id, checksum) do
           {false, Reporter.Status.ok(), checksum}
         else
           :cached ->
@@ -48,7 +48,7 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  def fun(%Config.Data{}, %BuildDeploy.Component{id: id} = component, force, get_deps_only, sandboxed) do
+  def fun(%Config.Data{} = config, %BuildDeploy.Component{id: id} = component, force, get_deps_only, sandboxed) do
     fn _job_id, upstream_results ->
       start_time = Reporter.time()
 
@@ -60,7 +60,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
           {true, Reporter.Status.uptodate(), checksum}
         else
-          run(component, checksum, upstream_results, sandboxed, force)
+          run(config, component, checksum, upstream_results, sandboxed, force)
         end
 
       end_time = Reporter.time()
@@ -99,24 +99,25 @@ defmodule MBS.Workflow.Job.RunBuild do
     Context.Files.put(component, upstream_components(upstream_results), sandboxed)
   end
 
-  @spec run(BuildDeploy.Component.t(), String.t(), Job.upstream_results(), boolean(), boolean()) ::
+  @spec run(Config.Data.t(), BuildDeploy.Component.t(), String.t(), Job.upstream_results(), boolean(), boolean()) ::
           {false, :ok | {:error, binary}, nil | binary}
   defp run(
+         %Config.Data{} = config,
          %BuildDeploy.Component{id: id, targets: targets} = component,
          checksum,
          upstream_results,
          sandboxed,
          force
        ) do
-    with :cache_miss <- if(force, do: :cache_miss, else: Job.Cache.get_targets(id, checksum, targets)),
-         {:ok, envs} <- Toolchain.RunBuild.up(component, checksum, upstream_results, not sandboxed),
+    with :cache_miss <- if(force, do: :cache_miss, else: Job.Cache.get_targets(config, id, checksum, targets)),
+         {:ok, envs} <- Toolchain.RunBuild.up(config, component, checksum, upstream_results, not sandboxed),
          :ok <- Context.Config.put(component, sandboxed),
          {:ok, changed_deps} <- Context.Deps.put_upstream(component, upstream_results, force, sandboxed),
          :ok <- Context.Files.put(component, upstream_components(upstream_results), sandboxed),
          :ok <- Toolchain.RunBuild.exec(component, changed_deps, envs),
          :ok <- Context.Deps.mark_changed(changed_deps, sandboxed),
          {:ok, targets} <- Context.Targets.get(component, checksum, sandboxed),
-         :ok <- Job.Cache.put_targets(id, checksum, targets) do
+         :ok <- Job.Cache.put_targets(config, id, checksum, targets) do
       {false, Reporter.Status.ok(), checksum}
     else
       :cached ->

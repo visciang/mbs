@@ -10,21 +10,12 @@ defmodule Test.Utils do
   def setup_volume_dirs do
     Enum.each(
       [Const.local_cache_dir(), Const.releases_dir(), Const.graph_dir()],
-      &rm_dir_content/1
+      &File.rm_rf!/1
     )
-  end
-
-  def rm_dir_content(dir) do
-    dir
-    |> File.ls!()
-    |> Enum.each(&File.rm_rf!(Path.join(dir, &1)))
   end
 
   def setup_env_vars do
     System.put_env("MBS_VERSION", test_mbs_version())
-    System.put_env("MBS_PROJECT_ID", test_mbs_project_id())
-    System.put_env("MBS_PUSH", "false")
-    System.put_env("LOG_COLOR", "false")
   end
 
   def setup_clean_cache(_context) do
@@ -41,7 +32,7 @@ defmodule Test.Utils do
     end
 
     defp wipe_files_cache do
-      Test.Utils.rm_dir_content(Const.local_cache_dir())
+      File.rm_rf!(Const.local_cache_dir())
     end
 
     defp wipe_all_image_tags do

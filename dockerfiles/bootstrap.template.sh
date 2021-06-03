@@ -1,5 +1,25 @@
+DOCKER_DIND_NAME="mbs-$MBS_PROJECT_ID-dind"
+DOCKER_DIND_ID="$(docker ps --filter name="^/$DOCKER_DIND_NAME\$" --format "{{ .ID }}")"
+
+if [ -z "$DOCKER_DIND_ID" ]; then
+    echo "Starting Docker DIND daemon ($DOCKER_DIND_NAME), please wait few seconds ...\n"
+
+    docker run --detach --privileged --rm \
+        --name="$DOCKER_DIND_NAME" --hostname="$DOCKER_DIND_NAME" \
+        --env DOCKER_TLS_CERTDIR="" \
+        --env DOCKER_TLS_VERIFY="" \
+        --volume="$DOCKER_DIND_NAME-artifacts":/mbs \
+        --volume="$DOCKER_DIND_NAME-docker":/var/lib/docker \
+        --volume="$BASEDIR":"$BASEDIR" \
+        docker:20.10.6-dind
+    
+    docker exec $DOCKER_DIND_NAME docker version
+
+    echo "\nDocker DIND UP."
+fi
+
 if [ "$MBS_PUSH" = "true" ]; then
-    V_MBS_REMOTE_CACHE_VOLUME="-v $MBS_REMOTE_CACHE_VOLUME:/mbs-cache"
+    V_MBS_REMOTE_CACHE_VOLUME="--volume \"$MBS_REMOTE_CACHE_VOLUME\":/mbs-remote_cache"
 else
     V_MBS_REMOTE_CACHE_VOLUME=""
 fi
@@ -9,19 +29,13 @@ if [ ! -t 1 ]; then
     TTY="";
 fi
 
-docker run --init --rm --net host $TTY \
-    -v /var/run/docker.sock:/var/run/docker.sock \
+docker run --init --rm $TTY \
+    --link="$DOCKER_DIND_NAME" \
+    --env DOCKER_HOST="tcp://$DOCKER_DIND_NAME:2375" \
+    --env DOCKER_TLS_CERTDIR="" \
+    --env DOCKER_TLS_VERIFY="" \
+    --volume="$DOCKER_DIND_NAME-artifacts":/mbs \
+    --volume="$BASEDIR":"$BASEDIR" \
     $V_MBS_REMOTE_CACHE_VOLUME \
-    -v "$MBS_LOCAL_CACHE_VOLUME":/.mbs-local-cache \
-    -v "$MBS_RELEASES_VOLUME":/.mbs-releases \
-    -v "$MBS_GRAPH_VOLUME":/.mbs-graph \
-    -v "$BASEDIR":"$BASEDIR" \
-    -w "$BASEDIR" \
-    -e LOG_LEVEL="$LOG_LEVEL" \
-    -e LOG_COLOR="$LOG_COLOR" \
-    -e MBS_PROJECT_ID="$MBS_PROJECT_ID" \
-    -e MBS_PUSH="$MBS_PUSH" \
-    -e MBS_DOCKER_REGISTRY="$MBS_DOCKER_REGISTRY" \
-    -e MBS_LOCAL_CACHE_VOLUME="$MBS_LOCAL_CACHE_VOLUME" \
-    -e MBS_RELEASES_VOLUME="$MBS_RELEASES_VOLUME" \
+    --workdir="$BASEDIR" \
     visciang/mbs:$MBS_VERSION $@

@@ -16,7 +16,7 @@ defmodule MBS.Workflow.Job.Shell do
     end
   end
 
-  def fun(%Config.Data{}, %BuildDeploy.Component{id: id} = component, shell_target) do
+  def fun(%Config.Data{} = config, %BuildDeploy.Component{id: id} = component, shell_target) do
     fn _job_id, upstream_results ->
       checksum = Job.Utils.build_checksum(component, upstream_results)
 
@@ -24,7 +24,7 @@ defmodule MBS.Workflow.Job.Shell do
         dependencies = Job.Utils.component_dependencies(component)
         upstream_results = Job.Utils.filter_upstream_results(upstream_results, dependencies)
 
-        Toolchain.Shell.cmd(component, checksum, upstream_results)
+        Toolchain.Shell.cmd(config, component, checksum, upstream_results)
         |> IO.puts()
       end
 

@@ -7,27 +7,21 @@ CMD=$1
 SUBCMD=$2
 
 if [ "$CMD" == "bootstrap" ]; then
-    LOG_LEVEL=$(jq -r '.log.level' .mbs-config.json) \
-    LOG_COLOR=$(jq -r '.log.color' .mbs-config.json) \
-    MBS_PROJECT_ID=$(jq -r '.project' .mbs-config.json) \
-    MBS_RELEASES_VOLUME=$(jq -r '.volume.releases' .mbs-config.json) \
-    MBS_GRAPH_VOLUME=$(jq -r '.volume.graph' .mbs-config.json) \
-    MBS_PUSH=$(jq -r '.cache.remote.push' .mbs-config.json) \
-    MBS_REMOTE_CACHE_VOLUME=$(jq -r '.cache.remote.volume' .mbs-config.json) \
-    MBS_DOCKER_REGISTRY=$(jq -r '.cache.remote.docker_registry' .mbs-config.json) \
-    MBS_LOCAL_CACHE_VOLUME=$(jq -r '.cache.local.volume' .mbs-config.json) \
-    envsubst '
-        ${LOG_LEVEL}
-        ${LOG_COLOR}
-        ${MBS_PROJECT_ID}
-        ${MBS_RELEASES_VOLUME}
-        ${MBS_GRAPH_VOLUME}
-        ${MBS_PUSH}
-        ${MBS_REMOTE_CACHE_VOLUME}
-        ${MBS_DOCKER_REGISTRY}
-        ${MBS_LOCAL_CACHE_VOLUME}' \
-        < /bootstrap.template.sh
-elif [ "$CMD" == "build" ] && [ "$SUBCMD" == "shell" ]; then
+    MBS_PROJECT_ID=$(jq -r '.project' .mbs-config.json)
+    MBS_PUSH=$(jq -r '.remote_cache.push' .mbs-config.json)
+    MBS_REMOTE_CACHE_VOLUME=$(jq -r '.remote_cache.volume' .mbs-config.json)
+    MBS_REMOTE_CACHE_DOCKER_REGISTRY=$(jq -r '.remote_cache.docker_registry' .mbs-config.json)
+
+    if [ "$MBS_PUSH" = "true" ]; then
+        if [ "$MBS_REMOTE_CACHE_VOLUME" = "null" -o "$MBS_REMOTE_CACHE_DOCKER_REGISTRY" = "null" ]; then
+            >&2 echo "Bad config: .remote_cache.push='true' implies a non null .remote_cache.volume / .remote_cache.docker_registry"
+            exit 1
+        fi
+    fi
+
+    MBS_PROJECT_ID=$MBS_PROJECT_ID MBS_PUSH=$MBS_PUSH MBS_REMOTE_CACHE_VOLUME=$MBS_REMOTE_CACHE_VOLUME \
+    envsubst '${MBS_PROJECT_ID} ${MBS_PUSH} ${MBS_REMOTE_CACHE_VOLUME}' < /bootstrap.template.sh
+elif [ "$CMD" == "build" -a "$SUBCMD" == "shell" ]; then
     $MBS $@
 
     SHELL_TARGET=$3

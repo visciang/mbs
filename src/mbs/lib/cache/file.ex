@@ -2,19 +2,19 @@ defmodule MBS.Cache.File do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.Const
+  alias MBS.{Config, Const}
 
   require MBS.CLI.Reporter.Status
 
-  @spec put(String.t(), String.t(), String.t()) :: :ok
-  def put(name, checksum, target) do
+  @spec put(Config.Data.t(), String.t(), String.t(), String.t()) :: :ok
+  def put(%Config.Data{remote_cache: %Config.Data.RemoteCache{push: push}}, name, checksum, target) do
     local_cache_dest_target = path_local(name, checksum, target)
     local_cache_dest_dir = Path.dirname(local_cache_dest_target)
 
     File.mkdir_p!(local_cache_dest_dir)
     File.cp!(target, local_cache_dest_target)
 
-    if Const.push() do
+    if push do
       cache_dest_target = path(name, checksum, target)
       cache_dest_dir = Path.dirname(cache_dest_target)
 

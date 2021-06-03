@@ -14,33 +14,28 @@ Docker images are stored in your local host docker registry.
 
 MBS will leverage the local caches to rebuild only what's changed.
 
-Optionally it's possible to define "remote caches" to have a cache shareable with the developers and the CI.
+Optionally it's possible to define "remote caches" to have a cache shareable beetween the developers and the CI.
 
-In `mbs.sh` you can set them, check the script for more details. The relevant part is:
+In `.mbs-config.json` you can configure them, ref. [Global configuration](#global-configuration). The relevant part is:
 
-```sh
-# [OPTIONAL]
-# external cache for artifacts files and docker images
-MBS_PUSH="true"
-MBS_CACHE_VOLUME="/nfs_share/mbs-$MBS_PROJECT_ID-cache"
-MBS_DOCKER_REGISTRY="https://my-private-docker-registry:5000"
+```js
+{
+    "remote_cache": {
+        "push": false,
+        "volume": "/nfs_share/mbs-myproject-cache",
+        "docker_registry": "https://my-private-docker-registry:5000"
+    }
+}
 ```
 
-- MBS_PUSH: enable/disable push to the remote caches
-- MBS_CACHE_VOLUME: the host directory where we mount the remote cache folder
-- MBS_DOCKER_REGISTRY: the external docker registry
+- cache.push: enable/disable push to the remote caches
+- cache.volume: the host directory where we mount the remote cache folder
+- cache.docker_registry: the external docker registry
 
 This approach is flexible enough to "share" the cache data between all the developers and the CI. It's enough to map the host dir to a "shared disk" (for example with NFS, cifs, ...).
 
-In a basic and safe setup, the cache should be shared in "read-only" mode to the developers (`MBS_PUSH=false`) and "read-write" to the CI (MBS_PUSH="true").
+In a basic and safe setup, the cache should be shared in "read-only" mode to the developers (`"push": false`) and "read-write" to the CI (`"push": true`).
 Following this approach the developers will see and re-use the artifacts build by the CI while keeping the simplicity / conflict-less approach of a single cache writer.
-
-### Environment variables
-
-Environment variable that you can pass to `mbs`:
-
-- `LOG_LEVEL`: set log level. For example `LOG_LEVEL="debug"` to turn on debug logs.
-- `LOG_COLOR`: enable / disable color. For example `LOG_LEVEL="true"`, `LOG_LEVEL="false"`.
 
 ### Project
 
@@ -73,6 +68,21 @@ MBS execution global configuration parameters.
 
 ```js
 {
+    // the project identifier
+    "project": "mbs",
+    // log level and color
+    "log": {
+        "level": "info",
+        "color": true
+    },
+    // cache config
+    "remote_cache": {
+        // remote volume and docker_registry, push enables/disable remote push
+        // leave volume / docker_registry null to don't use a remote cache at all
+        "push": false,
+        "volume": null,
+        "docker_registry": null
+    },
     // [optional] parallelism: run parallelism
     // [default] n. available cores
     "parallelism": 16,

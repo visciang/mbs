@@ -25,9 +25,9 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.CacheSize do
   end
 
   @spec run(Command.CacheSize.t(), Config.Data.t(), Path.t()) :: Command.on_run()
-  def run(%Command.CacheSize{}, %Config.Data{} = _config, _cwd) do
+  def run(%Command.CacheSize{}, %Config.Data{} = config, _cwd) do
     run_local_cache()
-    run_docker_registry()
+    run_docker_registry(config)
 
     :ok
   end
@@ -36,7 +36,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.CacheSize do
   defp run_local_cache do
     infos = info_local_cache()
 
-    IO.puts(IO.ANSI.format([:bright, :green, "\nLocal cache volume:  ", :normal, Const.local_cache_volume(), "\n"]))
+    IO.puts(IO.ANSI.format([:bright, :green, "\nLocal cache dir:  ", :normal, Const.local_cache_dir(), "\n"]))
 
     infos
     |> Enum.group_by(& &1.component)
@@ -44,11 +44,11 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.CacheSize do
     |> Enum.each(&print_files/1)
   end
 
-  @spec run_docker_registry :: :ok
-  defp run_docker_registry do
+  @spec run_docker_registry(Config.Data.t()) :: :ok
+  defp run_docker_registry(%Config.Data{project: project}) do
     IO.puts(IO.ANSI.format([:bright, :green, "\n\nLocal docker registry:\n"]))
 
-    {:ok, images} = Docker.image_ls_project()
+    {:ok, images} = Docker.image_ls_project(project)
 
     images
     |> Enum.group_by(& &1["Repository"])
@@ -58,9 +58,13 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.CacheSize do
 
   @spec info_local_cache :: [Info.t()]
   defp info_local_cache do
-    Const.local_cache_dir()
-    |> fq_ls!()
-    |> Enum.flat_map(&info_local_cache_component/1)
+    if File.exists?(Const.local_cache_dir()) do
+      Const.local_cache_dir()
+      |> fq_ls!()
+      |> Enum.flat_map(&info_local_cache_component/1)
+    else
+      []
+    end
   end
 
   @spec info_local_cache_component(Path.t()) :: [Info.t()]

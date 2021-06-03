@@ -2,7 +2,7 @@ defmodule MBS.Toolchain.RunBuild do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.{Const, Docker, DockerCompose}
+  alias MBS.{Config, Docker, DockerCompose}
   alias MBS.Manifest.BuildDeploy
   alias MBS.Toolchain
   alias MBS.Workflow.Job
@@ -15,15 +15,16 @@ defmodule MBS.Toolchain.RunBuild do
 
   @sh_sleep_forever_cmd ["-c", "while true; do sleep 2; done"]
 
-  @spec up(BuildDeploy.Component.t(), String.t(), Job.upstream_results(), boolean()) ::
+  @spec up(Config.Data.t(), BuildDeploy.Component.t(), String.t(), Job.upstream_results(), boolean()) ::
           {:ok, env_list()} | {:error, term()}
   def up(
+        %Config.Data{} = config,
         %BuildDeploy.Component{id: id, toolchain: toolchain} = component,
         checksum,
         upstream_results,
         mount_compoment_dir
       ) do
-    envs = env_vars(component, checksum, upstream_results)
+    envs = env_vars(config, component, checksum, upstream_results)
 
     with {:ok, docker_network_name} <- exec_services(:up, component, envs),
          run_opts_ = run_opts(component, docker_network_name, mount_compoment_dir),
@@ -80,8 +81,9 @@ defmodule MBS.Toolchain.RunBuild do
     opts ++ opts_work_dir ++ opts_dir_mount ++ opts_net
   end
 
-  @spec env_vars(BuildDeploy.Component.t(), String.t(), Job.upstream_results()) :: env_list()
+  @spec env_vars(Config.Data.t(), BuildDeploy.Component.t(), String.t(), Job.upstream_results()) :: env_list()
   def env_vars(
+        %Config.Data{project: project},
         %BuildDeploy.Component{id: id, dir: dir, dependencies: dependencies},
         checksum,
         upstream_results
@@ -98,6 +100,6 @@ defmodule MBS.Toolchain.RunBuild do
         {"MBS_CHECKSUM_#{shell_dep_id}", dep_checksum}
       end)
 
-    [{"MBS_PROJECT_ID", Const.project_id()}, {"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
+    [{"MBS_PROJECT_ID", project}, {"MBS_ID", id}, {"MBS_CWD", dir}, {"MBS_CHECKSUM", checksum} | env]
   end
 end

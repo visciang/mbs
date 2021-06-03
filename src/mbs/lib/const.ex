@@ -1,9 +1,6 @@
 defmodule MBS.Const do
   @moduledoc false
 
-  @spec project_id :: String.t()
-  def project_id, do: System.fetch_env!("MBS_PROJECT_ID")
-
   @spec config_file :: String.t()
   def config_file, do: ".mbs-config.json"
 
@@ -28,36 +25,17 @@ defmodule MBS.Const do
   @spec release_metadata_filename :: String.t()
   def release_metadata_filename, do: "metadata.json"
 
-  @spec push :: boolean()
-  def push do
-    case System.get_env("MBS_PUSH", "false") do
-      "true" -> true
-      "false" -> false
-      "" -> false
-      unknown -> raise "MBS_PUSH bad value: #{unknown}"
-    end
-  end
-
   @spec cache_dir :: Path.t()
-  def cache_dir, do: "/mbs-cache"
+  def cache_dir, do: "/mbs/remote_cache"
 
   @spec local_cache_dir :: Path.t()
-  def local_cache_dir, do: "/.mbs-local-cache"
-
-  @spec local_cache_volume :: String.t()
-  def local_cache_volume, do: System.fetch_env!("MBS_LOCAL_CACHE_VOLUME")
-
-  @spec docker_registry :: String.t()
-  def docker_registry, do: System.get_env("MBS_DOCKER_REGISTRY", "")
+  def local_cache_dir, do: "/mbs/local_cache"
 
   @spec releases_dir :: Path.t()
-  def releases_dir, do: "/.mbs-releases"
-
-  @spec release_volume :: String.t()
-  def release_volume, do: System.fetch_env!("MBS_RELEASES_VOLUME")
+  def releases_dir, do: "/mbs/releases"
 
   @spec graph_dir :: Path.t()
-  def graph_dir, do: "/.mbs-graph"
+  def graph_dir, do: "/mbs/graph"
 
   @spec local_dependencies_targets_dir :: Path.t()
   def local_dependencies_targets_dir, do: ".deps"
