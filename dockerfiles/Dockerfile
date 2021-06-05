@@ -1,4 +1,4 @@
-FROM elixir:1.12.0-alpine AS builder
+FROM elixir:1.12.1-alpine AS builder
 ENV MIX_ENV prod
 RUN mix local.rebar --force
 RUN mix local.hex --force
@@ -13,7 +13,7 @@ WORKDIR /mbs
 RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
-FROM elixir:1.12.0-alpine
+FROM elixir:1.12.1-alpine
 RUN apk add --no-cache docker docker-compose graphviz git jq gettext
 COPY dockerfiles/entrypoint.sh /entrypoint.sh
 COPY dockerfiles/bootstrap.template.sh /bootstrap.template.sh

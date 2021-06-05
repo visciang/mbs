@@ -11,11 +11,11 @@ if [ -z "$DOCKER_DIND_ID" ]; then
         --volume="$DOCKER_DIND_NAME-artifacts":/mbs \
         --volume="$DOCKER_DIND_NAME-docker":/var/lib/docker \
         --volume="$BASEDIR":"$BASEDIR" \
-        docker:20.10.6-dind
+        docker:20.10.7-dind
     
     docker exec $DOCKER_DIND_NAME docker version
 
-    echo "\nDocker DIND UP."
+    echo "\nDocker DIND UP.\n"
 fi
 
 if [ "$MBS_PUSH" = "true" ]; then

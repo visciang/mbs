@@ -2,13 +2,36 @@
 
 ### MBS cache and release persistency
 
-MBS caches **build artifacts** and **releases artifacts** in two specific directory (inside the mbs container).
+Every MBS project runs in an isolated docker dind container on your host.
+The docker dind container is started the first time you run an mbs command.
 
-- Artifacts local cache: `/.mbs-local-cache`
-- Releases: `/.mbs-releases`
-- Graph: `/.mbs-graph`
+This is what you should see on your host:
 
-Docker images are stored in your local host docker registry.
+- A docker dind container (per project)
+- Two docker volumes (per project):
+    - One to store file artifacts
+    - One to store the docker dind registry
+
+```
+$ docker ps
+CONTAINER ID   IMAGE                 COMMAND                  CREATED          STATUS          PORTS           NAMES
+c7d4b527c949   docker:20.10.7-dind   "dockerd-entrypoint.…"   15 minutes ago   Up 15 minutes   2375-2376/tcp   mbs-my-project-dind
+
+$ docker volume ls
+DRIVER    VOLUME NAME
+local     mbs-my-project-artifacts
+local     mbs-my-project-docker
+```
+
+If you want to inspect / get what's inside the artifact volume, you can jump into the docker dind container:
+
+```
+$ docker exec -ti mbs-my-project-dind ls /mbs
+```
+
+- Artifacts local cache: `/mbs/local-cache`
+- Releases: `/mbs/releases`
+- Graph: `/mbs/graph`
 
 ![image info](schema-cache.png)
 
