@@ -14,7 +14,9 @@ RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
 FROM elixir:1.12.1-alpine
-RUN apk add --no-cache docker docker-compose graphviz git jq gettext
+RUN [ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf
+RUN apk add --no-cache graphviz git jq gettext
+RUN apk add --no-cache "docker>20.10" "docker-compose>1.27"
 COPY dockerfiles/entrypoint.sh /entrypoint.sh
 COPY dockerfiles/bootstrap.template.sh /bootstrap.template.sh
 COPY --from=builder /mbs/mbs /usr/local/bin/

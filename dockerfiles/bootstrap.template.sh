@@ -30,6 +30,7 @@ if [ ! -t 1 ]; then
 fi
 
 docker run --init --rm $TTY \
+    --name=mbs-$MBS_PROJECT_ID \
     --link="$DOCKER_DIND_NAME" \
     --env DOCKER_HOST="tcp://$DOCKER_DIND_NAME:2375" \
     --env DOCKER_TLS_CERTDIR="" \

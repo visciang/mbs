@@ -18,7 +18,7 @@ To summarize:
 - language independent (polyglot monorepo)
 - checksum based diff detection
 - sandboxed build
-- no development environment on your machine, just docker
+- no development environment on your machine, just docker (and the possibility the execute a container in privileged mode)
 
 ## Vision
 
