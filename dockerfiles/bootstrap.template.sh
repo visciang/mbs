@@ -17,7 +17,8 @@ if [ -z "$DOCKER_DIND_ID" ]; then
 
     echo "Waiting for docker to come up"
 
-    while ! docker info > /dev/null 2>&1; do
+
+    while ! docker exec $DOCKER_DIND_NAME docker info > /dev/null 2>&1; do
         echo "Connection attempts left: $attempts"
 
         if [ $attempts -eq 0 ]; then
@@ -25,12 +26,10 @@ if [ -z "$DOCKER_DIND_ID" ]; then
             exit 1
         fi;
 
-        attempts=$attempts-1
+        attempts=$(($attempts-1))
         echo "Connection to docker failed"
         sleep 2
     done
-
-    docker exec $DOCKER_DIND_NAME docker version
 
     echo "\nDocker DIND UP.\n"
 fi
