@@ -2,7 +2,7 @@ DOCKER_DIND_NAME="mbs-$MBS_PROJECT_ID-dind"
 DOCKER_DIND_ID="$(docker ps --filter name="^/$DOCKER_DIND_NAME\$" --format "{{ .ID }}")"
 
 if [ -z "$DOCKER_DIND_ID" ]; then
-    echo "Starting Docker DIND daemon ($DOCKER_DIND_NAME), please wait few seconds ...\n"
+    echo "Starting Docker DIND daemon ($DOCKER_DIND_NAME)"
 
     docker run --detach --privileged --rm \
         --name="$DOCKER_DIND_NAME" --hostname="$DOCKER_DIND_NAME" \
@@ -15,8 +15,7 @@ if [ -z "$DOCKER_DIND_ID" ]; then
     
     attempts=30
 
-    echo "Waiting for docker to come up"
-
+    echo "Waiting for Docker DIND to come up"
 
     while ! docker exec $DOCKER_DIND_NAME docker info > /dev/null 2>&1; do
         echo "Connection attempts left: $attempts"
@@ -31,7 +30,7 @@ if [ -z "$DOCKER_DIND_ID" ]; then
         sleep 2
     done
 
-    echo "\nDocker DIND UP.\n"
+    echo "Docker DIND UP"
 fi
 
 if [ "$MBS_PUSH" = "true" ]; then
