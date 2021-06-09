@@ -13,6 +13,23 @@ if [ -z "$DOCKER_DIND_ID" ]; then
         --volume="$BASEDIR":"$BASEDIR" \
         docker:20.10.7-dind
     
+    attempts=30
+
+    echo "Waiting for docker to come up"
+
+    while ! docker info > /dev/null 2>&1; do
+        echo "Connection attempts left: $attempts"
+
+        if [ $attempts -eq 0 ]; then
+            echo "Couldn't connect to docker, no attempts left"
+            exit 1
+        fi;
+
+        attempts=$attempts-1
+        echo "Connection to docker failed"
+        sleep 2
+    done
+
     docker exec $DOCKER_DIND_NAME docker version
 
     echo "\nDocker DIND UP.\n"
