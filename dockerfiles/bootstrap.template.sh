@@ -4,20 +4,23 @@ DOCKER_DIND_ID="$(docker ps --filter name="^/$DOCKER_DIND_NAME\$" --format "{{ .
 if [ -z "$DOCKER_DIND_ID" ]; then
     echo "Starting Docker DIND daemon ($DOCKER_DIND_NAME)"
 
+    docker network create "$DOCKER_DIND_NAME"
+
     docker run --detach --privileged --rm \
         --name="$DOCKER_DIND_NAME" --hostname="$DOCKER_DIND_NAME" \
+        --network="$DOCKER_DIND_NAME" \
         --env DOCKER_TLS_CERTDIR="" \
         --env DOCKER_TLS_VERIFY="" \
         --volume="$DOCKER_DIND_NAME-artifacts":/mbs \
         --volume="$DOCKER_DIND_NAME-docker":/var/lib/docker \
         --volume="$BASEDIR":"$BASEDIR" \
         docker:20.10.7-dind
-    
+
     attempts=30
 
     echo "Waiting for Docker DIND to come up"
 
-    while ! docker exec $DOCKER_DIND_NAME docker info > /dev/null 2>&1; do
+    while ! docker exec $DOCKER_DIND_NAME docker info >/dev/null 2>&1; do
         echo "Connection attempts left: $attempts"
 
         if [ $attempts -eq 0 ]; then
@@ -46,7 +49,7 @@ fi
 
 docker run --init --rm $TTY \
     --name=mbs-$MBS_PROJECT_ID \
-    --link="$DOCKER_DIND_NAME" \
+    --network="$DOCKER_DIND_NAME" \
     --env DOCKER_HOST="tcp://$DOCKER_DIND_NAME:2375" \
     --env DOCKER_TLS_CERTDIR="" \
     --env DOCKER_TLS_VERIFY="" \
