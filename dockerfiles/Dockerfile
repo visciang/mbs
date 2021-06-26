@@ -14,6 +14,7 @@ RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
 FROM elixir:1.12.1-alpine
+# REF: https://github.com/docker-library/docker/blob/279ba9c93e8e26a15171645bd511ea8476c4706e/20.10/Dockerfile
 RUN [ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf
 RUN apk add --no-cache graphviz git jq gettext
 RUN apk add --no-cache "docker>20.10" "docker-compose>1.27"
