@@ -4,15 +4,16 @@ DOCKER_DIND_ID="$(docker ps --filter name="^/$DOCKER_DIND_NAME\$" --format "{{ .
 if [ -z "$DOCKER_DIND_ID" ]; then
     echo "Starting Docker DIND daemon ($DOCKER_DIND_NAME)"
 
-    docker network create "$DOCKER_DIND_NAME"
+    docker network create "$DOCKER_DIND_NAME" >/dev/null 2>&1 || true
 
     docker run --detach --privileged --rm \
-        --name="$DOCKER_DIND_NAME" --hostname="$DOCKER_DIND_NAME" \
+        --name="$DOCKER_DIND_NAME" \
         --network="$DOCKER_DIND_NAME" \
-        --env DOCKER_TLS_CERTDIR="" \
-        --env DOCKER_TLS_VERIFY="" \
+        --network-alias=docker \
+        --env DOCKER_TLS_CERTDIR=/certs \
         --volume="$DOCKER_DIND_NAME-artifacts":/mbs \
         --volume="$DOCKER_DIND_NAME-docker":/var/lib/docker \
+        --volume="$DOCKER_DIND_NAME-docker-certs":/certs \
         --volume="$BASEDIR":"$BASEDIR" \
         docker:20.10.7-dind
 
@@ -29,8 +30,7 @@ if [ -z "$DOCKER_DIND_ID" ]; then
         fi;
 
         attempts=$(($attempts-1))
-        echo "Connection to docker failed"
-        sleep 2
+        sleep 1
     done
 
     echo "Docker DIND UP"
@@ -50,10 +50,11 @@ fi
 docker run --init --rm $TTY \
     --name=mbs-$MBS_PROJECT_ID \
     --network="$DOCKER_DIND_NAME" \
-    --env DOCKER_HOST="tcp://$DOCKER_DIND_NAME:2375" \
-    --env DOCKER_TLS_CERTDIR="" \
-    --env DOCKER_TLS_VERIFY="" \
+    --env DOCKER_HOST="tcp://docker:2376" \
+    --env DOCKER_TLS_VERIFY=1 \
+    --env DOCKER_CERT_PATH="/certs/client" \
     --volume="$DOCKER_DIND_NAME-artifacts":/mbs \
+    --volume="$DOCKER_DIND_NAME-docker-certs":/certs:ro \
     --volume="$BASEDIR":"$BASEDIR" \
     $V_MBS_REMOTE_CACHE_VOLUME \
     --workdir="$BASEDIR" \
