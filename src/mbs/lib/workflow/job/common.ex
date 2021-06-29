@@ -14,5 +14,5 @@ defmodule MBS.Workflow.Job.Common do
   @spec stop_on_failure(Reporter.Status.t()) :: nil
   def stop_on_failure(Reporter.Status.ok()), do: nil
   def stop_on_failure(Reporter.Status.uptodate()), do: nil
-  def stop_on_failure(status), do: raise("Job failed #{inspect(status)}")
+  def stop_on_failure(status), do: raise(MBS.Workflow.JobError, "Job failed #{inspect(status)}")
 end

@@ -4,6 +4,7 @@ defmodule MBS.Workflow.Job.OnExit do
   alias MBS.CLI.Reporter
   alias MBS.Config
   alias MBS.Manifest.BuildDeploy
+  alias MBS.Workflow.JobError
 
   require Reporter.Status
 
@@ -15,6 +16,9 @@ defmodule MBS.Workflow.Job.OnExit do
       case job_exec_result do
         :job_timeout ->
           Reporter.job_report(job_id, Reporter.Status.timeout(), "", elapsed_time_s)
+
+        {:job_error, %JobError{}} ->
+          :ok
 
         {:job_error, reason} ->
           error_message = "Internal mbs error"
