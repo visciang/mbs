@@ -22,6 +22,7 @@ mbs-*.tar
 **/.elixir_ls/
 
 .mbs-local-cache/
+.mbs-logs/
 .mbs-graph/
 .mbs-releases/
 **/.deps/
