@@ -190,10 +190,12 @@ defmodule MBS.CLI.Args do
   end
 
   def parse(["build", "run" | args]) do
-    defaults = [sandbox: false, force: false]
+    defaults = [verbose: false, logs_to_file: false, sandbox: false, force: false]
 
     {options, targets} =
-      OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean, force: :boolean, sandbox: :boolean])
+      OptionParser.parse!(args,
+        strict: [help: :boolean, verbose: :boolean, logs_to_file: :boolean, force: :boolean, sandbox: :boolean]
+      )
 
     if options[:help] do
       IO.puts("""
@@ -203,18 +205,19 @@ defmodule MBS.CLI.Args do
       Run a target(s) build (default: all targets)
 
       Options:
-        --verbose    Stream jobs log to the console
-        --force      Skip cache and force a re-run
-        --sandbox    Filesystem sandbox mode (default: no sandbox)
+        --verbose         Stream jobs log to the console
+        --logs-to-file    Write logs to file
+        --force           Skip cache and force a re-run
+        --sandbox         Filesystem sandbox mode (default: no sandbox)
       """)
 
       :ok
     else
-      if options[:verbose] do
-        Reporter.logs(options[:verbose])
-      end
-
       options = Keyword.merge(defaults, options)
+
+      Reporter.logs(options[:verbose])
+      Reporter.logs_to_file(options[:logs_to_file])
+
       %Command.RunBuild{targets: targets, force: options[:force], sandbox: options[:sandbox], get_deps_only: false}
     end
   rescue
@@ -301,10 +304,11 @@ defmodule MBS.CLI.Args do
   end
 
   def parse(["release", "make" | args]) do
+    defaults = [verbose: false, logs_to_file: false]
+
     {options, targets} =
-      OptionParser.parse!(
-        args,
-        strict: [help: :boolean, id: :string, output_dir: :string, logs: :boolean, metadata: :string]
+      OptionParser.parse!(args,
+        strict: [help: :boolean, id: :string, verbose: :boolean, logs_to_file: :boolean, metadata: :string]
       )
 
     cond do
@@ -316,10 +320,11 @@ defmodule MBS.CLI.Args do
         Make a release (default: all targets) - output dir '#{Const.releases_dir()}/<id>/')
 
         Options:
-          --id          release identifier
-          --verbose     Stream jobs log to the console
-          --metadata    Extra metadata to include in the release manifest
-                        ex: --metadata='git_commit=...'
+          --id              release identifier
+          --verbose         Stream jobs log to the console
+          --logs-to-file    Write logs to file
+          --metadata        Extra metadata to include in the release manifest
+                            ex: --metadata='git_commit=...'
         """)
 
         :ok
@@ -330,9 +335,10 @@ defmodule MBS.CLI.Args do
         :error
 
       true ->
-        if options[:verbose] do
-          Reporter.logs(options[:verbose])
-        end
+        options = Keyword.merge(defaults, options)
+
+        Reporter.logs(options[:verbose])
+        Reporter.logs_to_file(options[:logs_to_file])
 
         %Command.MakeRelease{id: options[:id], targets: targets, metadata: options[:metadata]}
     end
@@ -370,6 +376,8 @@ defmodule MBS.CLI.Args do
   end
 
   def parse(["deploy", "run" | args]) do
+    defaults = [verbose: false, logs_to_file: false]
+
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
 
     if options[:help] do
@@ -383,16 +391,18 @@ defmodule MBS.CLI.Args do
         The release identifier (ref. 'mbs release --id=RELEASE-ID')
 
       Options:
-        --verbose    Stream jobs log to the console
+        --verbose         Stream jobs log to the console
+        --logs-to-file    Write logs to file
       """)
 
       :ok
     else
       case targets do
         [release_id] ->
-          if options[:verbose] do
-            Reporter.logs(options[:verbose])
-          end
+          options = Keyword.merge(defaults, options)
+
+          Reporter.logs(options[:verbose])
+          Reporter.logs_to_file(options[:logs_to_file])
 
           %Command.RunDeploy{release_id: release_id}
 
@@ -409,6 +419,8 @@ defmodule MBS.CLI.Args do
   end
 
   def parse(["deploy", "destroy" | args]) do
+    defaults = [verbose: false, logs_to_file: false]
+
     {options, targets} = OptionParser.parse!(args, strict: [help: :boolean, verbose: :boolean])
 
     if options[:help] do
@@ -422,16 +434,18 @@ defmodule MBS.CLI.Args do
         The release identifier (ref. 'mbs release --id=RELEASE-ID')
 
       Options:
-        --verbose    Stream jobs log to the console
+        --verbose         Stream jobs log to the console
+        --logs-to-file    Write logs to file
       """)
 
       :ok
     else
       case targets do
         [release_id] ->
-          if options[:verbose] do
-            Reporter.logs(options[:verbose])
-          end
+          options = Keyword.merge(defaults, options)
+
+          Reporter.logs(options[:verbose])
+          Reporter.logs_to_file(options[:logs_to_file])
 
           %Command.Destroy{release_id: release_id}
 
