@@ -25,6 +25,9 @@ defmodule MBS.Const do
   @spec release_metadata_filename :: String.t()
   def release_metadata_filename, do: "metadata.json"
 
+  @spec logs_dir :: Path.t()
+  def logs_dir, do: ".mbs-logs"
+
   @spec cache_dir :: Path.t()
   def cache_dir, do: "/mbs/remote_cache"
 
