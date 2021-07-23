@@ -1,12 +1,13 @@
 FROM elixir:1.12.1-alpine AS builder
 ENV MIX_ENV prod
+RUN apk add --no-cache git
 RUN mix local.rebar --force
 RUN mix local.hex --force
 RUN mkdir /mbs /dask
-COPY src/mbs/mix.exs src/mbs/mix.lock /mbs/
-RUN cd /mbs && mix deps.get
 COPY src/dask/mix.exs src/dask/mix.lock /dask/
 RUN cd /dask && mix deps.get
+COPY src/mbs/mix.exs src/mbs/mix.lock /mbs/
+RUN cd /mbs && mix deps.get
 COPY src/dask /dask
 COPY src/mbs /mbs
 WORKDIR /mbs
