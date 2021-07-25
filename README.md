@@ -41,20 +41,20 @@ Imagine a place where:
 
 ### Basic build
 
-[![asciicast](https://asciinema.org/a/N49g0amze1Xlar9JGiDSZOeqd.svg)](https://asciinema.org/a/N49g0amze1Xlar9JGiDSZOeqd)
+[![asciicast](https://asciinema.org/a/qD31M65fXERAWFNlRbIIlI1a4.svg)](https://asciinema.org/a/qD31M65fXERAWFNlRbIIlI1a4)
 
 ### Dependencies and changes
 
-[![asciicast](https://asciinema.org/a/t6BVEg3a6kHuidnrL2ltZ9dLt.svg)](https://asciinema.org/a/t6BVEg3a6kHuidnrL2ltZ9dLt)
+[![asciicast](https://asciinema.org/a/fwnUh7imRYHAof669bpSP4OwE.svg)](https://asciinema.org/a/fwnUh7imRYHAof669bpSP4OwE)
 
 ### Sandboxed execution
 
-[![asciicast](https://asciinema.org/a/E8w6AN4jYK8pbnhut2um3L0eE.svg)](https://asciinema.org/a/E8w6AN4jYK8pbnhut2um3L0eE)
+[![asciicast](https://asciinema.org/a/IN3OPJhjKpwRPA5dBqeJty4EZ.svg)](https://asciinema.org/a/IN3OPJhjKpwRPA5dBqeJty4EZ)
 
 ### Build development shell
 
-[![asciicast](https://asciinema.org/a/buMFZXSSFZZJOwPCRRgMtXU1G.svg)](https://asciinema.org/a/buMFZXSSFZZJOwPCRRgMtXU1G)
+[![asciicast](https://asciinema.org/a/06xg1ia6ClqCBDiYFLKVWZdTS.svg)](https://asciinema.org/a/06xg1ia6ClqCBDiYFLKVWZdTS)
 
 ### Release, deploy, destroy
 
-[![asciicast](https://asciinema.org/a/nVjC7YifZ5LWIhWi1qOAqd0uP.svg)](https://asciinema.org/a/nVjC7YifZ5LWIhWi1qOAqd0uP)
+[![asciicast](https://asciinema.org/a/sKEWH3tcyl8sszpSps39T8BgF.svg)](https://asciinema.org/a/sKEWH3tcyl8sszpSps39T8BgF)
