@@ -18,12 +18,7 @@ defmodule MBS.Cache.File do
       cache_dest_target = path(name, checksum, target)
       cache_dest_dir = Path.dirname(cache_dest_target)
 
-      Reporter.job_report(
-        name,
-        Reporter.Status.log(),
-        "CACHE: PUSH #{cache_dest_target}",
-        nil
-      )
+      Reporter.job_report(name, Reporter.Status.log(), "CACHE: PUSH #{cache_dest_target}", nil)
 
       File.mkdir_p!(cache_dest_dir)
       File.cp!(target, cache_dest_target)
@@ -43,12 +38,7 @@ defmodule MBS.Cache.File do
         {:ok, local_cache_target_path}
 
       {:cache, true} ->
-        Reporter.job_report(
-          name,
-          Reporter.Status.log(),
-          "CACHE: PULL #{cache_target_path}",
-          nil
-        )
+        Reporter.job_report(name, Reporter.Status.log(), "CACHE: PULL #{cache_target_path}", nil)
 
         File.cp!(cache_target_path, local_cache_target_path)
         {:ok, local_cache_target_path}

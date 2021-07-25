@@ -14,7 +14,7 @@ if [ -z "$DOCKER_DIND_ID" ]; then
         --volume="$DOCKER_DIND_NAME-artifacts":/mbs \
         --volume="$DOCKER_DIND_NAME-docker":/var/lib/docker \
         --volume="$DOCKER_DIND_NAME-docker-certs":/certs \
-        --volume="$BASEDIR":"$BASEDIR" \
+        --volume="$BASEDIR":"/mbs/run" \
         docker:20.10.7-dind
 
     attempts=30
@@ -48,14 +48,14 @@ if [ ! -t 1 ]; then
 fi
 
 docker run --init --rm $TTY \
-    --name=mbs-$MBS_PROJECT_ID \
+    --name="mbs-$MBS_PROJECT_ID" \
     --network="$DOCKER_DIND_NAME" \
     --env DOCKER_HOST="tcp://docker:2376" \
     --env DOCKER_TLS_VERIFY=1 \
     --env DOCKER_CERT_PATH="/certs/client" \
     --volume="$DOCKER_DIND_NAME-artifacts":/mbs \
     --volume="$DOCKER_DIND_NAME-docker-certs":/certs:ro \
-    --volume="$BASEDIR":"$BASEDIR" \
+    --volume="$BASEDIR":"/mbs/run" \
     $V_MBS_REMOTE_CACHE_VOLUME \
-    --workdir="$BASEDIR" \
+    --workdir="/mbs/run" \
     visciang/mbs:$MBS_VERSION $@
