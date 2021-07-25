@@ -11,7 +11,8 @@ defmodule Test.Command.Build.Run do
   @test_toolchain_a_id "test_toolchain_a"
 
   test "graph" do
-    msg = capture_io(fn -> MBS.run(["build", "graph", "--output-filename", "test.svg"], Utils.test_project_dir()) end)
+    msg =
+      capture_io(fn -> MBS.Main.run(["build", "graph", "--output-filename", "test.svg"], Utils.test_project_dir()) end)
 
     expected_file = Path.join(Const.graph_dir(), "test.svg")
 
@@ -27,7 +28,7 @@ defmodule Test.Command.Build.Run do
     setup :setup_clean_cache
 
     test "first time build" do
-      msg = capture_io(fn -> assert :ok == MBS.run(["build", "outdated"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "outdated"], Utils.test_project_dir()) end)
 
       assert msg =~ ~r/! - #{@test_component_a_id}\s+\|\s+\w+/
       assert msg =~ ~r/! - #{@test_toolchain_a_id}\s+\|\s+\w+/
@@ -38,7 +39,7 @@ defmodule Test.Command.Build.Run do
     setup :setup_clean_cache
 
     defp build_run do
-      msg = capture_io(fn -> MBS.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> MBS.Main.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
       ✔ - #{@test_toolchain_a_id}\s+\(.+ sec\)\s+\|\s+(?<toolchain_a_checksum>\w+)
@@ -75,7 +76,7 @@ defmodule Test.Command.Build.Run do
 
       # re-run -> should be all cached
 
-      msg = capture_io(fn -> assert :ok == MBS.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
       ✔ - #{@test_toolchain_a_id}\s+\(.+ sec\)\s+\|\s+#{toolchain_a_checksum}
@@ -102,11 +103,11 @@ defmodule Test.Command.Build.Run do
 
       File.rm!(component_a_target_cache_path)
 
-      msg = capture_io(fn -> assert :ok == MBS.run(["build", "outdated"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "outdated"], Utils.test_project_dir()) end)
 
       assert msg =~ ~r/! - #{@test_component_a_id}   \| #{component_a_checksum}/
 
-      msg = capture_io(fn -> assert :ok == MBS.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "run", "--sandbox"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
       ✔ - #{@test_toolchain_a_id}\s+\(.+ sec\)\s+\|\s+#{toolchain_a_checksum}
@@ -131,7 +132,7 @@ defmodule Test.Command.Build.Run do
 
       File.write!(file_path, "test")
 
-      msg = capture_io(fn -> assert :ok == MBS.run(["build", "outdated"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "outdated"], Utils.test_project_dir()) end)
 
       expected_msg = ~r/! - #{@test_component_a_id}\s+\|\s+(?<new_component_a_checksum>\w+)/
 
@@ -146,7 +147,7 @@ defmodule Test.Command.Build.Run do
 
       File.rm!(file_path)
 
-      msg = capture_io(fn -> assert :ok == MBS.run(["build", "outdated"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "outdated"], Utils.test_project_dir()) end)
 
       assert msg =~ ~r/Completed \(0 jobs\)/
     end

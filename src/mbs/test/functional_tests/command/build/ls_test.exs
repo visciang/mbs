@@ -11,7 +11,7 @@ defmodule Test.Command.Build.Ls do
   @toolchain_a_dir Path.absname(Path.join(Utils.test_project_dir(), @test_toolchain_a_id))
 
   test "ls" do
-    msg = capture_io(fn -> assert :ok == MBS.run(["build", "ls"], Utils.test_project_dir()) end)
+    msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "ls"], Utils.test_project_dir()) end)
 
     expected_output = ~r"""
     #{@test_component_a_id}  \(component\)
@@ -24,7 +24,7 @@ defmodule Test.Command.Build.Ls do
   test "ls --verbose (single target)" do
     msg =
       capture_io(fn ->
-        assert :ok == MBS.run(["build", "ls", "--verbose", @test_component_a_id], Utils.test_project_dir())
+        assert :ok == MBS.Main.run(["build", "ls", "--verbose", @test_component_a_id], Utils.test_project_dir())
       end)
 
     @component_a_dir = Path.absname(Path.join(Utils.test_project_dir(), @test_component_a_id))
@@ -49,7 +49,7 @@ defmodule Test.Command.Build.Ls do
   end
 
   test "ls --verbose" do
-    msg = capture_io(fn -> assert :ok == MBS.run(["build", "ls", "--verbose"], Utils.test_project_dir()) end)
+    msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "ls", "--verbose"], Utils.test_project_dir()) end)
 
     expected_output = ~r"""
     #{@test_component_a_id}  \(component\):

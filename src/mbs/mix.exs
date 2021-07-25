@@ -7,7 +7,7 @@ defmodule MBS.MixProject do
       version: "0.0.0",
       elixir: "~> 1.11",
       start_permanent: Mix.env() == :prod,
-      escript: [main_module: MBS],
+      escript: [main_module: MBS.Main],
       deps: deps(),
       dialyzer: dialyzer(),
       preferred_cli_env: [

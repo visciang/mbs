@@ -28,7 +28,7 @@ defmodule Test.CLI do
       Enum.each(["" | @mbs_subcommands], fn subcommand ->
         msg =
           capture_io(fn ->
-            assert :ok == MBS.run(String.split(subcommand) ++ ["--help"], Utils.test_project_dir())
+            assert :ok == MBS.Main.run(String.split(subcommand) ++ ["--help"], Utils.test_project_dir())
           end)
 
         assert msg =~ ~r/Usage:  mbs #{subcommand}\s*/
@@ -39,7 +39,7 @@ defmodule Test.CLI do
       Enum.each(@mbs_subcommands, fn subcommand ->
         msg =
           capture_io(fn ->
-            assert :error == MBS.run(String.split(subcommand) ++ ["--bad-opts"], Utils.test_project_dir())
+            assert :error == MBS.Main.run(String.split(subcommand) ++ ["--bad-opts"], Utils.test_project_dir())
           end)
 
         assert msg =~ ~r/Unknown option/

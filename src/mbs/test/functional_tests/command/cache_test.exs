@@ -12,7 +12,7 @@ defmodule Test.Command.Cache do
     setup :setup_clean_cache
 
     test "size - empty" do
-      msg = capture_io(fn -> assert :ok == MBS.run(["cache", "size"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> assert :ok == MBS.Main.run(["cache", "size"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
       Local cache dir:\s+#{MBS.Const.local_cache_dir()}\s+
@@ -25,7 +25,9 @@ defmodule Test.Command.Cache do
 
     test "size - non empty" do
       msg =
-        capture_io(fn -> assert :ok == MBS.run(["build", "run", @test_component_a_id], Utils.test_project_dir()) end)
+        capture_io(fn ->
+          assert :ok == MBS.Main.run(["build", "run", @test_component_a_id], Utils.test_project_dir())
+        end)
 
       expected_msg = ~r"""
       ✔ - #{@test_toolchain_id}\s+\(.+ sec\)\s+\|\s+(?<toolchain_a_checksum>\w+)
@@ -43,7 +45,7 @@ defmodule Test.Command.Cache do
       assert msg =~ expected_msg
       component_a_checksum = re_groups["component_a_checksum"]
 
-      msg = capture_io(fn -> assert :ok == MBS.run(["cache", "size"], Utils.test_project_dir()) end)
+      msg = capture_io(fn -> assert :ok == MBS.Main.run(["cache", "size"], Utils.test_project_dir()) end)
 
       expected_msg = ~r"""
       Local cache dir:\s+#{MBS.Const.local_cache_dir()}\s+

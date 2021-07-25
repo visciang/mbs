@@ -1,4 +1,4 @@
-defmodule MBS do
+defmodule MBS.Main do
   @moduledoc false
 
   alias MBS.{Config, Utils}

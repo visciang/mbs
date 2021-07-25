@@ -9,7 +9,7 @@ defmodule Test.Command.Build.Tree do
   @test_toolchain_a_id "test_toolchain_a"
 
   test "tree" do
-    msg = capture_io(fn -> assert :ok == MBS.run(["build", "tree"], Utils.test_project_dir()) end)
+    msg = capture_io(fn -> assert :ok == MBS.Main.run(["build", "tree"], Utils.test_project_dir()) end)
 
     expected_output = ~r"""
     ├── #{@test_component_a_id}
