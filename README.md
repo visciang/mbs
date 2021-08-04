@@ -1,5 +1,7 @@
 # MBS - a Meta Build System
 
+*DISCLAIMER: this is a personal POC, it's not used in any product, it's not supported or sponsored by any company. Fell free to play with it and if interested keep in touch.*
+
 A fully dockerized **Meta Build System** to build, release and deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
 **Containerization** is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
