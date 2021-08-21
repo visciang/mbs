@@ -36,22 +36,22 @@ defmodule MBS.CLI.Reporter do
 
   @spec stop(:ok | :error | :timeout) :: :ok
   def stop(workflow_status) do
-    GenServer.call(@name, {:stop, workflow_status})
+    GenServer.call(@name, {:stop, workflow_status}, :infinity)
   end
 
   @spec mute(boolean()) :: :ok
   def mute(status) do
-    GenServer.call(@name, {:mute, status})
+    GenServer.call(@name, {:mute, status}, :infinity)
   end
 
   @spec logs(boolean()) :: :ok
   def logs(enabled) do
-    GenServer.call(@name, {:logs, enabled})
+    GenServer.call(@name, {:logs, enabled}, :infinity)
   end
 
   @spec logs_to_file(boolean()) :: :ok
   def logs_to_file(enabled) do
-    GenServer.call(@name, {:logs_to_file, enabled})
+    GenServer.call(@name, {:logs_to_file, enabled}, :infinity)
   end
 
   @spec job_report(String.t(), Status.t(), nil | String.t(), nil | non_neg_integer()) :: :ok
@@ -64,7 +64,11 @@ defmodule MBS.CLI.Reporter do
       end
 
     if report? do
-      GenServer.call(@name, %Report{job_id: job_id, status: status, description: description, elapsed: elapsed})
+      GenServer.call(
+        @name,
+        %Report{job_id: job_id, status: status, description: description, elapsed: elapsed},
+        :infinity
+      )
     else
       :ok
     end

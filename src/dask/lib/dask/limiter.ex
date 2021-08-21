@@ -47,7 +47,7 @@ defmodule Dask.Limiter do
 
   @spec stats(pid()) :: [running: non_neg_integer(), waiting: non_neg_integer()]
   def stats(limiter) do
-    GenServer.call(limiter, :stats)
+    GenServer.call(limiter, :stats, :infinity)
   end
 
   @impl true
