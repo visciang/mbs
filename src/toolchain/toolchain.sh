@@ -31,10 +31,6 @@ args()
                 shift;
                 DIALYZER_OPTS=$1
                 ;;
-            --compile-opts)
-                shift;
-                COMPILE_OPTS=$1
-                ;;
             --)
                 shift
                 break
