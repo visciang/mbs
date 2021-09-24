@@ -1,4 +1,4 @@
-FROM elixir:1.12.1-alpine
+FROM elixir:1.12.3-alpine
 
 RUN apk add --no-cache docker docker-compose graphviz git
 RUN mix local.rebar --force && mix local.hex --force
