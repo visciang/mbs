@@ -15,7 +15,7 @@ if [ -z "$DOCKER_DIND_ID" ]; then
         --volume="$DOCKER_DIND_NAME-docker":/var/lib/docker \
         --volume="$DOCKER_DIND_NAME-docker-certs":/certs \
         --volume="$BASEDIR":"/mbs/run" \
-        docker:20.10.7-dind
+        docker:20.10.11-dind
 
     attempts=30
 
