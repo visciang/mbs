@@ -49,10 +49,11 @@ case $1 in
     compile)
         mix compile --warnings-as-errors
         ;;
-    lint_fmt)
+    lint)
+        # fmt
         mix format --check-formatted
-        ;;
-    lint_xref_cycles)
+
+        # xref_cycles
         CYCLES=$(mix xref graph --format=cycles)
 
         if [ "$CYCLES" != "No cycles found" ]; then
@@ -60,11 +61,14 @@ case $1 in
             echo "$CYCLES"
             exit 1
         fi
-        ;;
-    lint_credo)
+
+        # unused deps
+        mix deps.unlock --check-unused
+
+        # credo
         mix credo --all --strict
-        ;;
-    lint_dialyzer)
+
+        # dialyzer
         if [ $DIALYZER == 1 ]; then
             mix dialyzer $DIALYZER_OPTS
         fi

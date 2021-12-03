@@ -8,10 +8,7 @@
         "steps": [
             "deps",
             "compile",
-            "lint_fmt",
-            "lint_xref_cycles",
-            "lint_credo",
-            "lint_dialyzer",
+            "lint",
             "test",
             "build"
         ]

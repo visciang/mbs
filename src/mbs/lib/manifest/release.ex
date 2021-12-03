@@ -65,13 +65,12 @@ defmodule MBS.Manifest.Release do
   @spec release_checksum([BuildDeploy.Type.t()], Path.t()) :: String.t()
   defp release_checksum(manifests, release_dir) do
     manifests
-    |> Enum.map(fn %{id: id} ->
+    |> Enum.map_join(fn %{id: id} ->
       Path.join([release_dir, id, Const.release_metadata_filename()])
       |> File.read!()
       |> Jason.decode!()
       |> Map.fetch!("checksum")
     end)
-    |> Enum.join()
     |> Checksum.checksum()
   end
 

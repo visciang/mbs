@@ -11,7 +11,7 @@ defmodule MBS.Toolchain.Common do
 
   @default_entrypoint "/toolchain.sh"
 
-  @spec build(%Config.Data{}, BuildDeploy.Toolchain.t(), boolean()) :: :ok | {:error, term()}
+  @spec build(Config.Data.t(), BuildDeploy.Toolchain.t(), boolean()) :: :ok | {:error, term()}
   def build(
         %Config.Data{project: project},
         %BuildDeploy.Toolchain{

@@ -123,10 +123,7 @@ defmodule Dask do
   defp add_edge(graph, %Job{} = upstream_job, %Job{} = downstream_job) do
     case :digraph.add_edge(graph, upstream_job, downstream_job) do
       {:error, {:bad_edge, path}} ->
-        cycle_path =
-          path
-          |> Enum.map(& &1.id)
-          |> Enum.join(" -> ")
+        cycle_path = Enum.map_join(path, " -> ", & &1.id)
 
         raise Error, "Cycle detected: #{cycle_path}"
 
