@@ -51,9 +51,9 @@ In `.mbs-config.json` you can configure them, ref. [Global configuration](#globa
 }
 ```
 
-- cache.push: enable/disable push to the remote caches
-- cache.volume: the host directory where we mount the remote cache folder
-- cache.docker_registry: the external docker registry
+- `remote_cache.push`: enable/disable push to the remote caches
+- `remote_cache.volume`: the host directory where we mount the remote cache folder
+- `remote_cache.docker_registry`: the external docker registry
 
 This approach is flexible enough to "share" the cache data between all the developers and the CI. It's enough to map the host dir to a "shared disk" (for example with NFS, cifs, ...).
 
