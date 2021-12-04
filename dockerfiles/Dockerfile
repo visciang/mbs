@@ -19,8 +19,10 @@ FROM elixir:1.12.3-alpine
 RUN [ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf
 RUN wget -q -O - "https://download.docker.com/linux/static/stable/x86_64/docker-20.10.11.tgz" \
     | tar -xzf - --strip-components 1 --directory /usr/local/bin/
-# USE https://github.com/docker/compose-cli when stable 
-RUN apk add --no-cache "docker-compose>1.27"
+RUN mkdir -p /usr/local/lib/docker/cli-plugins/ \
+    && wget -q -O /usr/local/lib/docker/cli-plugins/docker-compose \
+       "https://github.com/docker/compose/releases/download/v2.2.2/docker-compose-linux-x86_64" \
+    && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 RUN apk add --no-cache graphviz git jq gettext
 COPY dockerfiles/entrypoint.sh /entrypoint.sh
 COPY dockerfiles/bootstrap.template.sh /bootstrap.template.sh

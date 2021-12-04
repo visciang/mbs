@@ -11,7 +11,7 @@ defmodule MBS.DockerCompose do
     {cmd_args, docker_network_name} = args(action, compose_file, job_id)
     cmd_into = %Reporter.Log{job_id: "#{job_id}_#{action}"}
 
-    case System.cmd("docker-compose", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
+    case System.cmd("docker", ["compose" | cmd_args], env: env, stderr_to_stdout: true, into: cmd_into) do
       {_, 0} -> {:ok, docker_network_name}
       {res, exit_status} -> {:error, {res, exit_status}}
     end
@@ -21,7 +21,7 @@ defmodule MBS.DockerCompose do
   def compose_cmd(action, compose_file, env, job_id) do
     {cmd_args, docker_network_name} = args(action, compose_file, job_id)
     env_cmd = Enum.map(env, fn {name, value} -> "#{name}='#{value}'" end)
-    cmd = (env_cmd ++ ["docker-compose"] ++ cmd_args) |> Enum.join(" ")
+    cmd = (env_cmd ++ ["docker", "compose"] ++ cmd_args) |> Enum.join(" ")
 
     {:ok, docker_network_name, cmd}
   end

@@ -388,7 +388,7 @@ defmodule MBS.CLI.Args do
       Run a release deploy
 
       Release id:
-        The release identifier (ref. 'mbs release --id=RELEASE-ID')
+        The release identifier (ref. 'mbs release --help')
 
       Options:
         --verbose         Stream jobs log to the console
