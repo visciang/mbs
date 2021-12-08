@@ -48,7 +48,7 @@ if [ ! -t 1 ]; then
 fi
 
 docker run --init --rm $TTY \
-    --name="mbs-$MBS_PROJECT_ID" \
+    --name="mbs-$MBS_PROJECT_ID-$(date +%s)" \
     --network="$DOCKER_DIND_NAME" \
     --env DOCKER_HOST="tcp://docker:2376" \
     --env DOCKER_TLS_VERIFY=1 \
