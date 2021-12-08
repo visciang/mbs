@@ -7,7 +7,7 @@ defmodule Dask.Limiter do
   # the limiter adds the process in FRONT of the queue (waiting_list is a LIFO queue).
   # This behaviour plays nice with the Dask DAG, since it startup the DAG in a reverse
   # topologically sorted order (why: see how it's implemented the Dask DAG ;)
-  # So the last job joining the queue, that is the root job oin the DAG, will be the first
+  # So the last job joining the queue, the root job in the DAG, will be the first
   # to be served
 
   use GenServer
