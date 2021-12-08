@@ -47,7 +47,7 @@ if [ ! -t 1 ]; then
     TTY="";
 fi
 
-DOCKER_MBS_NAME="mbs-$MBS_PROJECT_ID-$(tr -dc A-Za-z0-9 </dev/urandom | head -c 5)"
+DOCKER_MBS_NAME="mbs-$MBS_PROJECT_ID-$(date +%s)"
 
 docker run --init --rm $TTY \
     --name="$DOCKER_MBS_NAME" \
