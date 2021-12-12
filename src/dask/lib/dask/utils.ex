@@ -20,10 +20,6 @@ defmodule Dask.Utils do
     ["#{w} wk", "#{d} d", "#{h} hr", "#{m} min", "#{trunc(s)}.#{sec_decimals} sec"]
     |> Enum.reject(&String.starts_with?(&1, "0 "))
     |> Enum.join(", ")
-    |> case do
-      "" -> "0 sec"
-      s -> s
-    end
   end
 
   # coveralls-ignore-start
