@@ -1,9 +1,10 @@
 {
-    "id": "toolchain-mbs",
+    "id": "toolchain-elixir",
     "toolchain": {
         "dockerfile": "Dockerfile",
         "files": [
-            "toolchain.sh"
+            "toolchain.sh",
+            "dialyzer_plt/mix.*"
         ],
         "steps": [
             "deps",

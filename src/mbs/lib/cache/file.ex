@@ -59,7 +59,7 @@ defmodule MBS.Cache.File do
   end
 
   @spec path(String.t(), String.t(), String.t()) :: Path.t()
-  def path(name, checksum, target) do
+  defp path(name, checksum, target) do
     Path.join([Const.cache_dir(), name, checksum, Path.basename(target)])
   end
 end

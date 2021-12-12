@@ -17,8 +17,7 @@ defmodule Dask.MixProject do
         "coveralls.html": :test,
         docs: :dev
       ],
-      test_coverage: [tool: ExCoveralls],
-      aliases: aliases()
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -38,15 +37,8 @@ defmodule Dask.MixProject do
 
   defp dialyzer do
     [
-      plt_core_path: ".plts",
       plt_file: {:no_warn, ".plts/dialyzer.plt"},
       flags: [:error_handling, :race_conditions, :underspecs]
     ]
   end
-
-  def aliases do
-    [dialyzer: [&mkdir_plts/1, "dialyzer"]]
-  end
-
-  defp mkdir_plts(_), do: File.mkdir_p!(".plts")
 end

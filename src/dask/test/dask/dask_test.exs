@@ -63,6 +63,21 @@ defmodule Test.Dask do
     assert_workflow_execution(expected_workflow_execution)
   end
 
+  test "workflow timeout" do
+    test_job_fun = gen_test_job_fun(fn -> :ok end)
+    test_job_timeout_fun = gen_test_job_fun(fn -> Process.sleep(200) end)
+
+    workflow_status =
+      Dask.new()
+      |> Dask.job(:job_1, test_job_timeout_fun)
+      |> Dask.job(:job_2, test_job_fun)
+      |> Dask.flow(:job_1, :job_2)
+      |> Dask.async()
+      |> Dask.await(100)
+
+    assert workflow_status == :timeout
+  end
+
   test "bad dask (deps cycle)" do
     test_job_fun = fn _, _ -> :ok end
 

@@ -2,6 +2,6 @@
     "dirs": [
         "src/dask",
         "src/mbs",
-        "src/toolchain"
+        "src/toolchain/elixir"
     ]
 }
