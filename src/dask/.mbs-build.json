@@ -1,8 +1,8 @@
 {
     "id": "dask",
     "component": {
-        "toolchain": "toolchain-mbs",
-        "toolchain_opts": ["--type", "lib"],
+        "toolchain": "toolchain-elixir",
+        "toolchain_opts": ["--type", "lib", "--dialyzer"],
         "files_profile": "elixir",
         "targets": [
             "_build/dask"

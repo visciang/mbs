@@ -1,7 +1,8 @@
 {
     "id": "mbs",
     "component": {
-        "toolchain": "toolchain-mbs",
+        "toolchain": "toolchain-elixir",
+        "toolchain_opts": ["--dialyzer"],
         "files_profile": "elixir",
         "files": [
             "test/**/*.json",

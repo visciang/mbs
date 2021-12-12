@@ -70,6 +70,12 @@ case $1 in
 
         # dialyzer
         if [ $DIALYZER == 1 ]; then
+            if [ ! -f .plts/dialyzer.plt ]; then
+                echo "Copying toolchain dialyzer.plt"
+                mkdir -p .plts
+                cp /dialyzer_plt/dialyzer.plt* .plts/
+            fi
+
             mix dialyzer $DIALYZER_OPTS
         fi
         ;;
