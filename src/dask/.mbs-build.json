@@ -3,9 +3,12 @@
         "id": "dask-cache",
         "component": {
             "toolchain": "toolchain-elixir-cache",
+            "toolchain_opts": [
+                "--dialyzer"
+            ],
             "files_profile": "elixir-cache",
             "targets": [
-                "_build/cache.tgz"
+                ".cache/cache.tgz"
             ]
         }
     },

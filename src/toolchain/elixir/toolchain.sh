@@ -44,15 +44,25 @@ args $0 "$@"
 
 case $1 in
     cache)
-        rm -rf _build && mkdir -p _build
-
         mix deps.get
         MIX_ENV=dev mix deps.compile
         MIX_ENV=prod mix deps.compile
         MIX_ENV=test mix deps.compile
 
-        tar czf cache.tgz _build deps
-        mv cache.tgz _build
+        # dialyzer
+        mkdir -p .plts
+
+        if [ $DIALYZER == 1 ]; then
+            if [ ! -f .plts/dialyzer.plt ]; then
+                echo "Copying toolchain dialyzer.plt"
+                cp /dialyzer_plt/dialyzer.plt* .plts/
+            fi
+
+            mix dialyzer --plt
+        fi
+
+        rm -rf .cache && mkdir -p .cache
+        tar czf .cache/cache.tgz _build deps .plts
         ;;
     deps)
         CACHE_FROM=.deps/$MBS_ID-cache/cache.tgz
@@ -87,12 +97,6 @@ case $1 in
 
         # dialyzer
         if [ $DIALYZER == 1 ]; then
-            if [ ! -f .plts/dialyzer.plt ]; then
-                echo "Copying toolchain dialyzer.plt"
-                mkdir -p .plts
-                cp /dialyzer_plt/dialyzer.plt* .plts/
-            fi
-
             mix dialyzer $DIALYZER_OPTS
         fi
         ;;
