@@ -16,6 +16,9 @@
             "mix.{exs,lock}",
             "config/*.exs",
             "{apps,lib,test}/**/*.{ex,exs}"
+        ],
+        "elixir-cache": [
+            "mix.{exs,lock}"
         ]
     }
 }

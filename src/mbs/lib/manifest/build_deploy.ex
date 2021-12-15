@@ -12,10 +12,10 @@ defmodule MBS.Manifest.BuildDeploy do
 
     project_manifest_path
     |> Project.load(type)
-    |> Enum.map(fn manifest_path ->
+    |> Enum.flat_map(fn manifest_path ->
       manifest_path
       |> decode()
-      |> add_defaults(project_dir, manifest_path)
+      |> Enum.map(&add_defaults(&1, project_dir, manifest_path))
     end)
     |> Validator.validate(available_files_profiles)
     |> Enum.map(&to_struct(type, &1, files_profile))
@@ -29,14 +29,14 @@ defmodule MBS.Manifest.BuildDeploy do
   defp manifest_name(:deploy),
     do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_deploy_filename()}}"
 
-  @spec decode(Path.t()) :: map()
+  @spec decode(Path.t()) :: [map()]
   defp decode(manifest_path) do
     manifest_path
     |> File.read!()
     |> Jason.decode()
     |> case do
       {:ok, conf} ->
-        conf
+        List.wrap(conf)
 
       {:error, reason} ->
         Utils.halt("Error parsing #{manifest_path}\n  #{Jason.DecodeError.message(reason)}")

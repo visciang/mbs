@@ -1,17 +1,31 @@
-{
-    "id": "toolchain-elixir",
-    "toolchain": {
-        "dockerfile": "Dockerfile",
-        "files": [
-            "toolchain.sh",
-            "dialyzer_plt/mix.*"
-        ],
-        "steps": [
-            "deps",
-            "compile",
-            "lint",
-            "test",
-            "build"
-        ]
+[
+    {
+        "id": "toolchain-elixir",
+        "toolchain": {
+            "dockerfile": "Dockerfile",
+            "files": [
+                "toolchain.sh",
+                "dialyzer_plt/mix.*"
+            ],
+            "steps": [
+                "deps",
+                "compile",
+                "lint",
+                "test",
+                "build"
+            ]
+        }
+    },
+    {
+        "id": "toolchain-elixir-cache",
+        "toolchain": {
+            "dockerfile": "Dockerfile",
+            "files": [
+                "toolchain.sh"
+            ],
+            "steps": [
+                "cache"
+            ]
+        }
     }
-}
+]

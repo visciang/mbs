@@ -43,8 +43,25 @@ args()
 args $0 "$@"
 
 case $1 in
-    deps)
+    cache)
+        rm -rf _build && mkdir -p _build
+
         mix deps.get
+        MIX_ENV=dev mix deps.compile
+        MIX_ENV=prod mix deps.compile
+        MIX_ENV=test mix deps.compile
+
+        tar czf cache.tgz _build deps
+        mv cache.tgz _build
+        ;;
+    deps)
+        CACHE_FROM=.deps/$MBS_ID-cache/cache.tgz
+        if [ -f $CACHE_FROM ]; then
+            echo "Using cached deps"
+            tar xzf $CACHE_FROM
+        else
+            mix deps.get
+        fi
         ;;
     compile)
         mix compile --warnings-as-errors
