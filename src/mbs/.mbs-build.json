@@ -1,23 +1,39 @@
-{
-    "id": "mbs",
-    "component": {
-        "toolchain": "toolchain-elixir",
-        "toolchain_opts": ["--dialyzer"],
-        "files_profile": "elixir",
-        "files": [
-            "test/**/*.json",
-            "test/**/*.txt",
-            "test/**/Dockerfile",
-            "test/**/*.sh"
-        ],
-        "targets": [
-            "mbs"
-        ],
-        "dependencies": [
-            "dask"
-        ]
+[
+    {
+        "id": "mbs-cache",
+        "component": {
+            "toolchain": "toolchain-elixir-cache",
+            "files_profile": "elixir-cache",
+            "targets": [
+                "_build/cache.tgz"
+            ]
+        }
     },
-    "docker_opts": [
-        "-v", "mbs-test-dind-artifacts:/mbs"
-    ]
-}
+    {
+        "id": "mbs",
+        "component": {
+            "toolchain": "toolchain-elixir",
+            "toolchain_opts": [
+                "--dialyzer"
+            ],
+            "files_profile": "elixir",
+            "files": [
+                "test/**/*.json",
+                "test/**/*.txt",
+                "test/**/Dockerfile",
+                "test/**/*.sh"
+            ],
+            "targets": [
+                "mbs"
+            ],
+            "dependencies": [
+                "dask",
+                "mbs-cache"
+            ]
+        },
+        "docker_opts": [
+            "-v",
+            "mbs-test-dind-artifacts:/mbs"
+        ]
+    }
+]

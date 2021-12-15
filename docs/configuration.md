@@ -67,7 +67,7 @@ It lists all the components and toolchains folders.
 
 The approach of mbs is to have an explicit component's inclusion and it doesn't support auto-discovery. Auto-discovery (via wildcard globs search) works well in small repository, but it's heavy on the filesystem when you work on repositories with lots of (git untracked) files.
 
-Even more, being explicit, you can put in or out a component just adding or removing the component directory from the project file.
+Even more, being explicit, you can easily include or exclude a component from the build adding or removing the component directory from the project file.
 
 `.mbs-project.json`
 
@@ -167,8 +167,25 @@ MBS execution global configuration parameters.
         "destroy_steps": [
             "destroy"
         ]
-    }
+    },
+    // [optional] specific "docker build" options to add when running a toolchain build
+    "docker_opts": ["--build-arg", "XXX_VERSION=1.2.3"]
 }
+```
+
+Multiple toolchains can be defined in the same toolchain manifest file:
+
+```js
+[
+    {
+        "id": "toolchain-abc-1",
+        ...
+    },
+    {
+        "id": "toolchain-abc-2",
+        ...
+    }
+]
 ```
 
 ### Component build manifest
@@ -223,6 +240,26 @@ MBS execution global configuration parameters.
 }
 ```
 
+Multiple components can be defined in the same build manifest file:
+
+```js
+[
+    {
+        "id": "component-xyz-1",
+        ...
+    },
+    {
+        "id": "component-xyz-2",
+        ...
+    }
+]
+```
+
+This feature (coupled with the similar one in the toolchain manifest) can be used to implement different build patters such as:
+
+- Building the same component into multiple flavors / versions, maybe using different toolchains (see [multiversion_example](https://github.com/visciang/mbs-example-monorepo/tree/main/toolchains/build/multiversion-example))
+- External dependency "caching"
+
 ### Component deploy manifest
 
 ```js
@@ -255,8 +292,9 @@ MBS execution global configuration parameters.
             "xyz-infrastructure"
         ]
     },
-    // [optional] specific "docker build" options to add when running a toolchain build
-    "docker_opts": []
+    // [optional] docker_opts: specific "docker run" options to add
+    // when running the toolchain
+    "docker_opts": ["--net", "host"]
 }
 ```
 

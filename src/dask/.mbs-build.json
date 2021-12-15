@@ -1,11 +1,29 @@
-{
-    "id": "dask",
-    "component": {
-        "toolchain": "toolchain-elixir",
-        "toolchain_opts": ["--type", "lib", "--dialyzer"],
-        "files_profile": "elixir",
-        "targets": [
-            "_build/dask"
-        ]
+[
+    {
+        "id": "dask-cache",
+        "component": {
+            "toolchain": "toolchain-elixir-cache",
+            "files_profile": "elixir-cache",
+            "targets": [
+                "_build/cache.tgz"
+            ]
+        }
+    },
+    {
+        "id": "dask",
+        "component": {
+            "toolchain": "toolchain-elixir",
+            "toolchain_opts": [
+                "--type=lib",
+                "--dialyzer"
+            ],
+            "files_profile": "elixir",
+            "targets": [
+                "_build/dask"
+            ],
+            "dependencies": [
+                "dask-cache"
+            ]
+        }
     }
-}
+]
