@@ -151,11 +151,11 @@ defmodule MBS.Docker do
 
   @spec container_dput(String.t(), Path.t(), Path.t(), String.t()) :: :ok | {:error, {term(), pos_integer()}}
   def container_dput(container_id, src_dir, dest_dir, job_id) do
-    cmd_args = ["-c", "tar -O -h -C \"#{src_dir}\" -c . | docker cp - #{container_id}:#{dest_dir}"]
+    cmd_args = ["tar c -O -h -C \"#{src_dir}\" . | docker cp - #{container_id}:#{dest_dir}"]
 
     docker_debug(job_id, cmd_args)
 
-    case System.cmd("sh", cmd_args) do
+    case System.cmd("sh", ["-c" | cmd_args]) do
       {_, 0} -> :ok
       {res, exit_status} -> {:error, {res, exit_status}}
     end
@@ -163,11 +163,11 @@ defmodule MBS.Docker do
 
   @spec container_dget(String.t(), Path.t(), Path.t(), String.t()) :: :ok | {:error, {term(), pos_integer()}}
   def container_dget(container_id, src_dir, dest_dir, job_id) do
-    cmd_args = ["-c", "docker cp #{container_id}:#{src_dir} | tar -C \"#{dest_dir}\" -xf -"]
+    cmd_args = ["docker cp #{container_id}:#{src_dir} | tar xf -C \"#{dest_dir}\" -"]
 
     docker_debug(job_id, cmd_args)
 
-    case System.cmd("sh", cmd_args) do
+    case System.cmd("sh", ["-c" | cmd_args]) do
       {_, 0} -> :ok
       {res, exit_status} -> {:error, {res, exit_status}}
     end
