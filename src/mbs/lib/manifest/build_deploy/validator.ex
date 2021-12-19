@@ -22,7 +22,6 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
     Enum.each(manifests, fn manifest ->
       validate_id(manifest)
       validate_timeout(manifest)
-      validate_docker_opts(manifest)
       validate_type(manifest)
     end)
 
@@ -57,8 +56,24 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
   end
 
   @spec validate_docker_opts(map()) :: nil
-  defp validate_docker_opts(%{"docker_opts" => _, "dir" => dir} = docker) do
-    validate_list_of_strings(docker, ["docker_opts"], dir)
+  defp validate_docker_opts(%{"docker_opts" => docker_opts, "dir" => dir}) do
+    unless is_map(docker_opts) do
+      message = error_message(dir, "Bad docker_opts type")
+      Utils.halt(message)
+    end
+
+    docker_opts
+    |> Map.keys()
+    |> Enum.each(fn docker_opts_type ->
+      unless docker_opts_type in ["run", "shell"] do
+        message = error_message(dir, "Bad docker_opts key #{inspect(docker_opts_type)}")
+        Utils.halt(message)
+      end
+
+      validate_list_of_strings(docker_opts, [docker_opts_type], dir)
+    end)
+
+    nil
   end
 
   defp validate_docker_opts(_), do: nil
@@ -90,6 +105,10 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
     validate_list_of_strings(toolchain, ["files"], dir)
     validate_list_of_strings(toolchain, ["steps"], dir)
     validate_list_of_strings(toolchain, ["destroy_steps"], dir)
+
+    if toolchain["docker_build_opts"] do
+      validate_list_of_strings(toolchain, ["docker_build_opts"], dir)
+    end
   end
 
   defp validate_type(%{"__schema__" => "component", "dir" => dir} = type) do
@@ -129,6 +148,8 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
     validate_list_of_strings(component, ["toolchain_opts"], dir)
     validate_list_of_strings(component, ["targets"], dir)
     validate_list_of_strings(component, ["dependencies"], dir)
+
+    validate_docker_opts(type)
   end
 
   @spec validate_component_services(Path.t(), map()) :: nil

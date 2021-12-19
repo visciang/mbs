@@ -23,6 +23,8 @@ defmodule MBS.Manifest.BuildDeploy.Component do
     :docker_opts
   ]
 
+  @type docker_opts_type :: :run | :shell
+
   @type t :: %__MODULE__{
           type: MBS.Manifest.BuildDeploy.Type.type(),
           id: String.t(),
@@ -35,7 +37,9 @@ defmodule MBS.Manifest.BuildDeploy.Component do
           targets: nonempty_list(MBS.Manifest.BuildDeploy.Target.t()),
           dependencies: [String.t()],
           services: nil | Path.t(),
-          docker_opts: [String.t()]
+          docker_opts: %{
+            docker_opts_type() => [String.t()]
+          }
         }
 end
 
@@ -54,7 +58,7 @@ defmodule MBS.Manifest.BuildDeploy.Toolchain do
     :deps_change_step,
     :steps,
     :destroy_steps,
-    :docker_opts
+    :docker_build_opts
   ]
 
   @type t :: %__MODULE__{
@@ -69,7 +73,7 @@ defmodule MBS.Manifest.BuildDeploy.Toolchain do
           deps_change_step: nil | String.t(),
           steps: nonempty_list(String.t()),
           destroy_steps: [String.t()],
-          docker_opts: [String.t()]
+          docker_build_opts: [String.t()]
         }
 end
 

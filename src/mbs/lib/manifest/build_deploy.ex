@@ -50,7 +50,6 @@ defmodule MBS.Manifest.BuildDeploy do
       |> put_in(["project_dir"], Path.expand(project_dir))
       |> put_in(["dir"], Path.dirname(Path.expand(manifest_path)))
       |> update_in(["timeout"], &(&1 || :infinity))
-      |> update_in(["docker_opts"], &(&1 || []))
 
     manifest_build_filename = Const.manifest_build_filename()
     manifest_deploy_filename = Const.manifest_deploy_filename()
@@ -71,6 +70,7 @@ defmodule MBS.Manifest.BuildDeploy do
     |> update_in(["component", "targets"], &(&1 || []))
     |> update_in(["component", "files"], &(&1 || []))
     |> update_in(["component", "dependencies"], &(&1 || []))
+    |> update_in(["docker_opts"], &(&1 || %{}))
   end
 
   @spec add_defaults_toolchain(map()) :: map()
@@ -79,6 +79,7 @@ defmodule MBS.Manifest.BuildDeploy do
     |> Map.put("__schema__", "toolchain")
     |> update_in(["toolchain", "files"], &(&1 || []))
     |> update_in(["toolchain", "destroy_steps"], &(&1 || []))
+    |> update_in(["docker_build_opts"], &(&1 || []))
   end
 
   @spec to_struct(Type.type(), map(), Config.Data.files_profiles()) :: Type.t()
@@ -110,7 +111,10 @@ defmodule MBS.Manifest.BuildDeploy do
       targets: targets(dir, component["targets"]),
       dependencies: component["dependencies"],
       services: if(component["services"] != nil, do: Path.join(dir, component["services"])),
-      docker_opts: docker_opts
+      docker_opts: %{
+        run: docker_opts["run"] || [],
+        shell: docker_opts["shell"] || []
+      }
     }
   end
 
@@ -123,7 +127,7 @@ defmodule MBS.Manifest.BuildDeploy do
            "project_dir" => project_dir,
            "timeout" => timeout,
            "toolchain" => toolchain,
-           "docker_opts" => docker_opts
+           "docker_build_opts" => docker_build_opts
          },
          files_profile
        ) do
@@ -142,7 +146,7 @@ defmodule MBS.Manifest.BuildDeploy do
       deps_change_step: toolchain["deps_change_step"],
       steps: toolchain["steps"],
       destroy_steps: toolchain["destroy_steps"],
-      docker_opts: docker_opts
+      docker_build_opts: docker_build_opts
     }
   end
 
