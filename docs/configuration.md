@@ -169,7 +169,7 @@ MBS execution global configuration parameters.
         ]
     },
     // [optional] specific "docker build" options to add when running a toolchain build
-    "docker_opts": ["--build-arg", "XXX_VERSION=1.2.3"]
+    "docker_build_opts": ["--build-arg", "XXX_VERSION=1.2.3"]
 }
 ```
 
@@ -235,8 +235,11 @@ Multiple toolchains can be defined in the same toolchain manifest file:
         ]
     },
     // [optional] docker_opts: specific "docker run" options to add
-    // when running the toolchain
-    "docker_opts": ["--net", "host"]
+    // when running the toolchain 
+    "docker_opts": {
+        "run": ["--net", "host"]
+        "shell": []
+    }
 }
 ```
 
@@ -294,7 +297,10 @@ This feature (coupled with the similar one in the toolchain manifest) can be use
     },
     // [optional] docker_opts: specific "docker run" options to add
     // when running the toolchain
-    "docker_opts": ["--net", "host"]
+    "docker_opts": {
+        "run": ["--net", "host"]
+        "shell": []
+    }
 }
 ```
 
