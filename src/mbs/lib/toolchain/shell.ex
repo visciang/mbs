@@ -25,7 +25,8 @@ defmodule MBS.Toolchain.Shell do
         {nil, "true", "true"}
       end
 
-    opts = Toolchain.RunBuild.run_opts(component, docker_network_name, true) ++ ["-i", "--entrypoint", "sh"]
+    opts = Toolchain.RunBuild.run_opts(:shell, component, docker_network_name, true) ++ ["-i", "--entrypoint", "sh"]
+
     cmd_run = Docker.container_run_cmd(toolchain.id, toolchain.checksum, opts, env)
 
     "#{cmd_up}; #{cmd_run}; #{cmd_down}"

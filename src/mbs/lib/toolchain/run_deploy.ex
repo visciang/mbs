@@ -38,7 +38,7 @@ defmodule MBS.Toolchain.RunDeploy do
 
   @spec run_opts(BuildDeploy.Component.t()) :: opts()
   defp run_opts(%BuildDeploy.Component{docker_opts: docker_opts, dir: component_dir}) do
-    opts = ["--rm", "-t" | docker_opts]
+    opts = ["--rm", "-t" | Map.get(docker_opts, :run, [])]
     opts_work_dir = ["-w", "#{component_dir}"]
     opts_dir_mount = ["-v", "#{Const.releases_dir()}:#{Const.releases_dir()}:ro"]
 

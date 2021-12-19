@@ -19,7 +19,7 @@ defmodule MBS.Toolchain.Common do
           dir: dir,
           checksum: checksum,
           dockerfile: dockerfile,
-          docker_opts: docker_opts
+          docker_build_opts: docker_build_opts
         },
         force
       ) do
@@ -34,9 +34,9 @@ defmodule MBS.Toolchain.Common do
       "MBS_CHECKSUM=#{checksum}"
     ]
 
-    docker_opts = docker_opts ++ docker_no_cache ++ docker_labels
+    docker_build_opts = docker_build_opts ++ docker_no_cache ++ docker_labels
 
-    with {:build, :ok} <- {:build, Docker.image_build(docker_opts, id, checksum, dir, dockerfile, "#{id}:build")},
+    with {:build, :ok} <- {:build, Docker.image_build(docker_build_opts, id, checksum, dir, dockerfile, "#{id}:build")},
          {:entrypoint, {:ok, [@default_entrypoint]}} <- {:entrypoint, Docker.image_entrypoint(id, checksum)} do
       :ok
     else

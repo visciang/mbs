@@ -27,7 +27,7 @@ defmodule MBS.Toolchain.RunBuild do
     envs = env_vars(config, component, checksum, upstream_results)
 
     with {:ok, docker_network_name} <- exec_services(:up, component, envs),
-         run_opts_ = run_opts(component, docker_network_name, mount_compoment_dir),
+         run_opts_ = run_opts(:run, component, docker_network_name, mount_compoment_dir),
          run_opts_ = run_opts_ ++ ["--detach", "--name", id, "--entrypoint", "sh"],
          :ok <- Docker.container_run(toolchain.id, toolchain.checksum, run_opts_, envs, @sh_sleep_forever_cmd, id) do
       {:ok, envs}
@@ -67,13 +67,15 @@ defmodule MBS.Toolchain.RunBuild do
     end
   end
 
-  @spec run_opts(BuildDeploy.Component.t(), nil | String.t(), boolean()) :: opts()
+  @spec run_opts(BuildDeploy.Component.docker_opts_type(), BuildDeploy.Component.t(), nil | String.t(), boolean()) ::
+          opts()
   def run_opts(
+        action,
         %BuildDeploy.Component{docker_opts: docker_opts, dir: component_dir, project_dir: project_dir},
         network_name,
         mount_compoment_dir
       ) do
-    opts = ["--rm", "-t" | docker_opts]
+    opts = ["--rm", "-t" | Map.get(docker_opts, action, [])]
     opts_work_dir = ["-w", "#{component_dir}"]
     opts_dir_mount = if mount_compoment_dir, do: ["-v", "#{project_dir}:#{project_dir}"], else: []
     opts_net = if network_name != nil, do: ["--net", network_name], else: []

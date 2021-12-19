@@ -34,9 +34,11 @@
                 "mbs-cache"
             ]
         },
-        "docker_opts": [
-            "-v",
-            "mbs-test-dind-artifacts:/mbs"
-        ]
+        "docker_opts": {
+            "run": [
+                "-v",
+                "mbs-test-dind-artifacts:/mbs"
+            ]
+        }
     }
 ]

@@ -61,9 +61,13 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
       IO.puts("    #{component.services}")
     end
 
-    if component.docker_opts != [] do
+    if component.docker_opts != %{run: [], shell: []} do
       IO.puts("  docker_opts:")
-      Enum.each(component.docker_opts, &IO.puts("    - #{&1}"))
+
+      Enum.each(component.docker_opts, fn {k, v} ->
+        IO.puts("    #{k}:")
+        Enum.each(v, &IO.puts("      - #{&1}"))
+      end)
     end
 
     IO.puts("")
@@ -93,9 +97,9 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
     IO.puts("  files:")
     toolchain.files |> Enum.sort() |> Enum.each(&IO.puts("    - #{&1}"))
 
-    if toolchain.docker_opts != [] do
-      IO.puts("  docker_opts:")
-      Enum.each(toolchain.docker_opts, &IO.puts("    - #{&1}"))
+    if toolchain.docker_build_opts != [] do
+      IO.puts("  docker_build_opts:")
+      Enum.each(toolchain.docker_build_opts, &IO.puts("    - #{&1}"))
     end
 
     IO.puts("")
