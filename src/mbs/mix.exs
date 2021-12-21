@@ -36,6 +36,7 @@ defmodule MBS.MixProject do
     [
       {:dask, path: "../dask"},
       {:jason, "~> 1.2"},
+      {:path_glob, "~> 0.1.1"},
       {:excoveralls, "~> 0.12", only: :test},
       {:credo, "~> 1.0", only: [:dev], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false}

@@ -44,6 +44,8 @@ args $0 "$@"
 
 case $1 in
     cache)
+        rm -rf _build deps
+
         mix deps.get
         MIX_ENV=dev mix deps.compile
         MIX_ENV=prod mix deps.compile

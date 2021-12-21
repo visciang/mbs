@@ -3,7 +3,7 @@ defmodule MBS.Manifest.BuildDeploy do
 
   alias MBS.{Checksum, Config, Const, Utils}
   alias MBS.Manifest.BuildDeploy.{Component, Target, Toolchain, Type, Validator}
-  alias MBS.Manifest.Project
+  alias MBS.Manifest.{FileDeps, Project}
 
   @spec find_all(Type.type(), Config.Data.t(), Path.t()) :: [Type.t()]
   def find_all(type, %Config.Data{files_profile: files_profile}, project_dir \\ ".") do
@@ -150,25 +150,11 @@ defmodule MBS.Manifest.BuildDeploy do
     }
   end
 
-  @spec files(Type.type(), Path.t(), [String.t()]) :: [Path.t()]
+  @spec files(Type.type(), Path.t(), [String.t()]) :: [String.t()]
   defp files(:build, dir, file_globs) do
     file_globs = [manifest_name(:build), manifest_name(:deploy) | file_globs]
-    {file_exclude_glob, file_include_glob} = Enum.split_with(file_globs, &String.starts_with?(&1, "!"))
 
-    files_include_match =
-      file_include_glob
-      |> Stream.flat_map(&Path.wildcard(Path.join(dir, &1), match_dot: true))
-      |> MapSet.new()
-
-    files_exclude_match =
-      file_exclude_glob
-      |> Stream.map(&String.slice(&1, 1..-1))
-      |> Stream.flat_map(&Path.wildcard(Path.join(dir, &1), match_dot: true))
-      |> MapSet.new()
-
-    files_match = MapSet.difference(files_include_match, files_exclude_match)
-
-    MapSet.to_list(files_match)
+    FileDeps.wildcard(dir, file_globs, match_dot: true)
   end
 
   defp files(:deploy, dir, files) do
