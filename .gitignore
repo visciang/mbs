@@ -31,7 +31,6 @@ mbs-*.tar
 **/.elixir_ls
 **/.plts/
 **/.cache/
-coveralls.json
 
 src/mbs/mbs
 

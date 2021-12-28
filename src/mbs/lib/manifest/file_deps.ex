@@ -3,7 +3,8 @@ defmodule MBS.Manifest.FileDeps do
 
   # Fast "glob" considering we have negated globs (eg. "!app/**.txt")
   # :path_glob deps is used here to match? a path against a glob expression
-  # (at the time of writing this function is not available neither in the elixir nor in the erlang stdlib)
+  # (at the time of writing :path_glob functionalities are not available
+  # neither in the elixir nor in the erlang stdlib)
 
   @spec wildcard(Path.t(), [String.t()], keyword()) :: [String.t()]
   def wildcard(dir, globs, opts) do
