@@ -9,7 +9,8 @@ defmodule Dask.Exec do
   @enforce_keys [:graph, :task]
   defstruct [:graph, :task]
 
-  @spec exec(:digraph.graph(), Job.t(), Limiter.max_concurrency()) :: {:error, term()} | {:ok, term()}
+  @spec exec(:digraph.graph(), Job.t(), Limiter.max_concurrency()) ::
+          {:error, Job.upstream_results()} | {:ok, Job.upstream_results()}
   def exec(graph, %Job{} = end_job, max_concurrency) do
     {:ok, limiter} = Limiter.start_link(max_concurrency)
 

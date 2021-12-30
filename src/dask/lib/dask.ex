@@ -12,7 +12,7 @@ defmodule Dask do
   defstruct [:jobs]
   @type t :: %Dask{jobs: %{Job.id() => Job.t()}}
 
-  @type await_result :: {:ok, term()} | {:error, term()} | :timeout
+  @type await_result :: {:ok, Job.upstream_results()} | {:error, Job.upstream_results()} | :timeout
 
   @spec start_job_id :: :__start_job__
   def start_job_id, do: :__start_job__

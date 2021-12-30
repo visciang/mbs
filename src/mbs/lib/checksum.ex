@@ -1,7 +1,7 @@
 defmodule MBS.Checksum do
   @moduledoc false
 
-  @spec files_checksum([Path.t()], Path.t()) :: String.t()
+  @spec files_checksum(nonempty_list(Path.t()), Path.t()) :: String.t()
   def files_checksum(files, relative_to_dir) do
     files
     |> Enum.sort()
