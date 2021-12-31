@@ -53,7 +53,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Ls do
 
     if component.dependencies != [] do
       IO.puts("  dependencies:")
-      Enum.each(component.dependencies, &IO.puts("    - #{&1}"))
+      Enum.each(component.dependencies, &IO.puts("    - #{&1.id}"))
     end
 
     if component.services != nil do

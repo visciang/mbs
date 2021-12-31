@@ -1,6 +1,6 @@
 defmodule MBS.CLI.Command.MakeRelease do
   @moduledoc false
-  defstruct [:targets, :id, :output_dir, :metadata]
+  defstruct [:targets, :id, :metadata]
 
   @type t :: %__MODULE__{
           targets: [String.t()],
@@ -12,15 +12,15 @@ end
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
   alias MBS.CLI.Command
   alias MBS.{CLI, Config, Const, Utils, Workflow}
-  alias MBS.Manifest.{BuildDeploy, Project, Release}
+  alias MBS.Manifest.{BuildDeploy, Release}
 
   @spec run(Command.MakeRelease.t(), Config.Data.t(), Path.t()) :: Command.on_run()
   def run(
-        %Command.MakeRelease{id: id, targets: target_ids, metadata: metadata},
+        %Command.MakeRelease{id: release_id, targets: target_ids, metadata: metadata},
         %Config.Data{} = config,
         cwd
       ) do
-    output_dir = Path.join(Const.releases_dir(), id)
+    output_dir = Path.join(Const.releases_dir(), release_id)
 
     File.mkdir_p!(output_dir)
 
@@ -37,7 +37,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
 
     validate_deploy_files(build_manifests, deploy_manifests)
 
-    build_checksums_map = build_checksums(target_ids, build_manifests, config)
+    build_checksums_map = Map.new(build_manifests, &{&1.id, &1.checksum})
 
     dask =
       deploy_manifests
@@ -65,8 +65,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
       end
 
     if res == :ok do
-      Release.write(deploy_manifests, id, metadata)
-      Project.write(deploy_manifests, id)
+      Release.write(release_id, deploy_manifests, build_manifests, metadata)
     end
 
     res
@@ -79,6 +78,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     manifests
     |> Enum.filter(&match?(%BuildDeploy.Component{}, &1))
     |> Enum.flat_map(&[&1, &1.toolchain])
+    |> Enum.uniq_by(& &1.id)
   end
 
   @spec validate_deploy_files([BuildDeploy.Type.t()], [BuildDeploy.Type.t()]) :: :ok
@@ -99,28 +99,5 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
         Utils.halt(error_message)
       end
     end)
-  end
-
-  @spec build_checksums([String.t()], [BuildDeploy.Type.t()], Config.Data.t()) :: %{String.t() => String.t()}
-  defp build_checksums(_target_ids, build_manifests, config) do
-    dask = Workflow.workflow(build_manifests, config, &Workflow.Job.Checksums.fun/2)
-
-    dask_exec =
-      try do
-        Dask.async(dask, config.parallelism)
-      rescue
-        error in [Dask.Error] ->
-          Utils.halt(error.message)
-      end
-
-    dask_exec
-    |> Dask.await()
-    |> case do
-      {:ok, checksums_map} ->
-        checksums_map |> Map.values() |> Utils.merge_maps()
-
-      err ->
-        Utils.halt("Failed build checksums compute\n#{inspect(err)}")
-    end
   end
 end

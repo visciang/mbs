@@ -29,8 +29,6 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
   @spec print_ls(Release.Type.t(), boolean()) :: :ok
   defp print_ls(%Release.Type{} = release, true) do
     IO.puts(IO.ANSI.format([:bright, "#{release.id}", :normal, ":"]))
-    IO.puts("  checksum:")
-    IO.puts("    #{release.checksum}")
 
     if release.metadata do
       IO.puts("  metadata:")
@@ -39,9 +37,9 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.LsRelease do
 
     IO.puts("  components:")
 
-    Release.find_all_metadata(release.id)
-    |> Enum.sort_by(& &1["id"])
-    |> Enum.each(&IO.puts("  - #{&1["id"]}  (#{&1["checksum"]})"))
+    release.deploy_manifests
+    |> Enum.sort_by(& &1.id)
+    |> Enum.each(&IO.puts("  - #{&1.id}  (#{&1.checksum})"))
 
     IO.puts("")
   end

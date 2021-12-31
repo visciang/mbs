@@ -14,6 +14,7 @@ defmodule MBS.Manifest.BuildDeploy.Component do
     :dir,
     :project_dir,
     :timeout,
+    :checksum,
     :toolchain,
     :toolchain_opts,
     :files,
@@ -31,11 +32,12 @@ defmodule MBS.Manifest.BuildDeploy.Component do
           dir: Path.t(),
           project_dir: Path.t(),
           timeout: timeout(),
+          checksum: String.t(),
           toolchain: MBS.Manifest.BuildDeploy.Toolchain.t(),
           toolchain_opts: [String.t()],
           files: nonempty_list(String.t()) | nonempty_list(MBS.Manifest.BuildDeploy.Target.t()),
           targets: nonempty_list(MBS.Manifest.BuildDeploy.Target.t()),
-          dependencies: [String.t()],
+          dependencies: [MBS.Manifest.BuildDeploy.Component.t()],
           services: nil | Path.t(),
           docker_opts: %{
             docker_opts_type() => [String.t()]

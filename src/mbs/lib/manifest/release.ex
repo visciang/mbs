@@ -1,7 +1,7 @@
 defmodule MBS.Manifest.Release do
   @moduledoc false
 
-  alias MBS.{Checksum, Const, Utils}
+  alias MBS.{Const, Utils}
   alias MBS.Manifest.BuildDeploy
   alias MBS.Manifest.Release.Type
 
@@ -10,19 +10,16 @@ defmodule MBS.Manifest.Release do
     Path.join([Const.releases_dir(), "*", "#{Const.manifest_release_filename()}"])
     |> Path.wildcard(match_dot: true)
     |> Enum.map(&decode/1)
-    |> Enum.map(&to_struct/1)
   end
 
-  @spec find_all_metadata(String.t()) :: [map()]
-  def find_all_metadata(release_id) do
-    Path.join([Const.releases_dir(), release_id, "*", "#{Const.release_metadata_filename()}"])
-    |> Path.wildcard(match_dot: true)
-    |> Enum.map(&decode/1)
+  @spec release_dir(String.t()) :: Path.t()
+  def release_dir(release_id) do
+    Path.join(Const.releases_dir(), release_id)
   end
 
-  @spec get_release(String.t()) :: {Type.t(), Path.t()}
+  @spec get_release(String.t()) :: Type.t()
   def get_release(release_id) do
-    release_dir = Path.join(Const.releases_dir(), release_id)
+    release_dir = release_dir(release_id)
     release_manifest_path = Path.join(release_dir, Const.manifest_release_filename())
 
     unless File.exists?(release_manifest_path) do
@@ -30,66 +27,30 @@ defmodule MBS.Manifest.Release do
       Utils.halt(error_message)
     end
 
-    release_metadata_map =
-      release_manifest_path
-      |> File.read!()
-      |> Jason.decode!()
-
-    {
-      %Type{
-        id: Map.fetch!(release_metadata_map, "id"),
-        checksum: Map.fetch!(release_metadata_map, "checksum"),
-        metadata: Map.fetch!(release_metadata_map, "metadata")
-      },
-      release_dir
-    }
+    decode(release_manifest_path)
   end
 
-  @spec write([BuildDeploy.Type.t()], String.t(), nil | String.t()) :: :ok
-  def write(manifests, release_id, metadata) do
-    release_dir = Path.join(Const.releases_dir(), release_id)
+  @spec write(String.t(), [BuildDeploy.Type.t()], [BuildDeploy.Type.t()], nil | String.t()) :: :ok
+  def write(release_id, deploy_manifests, build_manifests, metadata) do
+    release_dir = release_dir(release_id)
 
     release_manifest = %Type{
       id: release_id,
-      checksum: release_checksum(manifests, release_dir),
-      metadata: metadata
+      metadata: metadata,
+      deploy_manifests: deploy_manifests,
+      build_manifests: build_manifests
     }
 
     File.write!(
       Path.join(release_dir, Const.manifest_release_filename()),
-      release_manifest |> Map.from_struct() |> Jason.encode!(pretty: true),
-      [:utf8]
+      :erlang.term_to_binary(release_manifest)
     )
   end
 
-  @spec release_checksum([BuildDeploy.Type.t()], Path.t()) :: String.t()
-  defp release_checksum(manifests, release_dir) do
-    manifests
-    |> Enum.map_join(fn %{id: id} ->
-      Path.join([release_dir, id, Const.release_metadata_filename()])
-      |> File.read!()
-      |> Jason.decode!()
-      |> Map.fetch!("checksum")
-    end)
-    |> Checksum.checksum()
-  end
-
-  @spec decode(Path.t()) :: map()
+  @spec decode(Path.t()) :: Type.t()
   defp decode(manifest_path) do
     manifest_path
     |> File.read!()
-    |> Jason.decode()
-    |> case do
-      {:ok, conf} ->
-        conf
-
-      {:error, reason} ->
-        Utils.halt("Error parsing #{manifest_path}\n  #{Jason.DecodeError.message(reason)}")
-    end
-  end
-
-  @spec to_struct(map) :: Type.t()
-  defp to_struct(%{"id" => id, "checksum" => checksum, "metadata" => metadata}) do
-    %Type{id: id, checksum: checksum, metadata: metadata}
+    |> :erlang.binary_to_term()
   end
 end

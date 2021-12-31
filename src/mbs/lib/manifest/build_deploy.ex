@@ -2,11 +2,18 @@ defmodule MBS.Manifest.BuildDeploy do
   @moduledoc false
 
   alias MBS.{Checksum, Config, Const, Utils}
-  alias MBS.Manifest.BuildDeploy.{Component, Target, Toolchain, Type, Validator}
+  alias MBS.Manifest.BuildDeploy.{Component, Target, Toolchain, Type, Validator, Workflow}
   alias MBS.Manifest.{FileDeps, Project}
 
   @spec find_all(Type.type(), Config.Data.t(), Path.t()) :: [Type.t()]
-  def find_all(type, %Config.Data{files_profile: files_profile}, project_dir \\ ".") do
+  def find_all(type, %Config.Data{files_profile: files_profile} = conf, project_dir \\ ".") do
+    pre_build_components =
+      if type == :deploy do
+        find_all(:build, conf, project_dir) |> Map.new(&{&1.id, &1})
+      else
+        %{}
+      end
+
     project_manifest_path = Path.join(project_dir, Const.manifest_project_filename())
     available_files_profiles = Map.keys(files_profile)
 
@@ -18,8 +25,14 @@ defmodule MBS.Manifest.BuildDeploy do
       |> Enum.map(&add_defaults(&1, project_dir, manifest_path))
     end)
     |> Validator.validate(available_files_profiles)
-    |> Enum.map(&to_struct(type, &1, files_profile))
-    |> add_toolchain_data()
+    |> Workflow.to_type(&to_struct(&1, &2, &3, &4, pre_build_components), type, files_profile)
+  end
+
+  @spec component_dependencies_ids(Type.t()) :: [String.t()]
+  def component_dependencies_ids(%Toolchain{}), do: []
+
+  def component_dependencies_ids(%Component{toolchain: toolchain, dependencies: dependencies}) do
+    [toolchain.id | Enum.map(dependencies, & &1.id)]
   end
 
   @spec manifest_name(Type.type()) :: String.t()
@@ -82,7 +95,8 @@ defmodule MBS.Manifest.BuildDeploy do
     |> update_in(["docker_build_opts"], &(&1 || []))
   end
 
-  @spec to_struct(Type.type(), map(), Config.Data.files_profiles()) :: Type.t()
+  @spec to_struct(Type.type(), map(), %{String.t() => Type.t()}, Config.Data.files_profiles(), %{String.t() => Type.t()}) ::
+          Type.t()
   defp to_struct(
          type,
          %{
@@ -94,10 +108,23 @@ defmodule MBS.Manifest.BuildDeploy do
            "component" => component,
            "docker_opts" => docker_opts
          },
-         files_profile
+         upstream_components,
+         files_profile,
+         pre_build_components
        ) do
     f_prof = Map.get(files_profile, component["files_profile"], [])
     services_file = if component["services"] != nil, do: [component["services"]], else: []
+    dependencies = Enum.map(component["dependencies"], &Map.fetch!(upstream_components, &1))
+    toolchain = Map.fetch!(upstream_components, component["toolchain"])
+    files_ = files(type, dir, f_prof ++ services_file ++ component["files"])
+
+    checksum =
+      if type == :build do
+        build_checksum_component(dir, files_, toolchain, dependencies)
+      else
+        build_checksum = Map.fetch!(pre_build_components, id).checksum
+        deploy_checksum_component(dir, files_, toolchain, dependencies, build_checksum)
+      end
 
     %Component{
       type: type,
@@ -105,11 +132,12 @@ defmodule MBS.Manifest.BuildDeploy do
       dir: dir,
       project_dir: project_dir,
       timeout: timeout,
-      toolchain: component["toolchain"],
+      checksum: checksum,
+      toolchain: toolchain,
       toolchain_opts: component["toolchain_opts"],
-      files: files(type, dir, f_prof ++ services_file ++ component["files"]),
+      files: files_,
       targets: targets(dir, component["targets"]),
-      dependencies: component["dependencies"],
+      dependencies: dependencies,
       services: if(component["services"] != nil, do: Path.join(dir, component["services"])),
       docker_opts: %{
         run: docker_opts["run"] || [],
@@ -129,7 +157,9 @@ defmodule MBS.Manifest.BuildDeploy do
            "toolchain" => toolchain,
            "docker_build_opts" => docker_build_opts
          },
-         files_profile
+         %{},
+         files_profile,
+         _pre_build_components
        ) do
     f_prof = Map.get(files_profile, toolchain["files_profile"], [])
     files_ = files(:build, dir, [toolchain["dockerfile"]] ++ f_prof ++ toolchain["files"])
@@ -140,7 +170,7 @@ defmodule MBS.Manifest.BuildDeploy do
       dir: dir,
       project_dir: project_dir,
       timeout: timeout,
-      checksum: Checksum.files_checksum(files_, dir),
+      checksum: checksum_toolchain(dir, files_),
       dockerfile: Path.join(dir, toolchain["dockerfile"]),
       files: files_,
       deps_change_step: toolchain["deps_change_step"],
@@ -172,16 +202,33 @@ defmodule MBS.Manifest.BuildDeploy do
     |> Enum.uniq()
   end
 
-  @spec add_toolchain_data([Type.t()]) :: [Type.t()]
-  defp add_toolchain_data(manifests) do
-    toolchains = Enum.filter(manifests, &match?(%Toolchain{}, &1))
-    get_toolchain = Map.new(toolchains, &{&1.id, &1})
+  @spec checksum_toolchain(Path.t(), nonempty_list(Path.t())) :: String.t()
+  defp checksum_toolchain(dir, files) do
+    Checksum.files_checksum(files, dir)
+  end
 
-    components =
-      manifests
-      |> Enum.filter(&match?(%Component{}, &1))
-      |> Enum.map(&put_in(&1.toolchain, Map.fetch!(get_toolchain, &1.toolchain)))
+  @spec build_checksum_component(Path.t(), nonempty_list(Path.t()), Toolchain.t(), [Component.t()]) :: String.t()
+  defp build_checksum_component(dir, files, toolchain, dependencies) do
+    component_checksum = Checksum.files_checksum(files, dir)
 
-    toolchains ++ components
+    dependencies_checksums =
+      [toolchain | dependencies]
+      |> Enum.sort_by(& &1.id)
+      |> Enum.map(& &1.checksum)
+
+    [component_checksum | dependencies_checksums]
+    |> Enum.join()
+    |> Checksum.checksum()
+  end
+
+  @spec deploy_checksum_component(Path.t(), nonempty_list(Path.t()), Toolchain.t(), [Component.t()], String.t()) ::
+          String.t()
+  defp deploy_checksum_component(dir, _files, toolchain, dependencies, build_checksum) do
+    deploy_manifest_path = Path.join(dir, Const.manifest_deploy_filename())
+    deploy_partial_checksum = build_checksum_component(dir, [deploy_manifest_path], toolchain, dependencies)
+
+    [build_checksum, deploy_partial_checksum]
+    |> Enum.join()
+    |> Checksum.checksum()
   end
 end

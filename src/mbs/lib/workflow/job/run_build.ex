@@ -41,18 +41,21 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       %Job.FunResult{
         cached: cached,
-        checksum: checksum,
         component: nil,
         upstream_cached_targets: MapSet.new()
       }
     end
   end
 
-  def fun(%Config.Data{} = config, %BuildDeploy.Component{id: id} = component, force, get_deps_only, sandboxed) do
+  def fun(
+        %Config.Data{} = config,
+        %BuildDeploy.Component{id: id, checksum: checksum} = component,
+        force,
+        get_deps_only,
+        sandboxed
+      ) do
     fn _job_id, upstream_results ->
       start_time = Reporter.time()
-
-      checksum = Job.Utils.build_checksum(component, upstream_results)
 
       {cached, report_status, report_desc} =
         if get_deps_only do
@@ -60,7 +63,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
           {true, Reporter.Status.uptodate(), checksum}
         else
-          run(config, component, checksum, upstream_results, sandboxed, force)
+          run(config, component, upstream_results, sandboxed, force)
         end
 
       end_time = Reporter.time()
@@ -70,7 +73,6 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       %Job.FunResult{
         cached: cached,
-        checksum: checksum,
         component: component,
         upstream_cached_targets: transitive_cached_targets(component, checksum, upstream_results)
       }
@@ -99,18 +101,17 @@ defmodule MBS.Workflow.Job.RunBuild do
     Context.Files.put(component, upstream_components(upstream_results), sandboxed)
   end
 
-  @spec run(Config.Data.t(), BuildDeploy.Component.t(), String.t(), Job.upstream_results(), boolean(), boolean()) ::
+  @spec run(Config.Data.t(), BuildDeploy.Component.t(), Job.upstream_results(), boolean(), boolean()) ::
           {false, :ok | {:error, binary}, nil | binary}
   defp run(
          %Config.Data{} = config,
-         %BuildDeploy.Component{id: id, targets: targets} = component,
-         checksum,
+         %BuildDeploy.Component{id: id, checksum: checksum, targets: targets} = component,
          upstream_results,
          sandboxed,
          force
        ) do
     with :cache_miss <- if(force, do: :cache_miss, else: Job.Cache.get_targets(config, id, checksum, targets)),
-         {:ok, envs} <- Toolchain.RunBuild.up(config, component, checksum, upstream_results, not sandboxed),
+         {:ok, envs} <- Toolchain.RunBuild.up(config, component, not sandboxed),
          :ok <- Context.Config.put(component, sandboxed),
          {:ok, changed_deps} <- Context.Deps.put_upstream(component, upstream_results, force, sandboxed),
          :ok <- Context.Files.put(component, upstream_components(upstream_results), sandboxed),

@@ -11,8 +11,9 @@ end
 
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   alias MBS.CLI.{Command, Reporter}
-  alias MBS.{CLI, Config, Utils, Workflow}
+  alias MBS.{CLI, Config, Utils}
   alias MBS.Manifest.BuildDeploy
+  alias MBS.Toolchain
 
   @spec run(Command.Shell.t(), Config.Data.t(), Path.t()) :: Command.on_run()
   def run(%Command.Shell{target: target, docker_cmd: nil}, %Config.Data{} = config, cwd) do
@@ -30,38 +31,24 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
     end
   end
 
-  def run(%Command.Shell{target: target, docker_cmd: true}, %Config.Data{} = config, cwd) do
+  def run(%Command.Shell{target: shell_target, docker_cmd: true}, %Config.Data{} = config, cwd) do
     Reporter.mute(true)
 
-    manifests = BuildDeploy.find_all(:build, config, cwd)
+    component =
+      BuildDeploy.find_all(:build, config, cwd)
+      |> Enum.find(&(&1.id == shell_target))
 
-    dask =
-      manifests
-      |> CLI.Utils.transitive_dependencies_closure([target])
-      |> Workflow.workflow(config, &Workflow.Job.Shell.fun(&1, &2, target), &Workflow.Job.OnExit.fun/2)
+    Toolchain.Shell.cmd(config, component)
+    |> IO.puts()
 
-    dask_exec =
-      try do
-        Dask.async(dask, config.parallelism)
-      rescue
-        error in [Dask.Error] ->
-          Utils.halt(error.message)
-      end
-
-    dask_exec
-    |> Dask.await()
-    |> case do
-      {:ok, _} -> :ok
-      {:error, _} -> :error
-      :timeout -> :timeout
-    end
+    :ok
   end
 
   @spec target_component_direct_dependencies([BuildDeploy.Type.t()], String.t()) :: [String.t()]
   defp target_component_direct_dependencies(manifests, id) do
     case Enum.find(manifests, &(&1.id == id)) do
       %BuildDeploy.Component{} = component ->
-        [component.toolchain.id | component.dependencies]
+        BuildDeploy.component_dependencies_ids(component)
 
       %BuildDeploy.Toolchain{} ->
         Utils.halt("Bad target, the target should be a component not a toolchain")

@@ -6,11 +6,10 @@ defmodule MBS.Workflow.Job do
   defmodule FunResult do
     @moduledoc false
 
-    defstruct [:cached, :checksum, :component, :upstream_cached_targets]
+    defstruct [:cached, :component, :upstream_cached_targets]
 
     @type t :: %__MODULE__{
             cached: boolean(),
-            checksum: String.t(),
             component: nil | BuildDeploy.Component.t(),
             upstream_cached_targets: MapSet.t(FunResult.UpstreamCachedTarget.t())
           }

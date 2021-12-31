@@ -13,41 +13,37 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Tree do
   alias MBS.CLI.Command
   alias MBS.{CLI, Config}
   alias MBS.Manifest.BuildDeploy
-  alias MBS.Workflow.Job
 
   @spec run(CLI.Command.Tree.t(), Config.Data.t(), Path.t()) :: Command.on_run()
   def run(%Command.Tree{type: type, targets: target_ids}, %Config.Data{} = config, cwd) do
     IO.puts("")
 
-    manifests = BuildDeploy.find_all(type, config, cwd)
+    manifests =
+      BuildDeploy.find_all(type, config, cwd)
+      |> Enum.filter(&CLI.Utils.filter_manifest_by_id(&1.id, target_ids))
 
-    target_ids = if target_ids == [], do: Enum.map(manifests, & &1.id), else: target_ids
-
-    manifests_map =
-      manifests
-      |> CLI.Utils.transitive_dependencies_closure(target_ids)
-      |> Map.new(&{&1.id, &1})
-
-    print_tree(target_ids, manifests_map, "")
+    print_tree(manifests, "")
 
     :ok
   end
 
-  @spec print_tree([String.t()], %{String.t() => BuildDeploy.Type.t()}, IO.chardata()) :: :ok
-  defp print_tree(names, manifests_map, indent) do
-    names_length = length(names)
+  @spec print_tree([BuildDeploy.Type.t()], IO.chardata()) :: :ok
+  defp print_tree(manifests, indent) do
+    manifests_length = length(manifests)
 
-    names
-    |> Enum.sort()
+    manifests
+    |> Enum.sort_by(& &1.id)
     |> Enum.with_index(1)
-    |> Enum.each(fn {id, idx} ->
-      guide = if idx == names_length, do: ["└── "], else: ["├── "]
-      IO.puts(IO.ANSI.format([indent, guide, :bright, id]))
+    |> Enum.each(fn {manifest, idx} ->
+      guide = if idx == manifests_length, do: ["└── "], else: ["├── "]
+      IO.puts(IO.ANSI.format([indent, guide, :bright, manifest.id]))
 
-      dependencies = Job.Utils.component_dependencies(manifests_map[id])
-      guide = if idx == names_length, do: ["    "], else: ["│   "]
-
-      print_tree(dependencies, manifests_map, [indent | guide])
+      guide = if idx == manifests_length, do: ["    "], else: ["│   "]
+      print_tree(deps(manifest), [indent | guide])
     end)
   end
+
+  @spec deps(BuildDeploy.Type.t()) :: [BuildDeploy.Type.t()]
+  defp deps(%BuildDeploy.Toolchain{}), do: []
+  defp deps(%BuildDeploy.Component{toolchain: toolchain, dependencies: dependencies}), do: [toolchain | dependencies]
 end

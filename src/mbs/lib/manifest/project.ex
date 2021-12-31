@@ -21,18 +21,6 @@ defmodule MBS.Manifest.Project do
     |> to_components_dirs(type, dir)
   end
 
-  @spec write([BuildDeploy.Type.t()], String.t()) :: :ok
-  def write(manifests, release_id) do
-    release_dir = Path.join(Const.releases_dir(), release_id)
-    components_id = Enum.map(manifests, & &1.id)
-
-    File.write!(
-      Path.join(release_dir, Const.manifest_project_filename()),
-      Jason.encode!(%{dirs: components_id}, pretty: true),
-      [:utf8]
-    )
-  end
-
   @spec to_components_dirs(map(), BuildDeploy.Type.type(), Path.t()) :: [Path.t()]
   defp to_components_dirs(manifest_map, type, base_dir) do
     unless is_map(manifest_map) do
