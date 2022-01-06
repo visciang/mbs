@@ -22,7 +22,7 @@ defmodule MBS.Workflow.Job do
 
     @type t :: %__MODULE__{
             component_id: String.t(),
-            target: BuildDeploy.Target.t()
+            target: BuildDeploy.Component.Target.t()
           }
   end
 

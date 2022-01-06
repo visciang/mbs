@@ -1,28 +1,28 @@
 defmodule MBS.Manifest.BuildDeploy.Validator do
   @moduledoc false
 
+  alias MBS.Manifest.BuildDeploy.Type
   alias MBS.Utils
 
   @name_regex "^[a-zA-Z0-9_-]+$"
 
-  @spec validate([map()], [String.t()]) :: [map()]
-  def validate(manifests, files_profile) do
-    validate_schema(manifests)
+  @spec validate([map()], Type.type(), [String.t()]) :: [map()]
+  def validate(manifests, type, files_profile) do
+    validate_schema(manifests, type)
 
-    ids = MapSet.new(manifests, & &1["id"])
-    validate_unique_id(manifests, ids)
-    validate_components(manifests, ids)
-    validate_files_profile(manifests, MapSet.new(files_profile))
+    validate_unique_id(manifests)
+    validate_components(manifests)
+    validate_files_profile(manifests, files_profile)
 
     manifests
   end
 
-  @spec validate_schema([map()]) :: nil
-  defp validate_schema(manifests) do
+  @spec validate_schema([map()], Type.type()) :: nil
+  defp validate_schema(manifests, type) do
     Enum.each(manifests, fn manifest ->
       validate_id(manifest)
       validate_timeout(manifest)
-      validate_type(manifest)
+      validate_type(manifest, type)
     end)
 
     nil
@@ -78,9 +78,9 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
 
   defp validate_docker_opts(_), do: nil
 
-  @spec validate_type(map()) :: nil
-  defp validate_type(%{"__schema__" => "toolchain", "dir" => dir} = type) do
-    toolchain = type["toolchain"]
+  @spec validate_type(map(), Type.type()) :: nil
+  defp validate_type(%{"__schema__" => "toolchain", "dir" => dir} = schema, _type) do
+    toolchain = schema["toolchain"]
 
     unless toolchain do
       message = error_message(dir, "Bad toolchain type, missing toolchain field")
@@ -111,8 +111,8 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
     end
   end
 
-  defp validate_type(%{"__schema__" => "component", "dir" => dir} = type) do
-    component = type["component"]
+  defp validate_type(%{"__schema__" => "component", "dir" => dir} = schema, type) do
+    component = schema["component"]
 
     unless component do
       message = error_message(dir, "Bad component type, missing component field")
@@ -129,6 +129,17 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
       Utils.halt(message)
     end
 
+    if type == :build do
+      validate_component_build(dir, component)
+    end
+
+    validate_list_of_strings(component, ["toolchain_opts"], dir)
+    validate_list_of_strings(component, ["dependencies"], dir)
+    validate_docker_opts(schema)
+  end
+
+  @spec validate_component_build(Path.t(), map()) :: nil
+  defp validate_component_build(dir, component) do
     unless component["files"] != nil or component["files_profile"] != nil do
       message = error_message(dir, "One of file/files_profile should be defined")
       Utils.halt(message)
@@ -139,17 +150,12 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
       Utils.halt(message)
     end
 
-    if component["files"] do
+    if component["files"] != nil do
       validate_list_of_strings(component, ["files"], dir)
     end
 
     validate_component_services(dir, component)
-
-    validate_list_of_strings(component, ["toolchain_opts"], dir)
     validate_list_of_strings(component, ["targets"], dir)
-    validate_list_of_strings(component, ["dependencies"], dir)
-
-    validate_docker_opts(type)
   end
 
   @spec validate_component_services(Path.t(), map()) :: nil
@@ -186,8 +192,10 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
     end
   end
 
-  @spec validate_unique_id([map()], MapSet.t(String.t())) :: nil
-  defp validate_unique_id(manifests, ids) do
+  @spec validate_unique_id([map()]) :: nil
+  defp validate_unique_id(manifests) do
+    ids = MapSet.new(manifests, & &1["id"])
+
     if MapSet.size(ids) != length(manifests) do
       message =
         manifests
@@ -201,8 +209,10 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
     end
   end
 
-  @spec validate_components([map()], MapSet.t(String.t())) :: nil
-  defp validate_components(manifests, ids) do
+  @spec validate_components([map()]) :: nil
+  defp validate_components(manifests) do
+    ids = MapSet.new(manifests, & &1["id"])
+
     toolchains_ids =
       manifests
       |> Enum.filter(&(&1["__schema__"] == "toolchain"))
@@ -227,8 +237,10 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
     nil
   end
 
-  @spec validate_files_profile([map()], MapSet.t(String.t())) :: nil
+  @spec validate_files_profile([map()], [String.t()]) :: nil
   defp validate_files_profile(manifests, available_files_profile) do
+    available_files_profile = MapSet.new(available_files_profile)
+
     Enum.each(manifests, fn manifest ->
       dir = manifest["dir"]
       files_profile = manifest[manifest["__schema__"]]["files_profile"]

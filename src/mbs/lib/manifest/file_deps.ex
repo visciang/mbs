@@ -40,20 +40,18 @@ defmodule MBS.Manifest.FileDeps do
 
   @spec _wildcard_apply(Path.t(), [String.t()], [String.t()], keyword()) :: [String.t()]
   defp _wildcard_apply(path, include_globs, exclude_globs, opts) do
-    cond do
-      File.regular?(path) ->
-        if Enum.any?(include_globs, &String.match?(path, &1)) do
-          [path]
-        else
-          []
-        end
-
-      File.dir?(path) ->
-        if not opts[:match_dot] and String.starts_with?(Path.basename(path), ".") do
-          []
-        else
-          _wildcard(path, include_globs, exclude_globs, opts)
-        end
+    if File.dir?(path) do
+      if not opts[:match_dot] and String.starts_with?(Path.basename(path), ".") do
+        []
+      else
+        _wildcard(path, include_globs, exclude_globs, opts)
+      end
+    else
+      if Enum.any?(include_globs, &String.match?(path, &1)) do
+        [path]
+      else
+        []
+      end
     end
   end
 end

@@ -105,7 +105,11 @@ defmodule MBS.Workflow.Job.RunBuild do
           {false, :ok | {:error, binary}, nil | binary}
   defp run(
          %Config.Data{} = config,
-         %BuildDeploy.Component{id: id, checksum: checksum, targets: targets} = component,
+         %BuildDeploy.Component{
+           id: id,
+           checksum: checksum,
+           type: %BuildDeploy.Component.Build{targets: targets}
+         } = component,
          upstream_results,
          sandboxed,
          force
@@ -131,7 +135,11 @@ defmodule MBS.Workflow.Job.RunBuild do
 
   @spec transitive_cached_targets(BuildDeploy.Component.t(), String.t(), Job.upstream_results()) ::
           MapSet.t(Job.FunResult.UpstreamCachedTarget.t())
-  defp transitive_cached_targets(%BuildDeploy.Component{id: id, targets: targets}, checksum, upstream_results) do
+  defp transitive_cached_targets(
+         %BuildDeploy.Component{id: id, type: %BuildDeploy.Component.Build{targets: targets}},
+         checksum,
+         upstream_results
+       ) do
     expanded_targets_set =
       Job.Cache.expand_targets_path(id, checksum, targets)
       |> Enum.map(&%Job.FunResult.UpstreamCachedTarget{component_id: id, target: &1})

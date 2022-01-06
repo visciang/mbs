@@ -9,7 +9,7 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Targets do
   require Reporter.Status
 
   @spec get(BuildDeploy.Component.t(), String.t(), boolean()) :: {:ok, Path.t()} | {:error, String.t()}
-  def get(%BuildDeploy.Component{id: id, targets: targets}, checksum, true) do
+  def get(%BuildDeploy.Component{id: id, type: %BuildDeploy.Component.Build{targets: targets}}, checksum, true) do
     temp_dir = Utils.mktemp()
 
     case _get(targets, id, checksum, &(Docker.container_get(id, &1, temp_dir, id) != :ok)) do
@@ -22,11 +22,11 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Targets do
     end
   end
 
-  def get(%BuildDeploy.Component{id: id, targets: targets}, checksum, false) do
+  def get(%BuildDeploy.Component{id: id, type: %BuildDeploy.Component.Build{targets: targets}}, checksum, false) do
     _get(targets, id, checksum, &(not File.exists?(&1)))
   end
 
-  @spec _get([BuildDeploy.Target.t()], String.t(), String.t(), (Path.t() -> boolean())) ::
+  @spec _get([BuildDeploy.Component.Target.t()], String.t(), String.t(), (Path.t() -> boolean())) ::
           {:ok, Path.t()} | {:error, String.t()}
   defp _get(targets, id, checksum, copy_fun) do
     missing_docker_targets =
@@ -50,10 +50,10 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Targets do
     end
   end
 
-  @spec filter_targets([BuildDeploy.Target.t()], BuildDeploy.Target.type()) :: [Path.t()]
+  @spec filter_targets([BuildDeploy.Component.Target.t()], BuildDeploy.Component.Target.type()) :: [Path.t()]
   defp filter_targets(targets, type) do
     targets
-    |> Enum.filter(&match?(%BuildDeploy.Target{type: ^type}, &1))
+    |> Enum.filter(&match?(%BuildDeploy.Component.Target{type: ^type}, &1))
     |> Enum.map(& &1.target)
   end
 end

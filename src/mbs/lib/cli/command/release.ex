@@ -35,7 +35,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
       BuildDeploy.find_all(:build, config, cwd)
       |> CLI.Utils.transitive_dependencies_closure(build_targets_id)
 
-    validate_deploy_files(build_manifests, deploy_manifests)
+    validate_deploy_targets(build_manifests, deploy_manifests)
 
     build_checksums_map = Map.new(build_manifests, &{&1.id, &1.checksum})
 
@@ -81,23 +81,29 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.MakeRelease do
     |> Enum.uniq_by(& &1.id)
   end
 
-  @spec validate_deploy_files([BuildDeploy.Type.t()], [BuildDeploy.Type.t()]) :: :ok
-  defp validate_deploy_files(build_manifests, deploy_manifests) do
-    build_manifest_targets_map =
+  @spec validate_deploy_targets([BuildDeploy.Type.t()], [BuildDeploy.Type.t()]) :: :ok
+  defp validate_deploy_targets(build_manifests, deploy_manifests) do
+    build_component_targets_map =
       build_manifests
       |> Enum.filter(&match?(%BuildDeploy.Component{}, &1))
-      |> Map.new(&{&1.id, MapSet.new(&1.targets)})
+      |> Map.new(&{&1.id, MapSet.new(&1.type.targets)})
 
     deploy_manifests
     |> Enum.filter(&match?(%BuildDeploy.Component{}, &1))
-    |> Enum.each(fn %BuildDeploy.Component{id: id, files: files} ->
-      files
-      |> MapSet.new()
-      |> MapSet.subset?(Map.get(build_manifest_targets_map, id, MapSet.new()))
-      |> unless do
-        error_message = "Deploy files #{inspect(files)} in component #{id} are not all build targets"
-        Utils.halt(error_message)
-      end
+    |> Enum.each(fn
+      %BuildDeploy.Component{
+        id: id,
+        type: %BuildDeploy.Component.Deploy{build_target_dependencies: build_target_dependencies}
+      } ->
+        build_target_dependencies
+        |> MapSet.new()
+        |> MapSet.subset?(Map.get(build_component_targets_map, id, MapSet.new()))
+        |> unless do
+          error_message =
+            "Deploy build_target_dependencies #{inspect(build_target_dependencies)} in component #{id} are not all build targets"
+
+          Utils.halt(error_message)
+        end
     end)
   end
 end

@@ -56,7 +56,7 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Deps do
       Enum.reduce(upstream_targets_set, [], fn
         %Job.FunResult.UpstreamCachedTarget{
           component_id: dep_id,
-          target: %BuildDeploy.Target{type: :file, target: target_cache_path}
+          target: %BuildDeploy.Component.Target{type: :file, target: target_cache_path}
         },
         acc ->
           target_checksum = target_cache_path |> Path.dirname() |> Path.basename()
@@ -69,7 +69,7 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Deps do
             acc
           end
 
-        %Job.FunResult.UpstreamCachedTarget{target: %BuildDeploy.Target{type: :docker}}, acc ->
+        %Job.FunResult.UpstreamCachedTarget{target: %BuildDeploy.Component.Target{type: :docker}}, acc ->
           acc
       end)
 

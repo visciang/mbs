@@ -8,7 +8,11 @@ defmodule MBS.Toolchain.Shell do
   @spec cmd(Config.Data.t(), BuildDeploy.Component.t()) :: String.t()
   def cmd(
         %Config.Data{} = config,
-        %BuildDeploy.Component{id: id, toolchain: toolchain, services: services_compose_file} = component
+        %BuildDeploy.Component{
+          id: id,
+          toolchain: toolchain,
+          type: %BuildDeploy.Component.Build{services: services_compose_file}
+        } = component
       ) do
     env = Toolchain.RunBuild.env_vars(config, component)
     job_id = "#{id}_shell"

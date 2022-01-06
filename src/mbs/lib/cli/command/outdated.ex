@@ -34,7 +34,12 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Outdated do
           MapSet.put(outdated_set, toolchain)
         end
 
-      %BuildDeploy.Component{id: id, checksum: checksum, targets: targets} = component, outdated_set ->
+      %BuildDeploy.Component{
+        id: id,
+        checksum: checksum,
+        type: %BuildDeploy.Component.Build{targets: targets}
+      } = component,
+      outdated_set ->
         if Job.Cache.hit_targets(config, id, checksum, targets) do
           outdated_set
         else

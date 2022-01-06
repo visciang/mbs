@@ -282,7 +282,7 @@ This feature (coupled with the similar one in the toolchain manifest) can be use
         // files: toolchain deployed artifacts
         // this should be a subset of targets in the same
         // component .mbs-build.json manifest
-        "files": [
+        "build_target_dependencies": [
             "xyz-target.bin"
         ],
         // [optional] dependencies: deploy "dependencies"

@@ -2,7 +2,7 @@ defmodule MBS.Manifest.BuildDeploy do
   @moduledoc false
 
   alias MBS.{Checksum, Config, Const, Utils}
-  alias MBS.Manifest.BuildDeploy.{Component, Target, Toolchain, Type, Validator, Workflow}
+  alias MBS.Manifest.BuildDeploy.{Component, Toolchain, Type, Validator, Workflow}
   alias MBS.Manifest.{FileDeps, Project}
 
   @spec find_all(Type.type(), Config.Data.t(), Path.t()) :: [Type.t()]
@@ -24,7 +24,7 @@ defmodule MBS.Manifest.BuildDeploy do
       |> decode()
       |> Enum.map(&add_defaults(&1, project_dir, manifest_path))
     end)
-    |> Validator.validate(available_files_profiles)
+    |> Validator.validate(type, available_files_profiles)
     |> Workflow.to_type(&to_struct(&1, &2, &3, &4, pre_build_components), type, files_profile)
   end
 
@@ -34,13 +34,6 @@ defmodule MBS.Manifest.BuildDeploy do
   def component_dependencies_ids(%Component{toolchain: toolchain, dependencies: dependencies}) do
     [toolchain.id | Enum.map(dependencies, & &1.id)]
   end
-
-  @spec manifest_name(Type.type()) :: String.t()
-  defp manifest_name(:build),
-    do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_build_filename()}}"
-
-  defp manifest_name(:deploy),
-    do: "{#{Const.manifest_toolchain_filename()},#{Const.manifest_deploy_filename()}}"
 
   @spec decode(Path.t()) :: [map()]
   defp decode(manifest_path) do
@@ -69,19 +62,17 @@ defmodule MBS.Manifest.BuildDeploy do
     manifest_toolchain_filename = Const.manifest_toolchain_filename()
 
     case Path.basename(manifest_path) do
-      ^manifest_build_filename -> add_defaults_build(manifest)
-      ^manifest_deploy_filename -> add_defaults_build(manifest)
+      ^manifest_build_filename -> add_defaults_component(manifest)
+      ^manifest_deploy_filename -> add_defaults_component(manifest)
       ^manifest_toolchain_filename -> add_defaults_toolchain(manifest)
     end
   end
 
-  @spec add_defaults_build(map()) :: map()
-  defp add_defaults_build(manifest) do
+  @spec add_defaults_component(map()) :: map()
+  defp add_defaults_component(manifest) do
     manifest
     |> Map.put("__schema__", "component")
     |> update_in(["component", "toolchain_opts"], &(&1 || []))
-    |> update_in(["component", "targets"], &(&1 || []))
-    |> update_in(["component", "files"], &(&1 || []))
     |> update_in(["component", "dependencies"], &(&1 || []))
     |> update_in(["docker_opts"], &(&1 || %{}))
   end
@@ -113,32 +104,51 @@ defmodule MBS.Manifest.BuildDeploy do
          pre_build_components
        ) do
     f_prof = Map.get(files_profile, component["files_profile"], [])
-    services_file = if component["services"] != nil, do: [component["services"]], else: []
     dependencies = Enum.map(component["dependencies"], &Map.fetch!(upstream_components, &1))
     toolchain = Map.fetch!(upstream_components, component["toolchain"])
-    files_ = files(type, dir, f_prof ++ services_file ++ component["files"])
 
-    checksum =
-      if type == :build do
-        build_checksum_component(dir, files_, toolchain, dependencies)
-      else
-        build_checksum = Map.fetch!(pre_build_components, id).checksum
-        deploy_checksum_component(dir, files_, toolchain, dependencies, build_checksum)
+    {checksum, component_type} =
+      case type do
+        :build ->
+          file_globs =
+            Enum.concat([
+              [Const.manifest_build_filename()],
+              f_prof,
+              List.wrap(component["service"]),
+              List.wrap(component["files"])
+            ])
+
+          files_ = FileDeps.wildcard(dir, file_globs, match_dot: true)
+          services = if component["services"] != nil, do: Path.join(dir, component["services"])
+          targets = targets(dir, component["targets"])
+
+          checksum = build_checksum_component(dir, files_, toolchain, dependencies)
+          component_type = %Component.Build{files: files_, targets: targets, services: services}
+
+          {checksum, component_type}
+
+        :deploy ->
+          files_ = FileDeps.wildcard(dir, [Const.manifest_deploy_filename()], match_dot: true)
+          build_checksum = Map.fetch!(pre_build_components, id).checksum
+          checksum = deploy_checksum_component(dir, files_, toolchain, dependencies, build_checksum)
+
+          build_target_dependencies = targets(dir, component["build_target_dependencies"])
+
+          component_type = %Component.Deploy{build_target_dependencies: build_target_dependencies}
+
+          {checksum, component_type}
       end
 
     %Component{
-      type: type,
+      type: component_type,
       id: id,
       dir: dir,
       project_dir: project_dir,
-      timeout: timeout,
       checksum: checksum,
       toolchain: toolchain,
       toolchain_opts: component["toolchain_opts"],
-      files: files_,
-      targets: targets(dir, component["targets"]),
+      timeout: timeout,
       dependencies: dependencies,
-      services: if(component["services"] != nil, do: Path.join(dir, component["services"])),
       docker_opts: %{
         run: docker_opts["run"] || [],
         shell: docker_opts["shell"] || []
@@ -147,7 +157,7 @@ defmodule MBS.Manifest.BuildDeploy do
   end
 
   defp to_struct(
-         type,
+         _type,
          %{
            "__schema__" => "toolchain",
            "id" => id,
@@ -162,10 +172,17 @@ defmodule MBS.Manifest.BuildDeploy do
          _pre_build_components
        ) do
     f_prof = Map.get(files_profile, toolchain["files_profile"], [])
-    files_ = files(:build, dir, [toolchain["dockerfile"]] ++ f_prof ++ toolchain["files"])
+
+    file_globs =
+      Enum.concat([
+        [Const.manifest_toolchain_filename(), toolchain["dockerfile"]],
+        f_prof,
+        toolchain["files"]
+      ])
+
+    files_ = FileDeps.wildcard(dir, file_globs, match_dot: true)
 
     %Toolchain{
-      type: type,
       id: id,
       dir: dir,
       project_dir: project_dir,
@@ -180,24 +197,13 @@ defmodule MBS.Manifest.BuildDeploy do
     }
   end
 
-  @spec files(Type.type(), Path.t(), [String.t()]) :: [String.t()]
-  defp files(:build, dir, file_globs) do
-    file_globs = [manifest_name(:build), manifest_name(:deploy) | file_globs]
-
-    FileDeps.wildcard(dir, file_globs, match_dot: true)
-  end
-
-  defp files(:deploy, dir, files) do
-    targets(dir, files)
-  end
-
-  @spec targets(Path.t(), [String.t()]) :: [Target.t()]
+  @spec targets(Path.t(), [String.t()]) :: [Component.Target.t()]
   defp targets(dir, targets) do
     targets
     |> Enum.map(fn
-      "docker://" <> target -> %Target{type: :docker, target: target}
-      "file://" <> target -> %Target{type: :file, target: Path.join(dir, target)}
-      target -> %Target{type: :file, target: Path.join(dir, target)}
+      "docker://" <> target -> %Component.Target{type: :docker, target: target}
+      "file://" <> target -> %Component.Target{type: :file, target: Path.join(dir, target)}
+      target -> %Component.Target{type: :file, target: Path.join(dir, target)}
     end)
     |> Enum.uniq()
   end
@@ -223,9 +229,8 @@ defmodule MBS.Manifest.BuildDeploy do
 
   @spec deploy_checksum_component(Path.t(), nonempty_list(Path.t()), Toolchain.t(), [Component.t()], String.t()) ::
           String.t()
-  defp deploy_checksum_component(dir, _files, toolchain, dependencies, build_checksum) do
-    deploy_manifest_path = Path.join(dir, Const.manifest_deploy_filename())
-    deploy_partial_checksum = build_checksum_component(dir, [deploy_manifest_path], toolchain, dependencies)
+  defp deploy_checksum_component(dir, files, toolchain, dependencies, build_checksum) do
+    deploy_partial_checksum = build_checksum_component(dir, files, toolchain, dependencies)
 
     [build_checksum, deploy_partial_checksum]
     |> Enum.join()

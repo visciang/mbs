@@ -3,7 +3,7 @@ defmodule MBS.Workflow.Job.Cache do
 
   alias MBS.CLI.Reporter
   alias MBS.{Cache, Config, Docker}
-  alias MBS.Manifest.BuildDeploy.Target
+  alias MBS.Manifest.BuildDeploy.Component.Target
 
   require MBS.CLI.Reporter.Status
 

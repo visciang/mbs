@@ -13,7 +13,7 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Files do
 
     files =
       [component | upstream_components]
-      |> Enum.flat_map(fn %BuildDeploy.Component{files: files} -> files end)
+      |> Enum.flat_map(fn %BuildDeploy.Component{type: %BuildDeploy.Component.Build{files: files}} -> files end)
       |> MapSet.new()
 
     files

@@ -11,17 +11,12 @@ defmodule MBS.Workflow.Job.Release do
   @type fun :: (String.t(), Dask.Job.upstream_results() -> :ok)
 
   @spec fun(Config.Data.t(), BuildDeploy.Type.t(), Path.t(), %{String.t() => String.t()}) :: fun()
-  def fun(
-        %Config.Data{} = config,
-        %BuildDeploy.Toolchain{type: :deploy, id: id, checksum: checksum},
-        release_dir,
-        _build_checksums
-      ) do
+  def fun(%Config.Data{} = config, %BuildDeploy.Toolchain{id: id, checksum: checksum}, release_dir, _build_checksums) do
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
       targets_dir = Path.join(release_dir, id)
-      target = %BuildDeploy.Target{type: :docker, target: id}
+      target = %BuildDeploy.Component.Target{type: :docker, target: id}
 
       {report_status, report_desc} =
         case Job.Cache.copy_targets(config, id, checksum, [target], targets_dir) do
@@ -43,7 +38,7 @@ defmodule MBS.Workflow.Job.Release do
 
   def fun(
         %Config.Data{} = config,
-        %BuildDeploy.Component{type: :deploy, id: id, files: deploy_targets},
+        %BuildDeploy.Component{id: id, type: %BuildDeploy.Component.Deploy{build_target_dependencies: deploy_targets}},
         release_dir,
         build_checksums
       ) do

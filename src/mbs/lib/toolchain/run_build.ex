@@ -53,7 +53,11 @@ defmodule MBS.Toolchain.RunBuild do
 
   @spec exec_services(DockerCompose.compose_action(), BuildDeploy.Component.t(), env_list()) ::
           {:ok, nil | String.t()} | {:error, term()}
-  defp exec_services(action, %BuildDeploy.Component{id: id, services: services_compose_file}, env) do
+  defp exec_services(
+         action,
+         %BuildDeploy.Component{id: id, type: %BuildDeploy.Component.Build{services: services_compose_file}},
+         env
+       ) do
     if services_compose_file == nil do
       {:ok, nil}
     else
