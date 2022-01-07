@@ -48,7 +48,7 @@ defimpl MBS.CLI.Command, for: MBS.CLI.Command.Shell do
   defp target_component_direct_dependencies(manifests, id) do
     case Enum.find(manifests, &(&1.id == id)) do
       %BuildDeploy.Component{} = component ->
-        BuildDeploy.component_dependencies_ids(component)
+        BuildDeploy.Component.dependencies_ids(component)
 
       %BuildDeploy.Toolchain{} ->
         Utils.halt("Bad target, the target should be a component not a toolchain")

@@ -29,7 +29,7 @@ defmodule MBS.Workflow do
 
     Enum.reduce(manifests, workflow, fn
       %BuildDeploy.Component{} = component, workflow ->
-        dependencies_ids = BuildDeploy.component_dependencies_ids(component)
+        dependencies_ids = BuildDeploy.Component.dependencies_ids(component)
 
         try do
           case direction do

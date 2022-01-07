@@ -28,13 +28,6 @@ defmodule MBS.Manifest.BuildDeploy do
     |> Workflow.to_type(&to_struct(&1, &2, &3, &4, pre_build_components), type, files_profile)
   end
 
-  @spec component_dependencies_ids(Type.t()) :: [String.t()]
-  def component_dependencies_ids(%Toolchain{}), do: []
-
-  def component_dependencies_ids(%Component{toolchain: toolchain, dependencies: dependencies}) do
-    [toolchain.id | Enum.map(dependencies, & &1.id)]
-  end
-
   @spec decode(Path.t()) :: [map()]
   defp decode(manifest_path) do
     manifest_path

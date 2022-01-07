@@ -67,11 +67,15 @@ defmodule MBS.Manifest.BuildDeploy.Component do
           checksum: String.t(),
           toolchain: MBS.Manifest.BuildDeploy.Toolchain.t(),
           toolchain_opts: [String.t()],
-          dependencies: [MBS.Manifest.BuildDeploy.Component.t()],
+          dependencies: [t()],
           docker_opts: %{
             docker_opts_type() => [String.t()]
           }
         }
+
+  def dependencies_ids(%__MODULE__{toolchain: toolchain, dependencies: dependencies}) do
+    [toolchain.id | Enum.map(dependencies, & &1.id)]
+  end
 end
 
 defmodule MBS.Manifest.BuildDeploy.Toolchain do
