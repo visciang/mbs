@@ -14,14 +14,14 @@ defmodule MBS.Manifest.Dependency do
 
   @spec load(Path.t()) :: Type.t()
   def load(path) do
-    dependency_manifest_map =
+    dependency_manifest =
       path
       |> File.read!()
       |> Jason.decode!()
 
     %Type{
-      id: dependency_manifest_map["id"],
-      checksum: dependency_manifest_map["checksum"]
+      id: dependency_manifest["id"],
+      checksum: dependency_manifest["checksum"]
     }
   end
 end

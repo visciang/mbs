@@ -9,6 +9,9 @@
             "files_profile": "elixir-cache",
             "targets": [
                 ".cache/cache.tgz"
+            ],
+            "dependencies": [
+                "dask"
             ]
         }
     },

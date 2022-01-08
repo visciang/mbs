@@ -67,7 +67,7 @@ case $1 in
         tar czf .cache/cache.tgz _build deps .plts
         ;;
     deps)
-        CACHE_FROM=.deps/$MBS_ID-cache/cache.tgz
+        CACHE_FROM=.mbs-deps/$MBS_ID-cache/cache.tgz
         if [ -f $CACHE_FROM ]; then
             echo "Using cached deps"
             tar xzf $CACHE_FROM

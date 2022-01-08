@@ -17,13 +17,10 @@ defmodule MBS.Const do
   def manifest_toolchain_filename, do: ".mbs-toolchain.json"
 
   @spec manifest_release_filename :: String.t()
-  def manifest_release_filename, do: "mbs-release.json"
+  def manifest_release_filename, do: "mbs-release.bin"
 
   @spec manifest_dependency_filename :: String.t()
   def manifest_dependency_filename, do: "mbs-dependency.json"
-
-  @spec release_metadata_filename :: String.t()
-  def release_metadata_filename, do: "metadata.json"
 
   @spec logs_dir :: Path.t()
   def logs_dir, do: ".mbs-logs"
@@ -41,5 +38,5 @@ defmodule MBS.Const do
   def graph_dir, do: "/mbs/graph"
 
   @spec local_dependencies_targets_dir :: Path.t()
-  def local_dependencies_targets_dir, do: ".deps"
+  def local_dependencies_targets_dir, do: ".mbs-deps"
 end

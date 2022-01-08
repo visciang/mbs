@@ -149,9 +149,6 @@ MBS execution global configuration parameters.
             "build.sh"
         ],
         "files_profile": "...",
-        // [optional] deps_change_step: step executed if and only if
-        // a dependency (transitively) change
-        "deps_change_step": "deps_change",
         // steps: toolchains steps
         // the toolchain will be executed calling the toolchain docker
         // image with the following steps as command, sequentially
@@ -282,7 +279,7 @@ This feature (coupled with the similar one in the toolchain manifest) can be use
         // files: toolchain deployed artifacts
         // this should be a subset of targets in the same
         // component .mbs-build.json manifest
-        "files": [
+        "build_target_dependencies": [
             "xyz-target.bin"
         ],
         // [optional] dependencies: deploy "dependencies"

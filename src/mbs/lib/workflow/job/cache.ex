@@ -3,7 +3,7 @@ defmodule MBS.Workflow.Job.Cache do
 
   alias MBS.CLI.Reporter
   alias MBS.{Cache, Config, Docker}
-  alias MBS.Manifest.BuildDeploy.Target
+  alias MBS.Manifest.BuildDeploy.Component.Target
 
   require MBS.CLI.Reporter.Status
 
@@ -49,19 +49,6 @@ defmodule MBS.Workflow.Job.Cache do
     else
       :cache_miss
     end
-  end
-
-  @spec expand_targets_path(String.t(), String.t(), [Target.t()]) :: [Target.t()]
-  def expand_targets_path(id, checksum, targets) do
-    Enum.map(targets, fn
-      %Target{type: :file, target: target} = t ->
-        target_cache_path = Cache.File.path_local(id, checksum, target)
-        put_in(t.target, target_cache_path)
-
-      %Target{type: :docker, target: target} = t ->
-        target_docker = Cache.Docker.path_local(checksum, target)
-        put_in(t.target, target_docker)
-    end)
   end
 
   @spec put_targets(Config.Data.t(), String.t(), String.t(), [Target.t()]) :: :ok

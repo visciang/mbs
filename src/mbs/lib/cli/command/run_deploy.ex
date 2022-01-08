@@ -11,17 +11,21 @@ end
 defimpl MBS.CLI.Command, for: MBS.CLI.Command.RunDeploy do
   alias MBS.CLI.Command
   alias MBS.{Config, Utils, Workflow}
-  alias MBS.Manifest.{BuildDeploy, Release}
+  alias MBS.Manifest.Release
 
   @spec run(Command.RunDeploy.t(), Config.Data.t(), Path.t()) :: Command.on_run()
   def run(%Command.RunDeploy{release_id: release_id}, %Config.Data{} = config, _cwd) do
-    {release, release_dir} = Release.get_release(release_id)
+    release = Release.get_release(release_id)
 
-    IO.puts("\nRunning release '#{release.id}' deploy (#{release.checksum})\n")
+    IO.puts("\nRunning release '#{release.id}' deploy\n")
 
     dask =
-      BuildDeploy.find_all(:deploy, config, release_dir)
-      |> Workflow.workflow(config, &Workflow.Job.RunDeploy.fun(&1, &2), &Workflow.Job.RunDeploy.fun_on_exit/2)
+      release.deploy_manifests
+      |> Workflow.workflow(
+        config,
+        &Workflow.Job.RunDeploy.fun(&1, &2, release),
+        &Workflow.Job.RunDeploy.fun_on_exit/2
+      )
 
     dask_exec =
       try do

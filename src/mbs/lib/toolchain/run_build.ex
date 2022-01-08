@@ -5,8 +5,6 @@ defmodule MBS.Toolchain.RunBuild do
   alias MBS.{Config, Docker, DockerCompose}
   alias MBS.Manifest.BuildDeploy
   alias MBS.Toolchain
-  alias MBS.Workflow.Job
-  alias MBS.Workflow.Job.RunBuild.Context.Deps
 
   require Reporter.Status
 
@@ -15,16 +13,13 @@ defmodule MBS.Toolchain.RunBuild do
 
   @sh_sleep_forever_cmd ["-c", "while true; do sleep 2; done"]
 
-  @spec up(Config.Data.t(), BuildDeploy.Component.t(), String.t(), Job.upstream_results(), boolean()) ::
-          {:ok, env_list()} | {:error, term()}
+  @spec up(Config.Data.t(), BuildDeploy.Component.t(), boolean()) :: {:ok, env_list()} | {:error, term()}
   def up(
         %Config.Data{} = config,
         %BuildDeploy.Component{id: id, toolchain: toolchain} = component,
-        checksum,
-        upstream_results,
         mount_compoment_dir
       ) do
-    envs = env_vars(config, component, checksum, upstream_results)
+    envs = env_vars(config, component)
 
     with {:ok, docker_network_name} <- exec_services(:up, component, envs),
          run_opts_ = run_opts(:run, component, docker_network_name, mount_compoment_dir),
@@ -43,21 +38,18 @@ defmodule MBS.Toolchain.RunBuild do
     Docker.container_stop(id, id)
   end
 
-  @spec exec(BuildDeploy.Component.t(), Deps.changed_deps(), env_list()) :: :ok | {:error, String.t()}
-  def exec(%BuildDeploy.Component{} = component, changed_deps, envs) do
-    deps_change_steps =
-      if changed_deps != [] and component.toolchain.deps_change_step != nil do
-        [component.toolchain.deps_change_step]
-      else
-        []
-      end
-
-    Toolchain.Common.exec(component, envs, deps_change_steps ++ component.toolchain.steps)
+  @spec exec(BuildDeploy.Component.t(), env_list()) :: :ok | {:error, String.t()}
+  def exec(%BuildDeploy.Component{} = component, envs) do
+    Toolchain.Common.exec(component, envs, component.toolchain.steps)
   end
 
   @spec exec_services(DockerCompose.compose_action(), BuildDeploy.Component.t(), env_list()) ::
           {:ok, nil | String.t()} | {:error, term()}
-  defp exec_services(action, %BuildDeploy.Component{id: id, services: services_compose_file}, env) do
+  defp exec_services(
+         action,
+         %BuildDeploy.Component{id: id, type: %BuildDeploy.Component.Build{services: services_compose_file}},
+         env
+       ) do
     if services_compose_file == nil do
       {:ok, nil}
     else
@@ -83,17 +75,13 @@ defmodule MBS.Toolchain.RunBuild do
     opts ++ opts_work_dir ++ opts_dir_mount ++ opts_net
   end
 
-  @spec env_vars(Config.Data.t(), BuildDeploy.Component.t(), String.t(), Job.upstream_results()) :: env_list()
+  @spec env_vars(Config.Data.t(), BuildDeploy.Component.t()) :: env_list()
   def env_vars(
         %Config.Data{project: project},
-        %BuildDeploy.Component{id: id, dir: dir, dependencies: dependencies},
-        checksum,
-        upstream_results
+        %BuildDeploy.Component{id: id, dir: dir, checksum: checksum, dependencies: dependencies}
       ) do
     env =
-      Enum.map(dependencies, fn dep_id ->
-        %Job.FunResult{checksum: dep_checksum} = Map.fetch!(upstream_results, dep_id)
-
+      Enum.map(dependencies, fn %BuildDeploy.Component{id: dep_id, checksum: dep_checksum} ->
         shell_dep_id =
           dep_id
           |> String.upcase()

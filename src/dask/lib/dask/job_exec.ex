@@ -40,7 +40,7 @@ defmodule Dask.JobExec do
 
         job.fun.(job.id, upstream_jobs_result)
       rescue
-        job_error -> {:job_error, job_error}
+        job_error -> {:job_error, Exception.format(:error, job_error, __STACKTRACE__)}
       else
         job_result -> {:job_ok, job_result}
       end

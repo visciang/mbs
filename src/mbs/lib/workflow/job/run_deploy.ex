@@ -2,20 +2,27 @@ defmodule MBS.Workflow.Job.RunDeploy do
   @moduledoc false
 
   alias MBS.CLI.Reporter
-  alias MBS.{Config, Const, Docker, Toolchain}
-  alias MBS.Manifest.BuildDeploy
+  alias MBS.{Config, Docker, Toolchain}
+  alias MBS.Manifest.{BuildDeploy, Release}
   alias MBS.Workflow.Job
 
   require Reporter.Status
 
-  @spec fun(Config.Data.t(), BuildDeploy.Type.t()) :: Job.fun()
-  def fun(%Config.Data{}, %BuildDeploy.Toolchain{id: id, dir: toolchain_dir}) do
+  @spec fun(Config.Data.t(), BuildDeploy.Type.t(), Release.Type.t()) :: Job.fun()
+  def fun(
+        %Config.Data{},
+        %BuildDeploy.Toolchain{id: id, dir: toolchain_dir},
+        %Release.Type{build_manifests: build_manifests}
+      ) do
+    build_checksum_map = Map.new(build_manifests, &{&1.id, &1.checksum})
+
     fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
+      {:ok, checksum} = Map.fetch(build_checksum_map, id)
+
       {report_status, checksum} =
-        with {:ok, checksum} <- build_checksum(toolchain_dir),
-             {:image_exists, false, checksum} <- {:image_exists, Docker.image_exists(id, checksum), checksum},
+        with {:image_exists, false, checksum} <- {:image_exists, Docker.image_exists(id, checksum), checksum},
              path_tar_gz = Path.join(toolchain_dir, "#{id}.tar.gz"),
              :ok <- Docker.image_load(path_tar_gz, job_id) do
           {Reporter.Status.ok(), checksum}
@@ -32,23 +39,32 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
       Job.Common.stop_on_failure(report_status)
 
-      %Job.FunResult{checksum: checksum}
+      %Job.FunResult{}
     end
   end
 
   def fun(
         %Config.Data{},
-        %BuildDeploy.Component{dir: component_dir, toolchain: %BuildDeploy.Toolchain{dir: toolchain_dir}} = component
+        %BuildDeploy.Component{
+          id: component_id,
+          checksum: deploy_checksum,
+          toolchain: %BuildDeploy.Toolchain{id: toolchain_id}
+        } = component,
+        %Release.Type{id: release_id, build_manifests: build_manifests}
       ) do
-    fn job_id, upstream_results ->
+    fn job_id, _upstream_results ->
       start_time = Reporter.time()
 
+      work_dir = Path.join(Release.release_dir(release_id), component_id)
+
+      build_checksum_map = Map.new(build_manifests, &{&1.id, &1.checksum})
+      {:ok, build_checksum} = Map.fetch(build_checksum_map, component_id)
+      {:ok, toolchain_checksum} = Map.fetch(build_checksum_map, toolchain_id)
+
+      component = put_in(component.toolchain.checksum, toolchain_checksum)
+
       {report_status, deploy_checksum} =
-        with {:ok, build_checksum} <- build_checksum(component_dir),
-             {:ok, toolchain_checksum} <- build_checksum(toolchain_dir),
-             deploy_checksum = Job.Utils.deploy_checksum(component, build_checksum, upstream_results),
-             component = put_in(component.toolchain.checksum, toolchain_checksum),
-             {:ok, envs} <- Toolchain.RunDeploy.up(component, build_checksum),
+        with {:ok, envs} <- Toolchain.RunDeploy.up(work_dir, component, build_checksum),
              :ok <- Toolchain.RunDeploy.exec(component, envs) do
           {Reporter.Status.ok(), deploy_checksum}
         else
@@ -61,7 +77,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
 
       Job.Common.stop_on_failure(report_status)
 
-      %Job.FunResult{checksum: deploy_checksum}
+      %Job.FunResult{}
     end
   end
 
@@ -78,23 +94,6 @@ defmodule MBS.Workflow.Job.RunDeploy do
         Toolchain.RunDeploy.down(component)
         job_on_exit.(id, upstream_results, job_exec_result, elapsed_time_ms)
       end
-    end
-  end
-
-  @spec build_checksum(Path.t()) :: {:ok, String.t()} | {:error, String.t()}
-  def build_checksum(dir) do
-    metadata_path = Path.join(dir, Const.release_metadata_filename())
-
-    if File.exists?(metadata_path) do
-      checksum =
-        metadata_path
-        |> File.read!()
-        |> Jason.decode!()
-        |> Map.fetch!("checksum")
-
-      {:ok, checksum}
-    else
-      {:error, "Can't find #{metadata_path}"}
     end
   end
 end

@@ -9,10 +9,10 @@ defmodule MBS.Toolchain.RunDeploy do
 
   @sh_sleep_forever_cmd ["-c", "while true; do sleep 2; done"]
 
-  @spec up(BuildDeploy.Component.t(), String.t()) :: {:ok, env_list()} | {:error, term()}
-  def up(%BuildDeploy.Component{id: id, toolchain: toolchain} = component, checksum) do
+  @spec up(Path.t(), BuildDeploy.Component.t(), String.t()) :: {:ok, env_list()} | {:error, term()}
+  def up(work_dir, %BuildDeploy.Component{id: id, toolchain: toolchain} = component, checksum) do
     envs = env_vars(component, checksum)
-    run_opts_ = run_opts(component) ++ ["--detach", "--name", id, "--entrypoint", "sh"]
+    run_opts_ = run_opts(work_dir, component) ++ ["--detach", "--name", id, "--entrypoint", "sh"]
 
     case Docker.container_run(toolchain.id, toolchain.checksum, run_opts_, envs, @sh_sleep_forever_cmd, id) do
       :ok -> {:ok, envs}
@@ -36,10 +36,10 @@ defmodule MBS.Toolchain.RunDeploy do
     Toolchain.Common.exec(component, envs, component.toolchain.destroy_steps)
   end
 
-  @spec run_opts(BuildDeploy.Component.t()) :: opts()
-  defp run_opts(%BuildDeploy.Component{docker_opts: docker_opts, dir: component_dir}) do
+  @spec run_opts(Path.t(), BuildDeploy.Component.t()) :: opts()
+  defp run_opts(work_dir, %BuildDeploy.Component{docker_opts: docker_opts}) do
     opts = ["--rm", "-t" | Map.get(docker_opts, :run, [])]
-    opts_work_dir = ["-w", "#{component_dir}"]
+    opts_work_dir = ["-w", "#{work_dir}"]
     opts_dir_mount = ["-v", "#{Const.releases_dir()}:#{Const.releases_dir()}:ro"]
 
     opts ++ opts_work_dir ++ opts_dir_mount

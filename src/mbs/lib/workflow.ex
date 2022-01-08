@@ -29,15 +29,17 @@ defmodule MBS.Workflow do
 
     Enum.reduce(manifests, workflow, fn
       %BuildDeploy.Component{} = component, workflow ->
+        dependencies_ids = BuildDeploy.Component.dependencies_ids(component)
+
         try do
           case direction do
             :upward ->
               # run dependencies first
-              Dask.depends_on(workflow, component.id, [component.toolchain.id | component.dependencies])
+              Dask.depends_on(workflow, component.id, dependencies_ids)
 
             :downward ->
               # run dependants first
-              Dask.depends_on(workflow, [component.toolchain.id | component.dependencies], component.id)
+              Dask.depends_on(workflow, dependencies_ids, component.id)
           end
         rescue
           error in [Dask.Error] ->

@@ -8,61 +8,93 @@ end
 defmodule MBS.Manifest.BuildDeploy.Component do
   @moduledoc false
 
+  defmodule Target do
+    @moduledoc false
+
+    defstruct [:type, :target]
+
+    @type type :: :docker | :file
+
+    @type t :: %__MODULE__{
+            type: type(),
+            target: String.t()
+          }
+  end
+
+  defmodule Build do
+    @moduledoc false
+
+    defstruct [:files, :targets, :services]
+
+    @type t :: %__MODULE__{
+            files: nonempty_list(String.t()),
+            targets: nonempty_list(Target.t()),
+            services: nil | Path.t()
+          }
+  end
+
+  defmodule Deploy do
+    @moduledoc false
+
+    defstruct [:build_target_dependencies]
+
+    @type t :: %__MODULE__{
+            build_target_dependencies: nonempty_list(Target.t())
+          }
+  end
+
   defstruct [
     :type,
     :id,
     :dir,
     :project_dir,
-    :timeout,
+    :checksum,
     :toolchain,
     :toolchain_opts,
-    :files,
-    :targets,
+    :timeout,
     :dependencies,
-    :services,
     :docker_opts
   ]
 
   @type docker_opts_type :: :run | :shell
 
   @type t :: %__MODULE__{
-          type: MBS.Manifest.BuildDeploy.Type.type(),
+          type: Build.t() | Deploy.t(),
           id: String.t(),
           dir: Path.t(),
           project_dir: Path.t(),
           timeout: timeout(),
+          checksum: String.t(),
           toolchain: MBS.Manifest.BuildDeploy.Toolchain.t(),
           toolchain_opts: [String.t()],
-          files: nonempty_list(String.t()) | nonempty_list(MBS.Manifest.BuildDeploy.Target.t()),
-          targets: nonempty_list(MBS.Manifest.BuildDeploy.Target.t()),
-          dependencies: [String.t()],
-          services: nil | Path.t(),
+          dependencies: [t()],
           docker_opts: %{
             docker_opts_type() => [String.t()]
           }
         }
+
+  def dependencies_ids(%__MODULE__{toolchain: toolchain, dependencies: dependencies}) do
+    [toolchain.id | Enum.map(dependencies, & &1.id)]
+  end
 end
 
 defmodule MBS.Manifest.BuildDeploy.Toolchain do
   @moduledoc false
 
   defstruct [
-    :type,
     :id,
     :dir,
     :project_dir,
-    :timeout,
     :checksum,
-    :dockerfile,
     :files,
-    :deps_change_step,
+    :dockerfile,
+    :timeout,
     :steps,
     :destroy_steps,
     :docker_build_opts
   ]
 
   @type t :: %__MODULE__{
-          type: MBS.Manifest.BuildDeploy.Type.type(),
           id: String.t(),
           dir: Path.t(),
           project_dir: Path.t(),
@@ -70,22 +102,8 @@ defmodule MBS.Manifest.BuildDeploy.Toolchain do
           checksum: String.t(),
           dockerfile: String.t(),
           files: nonempty_list(String.t()),
-          deps_change_step: nil | String.t(),
           steps: nonempty_list(String.t()),
           destroy_steps: [String.t()],
           docker_build_opts: [String.t()]
-        }
-end
-
-defmodule MBS.Manifest.BuildDeploy.Target do
-  @moduledoc false
-
-  defstruct [:type, :target]
-
-  @type type :: :docker | :file
-
-  @type t :: %__MODULE__{
-          type: type(),
-          target: String.t()
         }
 end
