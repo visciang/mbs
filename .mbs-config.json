@@ -12,14 +12,14 @@
     "timeout": 600,
     "files_profile": {
         "elixir": [
-            "!{deps,_build,.elixir_ls}/**/*",
+            "!{deps,_build,.elixir_ls}",
             ".formatter.exs",
             "mix.{exs,lock}",
             "config/*.exs",
             "{apps,lib,test}/**/*.{ex,exs}"
         ],
         "elixir-cache": [
-            "!{deps,_build,.elixir_ls}/**/*",
+            "!{deps,_build,.elixir_ls}",
             "mix.{exs,lock}"
         ]
     }

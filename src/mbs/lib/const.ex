@@ -38,5 +38,5 @@ defmodule MBS.Const do
   def graph_dir, do: "/mbs/graph"
 
   @spec local_dependencies_targets_dir :: Path.t()
-  def local_dependencies_targets_dir, do: ".deps"
+  def local_dependencies_targets_dir, do: ".mbs-deps"
 end

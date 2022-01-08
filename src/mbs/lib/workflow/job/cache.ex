@@ -51,19 +51,6 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
-  @spec expand_targets_path(String.t(), String.t(), [Target.t()]) :: [Target.t()]
-  def expand_targets_path(id, checksum, targets) do
-    Enum.map(targets, fn
-      %Target{type: :file, target: target} = t ->
-        target_cache_path = Cache.File.path_local(id, checksum, target)
-        put_in(t.target, target_cache_path)
-
-      %Target{type: :docker, target: target} = t ->
-        target_docker = Cache.Docker.path_local(checksum, target)
-        put_in(t.target, target_docker)
-    end)
-  end
-
   @spec put_targets(Config.Data.t(), String.t(), String.t(), [Target.t()]) :: :ok
   def put_targets(%Config.Data{} = config, id, checksum, targets) do
     Enum.each(targets, fn

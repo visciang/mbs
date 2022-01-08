@@ -183,7 +183,6 @@ defmodule MBS.Manifest.BuildDeploy do
       checksum: checksum_toolchain(dir, files_),
       dockerfile: Path.join(dir, toolchain["dockerfile"]),
       files: files_,
-      deps_change_step: toolchain["deps_change_step"],
       steps: toolchain["steps"],
       destroy_steps: toolchain["destroy_steps"],
       docker_build_opts: docker_build_opts

@@ -89,7 +89,6 @@ defmodule MBS.Manifest.BuildDeploy.Toolchain do
     :files,
     :dockerfile,
     :timeout,
-    :deps_change_step,
     :steps,
     :destroy_steps,
     :docker_build_opts
@@ -103,7 +102,6 @@ defmodule MBS.Manifest.BuildDeploy.Toolchain do
           checksum: String.t(),
           dockerfile: String.t(),
           files: nonempty_list(String.t()),
-          deps_change_step: nil | String.t(),
           steps: nonempty_list(String.t()),
           destroy_steps: [String.t()],
           docker_build_opts: [String.t()]

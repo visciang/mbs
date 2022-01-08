@@ -5,7 +5,6 @@ defmodule MBS.Toolchain.RunBuild do
   alias MBS.{Config, Docker, DockerCompose}
   alias MBS.Manifest.BuildDeploy
   alias MBS.Toolchain
-  alias MBS.Workflow.Job.RunBuild.Context.Deps
 
   require Reporter.Status
 
@@ -39,16 +38,9 @@ defmodule MBS.Toolchain.RunBuild do
     Docker.container_stop(id, id)
   end
 
-  @spec exec(BuildDeploy.Component.t(), Deps.changed_deps(), env_list()) :: :ok | {:error, String.t()}
-  def exec(%BuildDeploy.Component{} = component, changed_deps, envs) do
-    deps_change_steps =
-      if changed_deps != [] and component.toolchain.deps_change_step != nil do
-        [component.toolchain.deps_change_step]
-      else
-        []
-      end
-
-    Toolchain.Common.exec(component, envs, deps_change_steps ++ component.toolchain.steps)
+  @spec exec(BuildDeploy.Component.t(), env_list()) :: :ok | {:error, String.t()}
+  def exec(%BuildDeploy.Component{} = component, envs) do
+    Toolchain.Common.exec(component, envs, component.toolchain.steps)
   end
 
   @spec exec_services(DockerCompose.compose_action(), BuildDeploy.Component.t(), env_list()) ::

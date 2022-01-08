@@ -39,11 +39,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       Job.Common.stop_on_failure(report_status)
 
-      %Job.FunResult{
-        cached: cached,
-        component: nil,
-        upstream_cached_targets: MapSet.new()
-      }
+      %Job.FunResult{cached: cached}
     end
   end
 
@@ -54,16 +50,16 @@ defmodule MBS.Workflow.Job.RunBuild do
         get_deps_only,
         sandboxed
       ) do
-    fn _job_id, upstream_results ->
+    fn _job_id, _upstream_results ->
       start_time = Reporter.time()
 
       {cached, report_status, report_desc} =
         if get_deps_only do
-          run_get_only_deps(component, upstream_results, sandboxed)
+          run_get_only_deps(component, sandboxed)
 
           {true, Reporter.Status.uptodate(), checksum}
         else
-          run(config, component, upstream_results, sandboxed, force)
+          run(config, component, sandboxed, force)
         end
 
       end_time = Reporter.time()
@@ -71,11 +67,7 @@ defmodule MBS.Workflow.Job.RunBuild do
 
       Job.Common.stop_on_failure(report_status)
 
-      %Job.FunResult{
-        cached: cached,
-        component: component,
-        upstream_cached_targets: transitive_cached_targets(component, checksum, upstream_results)
-      }
+      %Job.FunResult{cached: cached}
     end
   end
 
@@ -95,14 +87,14 @@ defmodule MBS.Workflow.Job.RunBuild do
     end
   end
 
-  @spec run_get_only_deps(BuildDeploy.Component.t(), Job.upstream_results(), boolean()) :: :ok
-  defp run_get_only_deps(%BuildDeploy.Component{} = component, upstream_results, sandboxed) do
-    Context.Deps.put_upstream(component, upstream_results, true, sandboxed)
-    Context.Files.put(component, upstream_components(upstream_results), sandboxed)
+  @spec run_get_only_deps(BuildDeploy.Component.t(), boolean()) :: :ok
+  defp run_get_only_deps(%BuildDeploy.Component{} = component, sandboxed) do
+    Context.Deps.put_upstream(component, true, sandboxed)
+    Context.Files.put(component, sandboxed)
   end
 
-  @spec run(Config.Data.t(), BuildDeploy.Component.t(), Job.upstream_results(), boolean(), boolean()) ::
-          {false, :ok | {:error, binary}, nil | binary}
+  @spec run(Config.Data.t(), BuildDeploy.Component.t(), boolean(), boolean()) ::
+          {boolean(), Reporter.Status.t(), nil | String.t()}
   defp run(
          %Config.Data{} = config,
          %BuildDeploy.Component{
@@ -110,16 +102,15 @@ defmodule MBS.Workflow.Job.RunBuild do
            checksum: checksum,
            type: %BuildDeploy.Component.Build{targets: targets}
          } = component,
-         upstream_results,
          sandboxed,
          force
        ) do
     with :cache_miss <- if(force, do: :cache_miss, else: Job.Cache.get_targets(config, id, checksum, targets)),
          {:ok, envs} <- Toolchain.RunBuild.up(config, component, not sandboxed),
          :ok <- Context.Config.put(component, sandboxed),
-         {:ok, changed_deps} <- Context.Deps.put_upstream(component, upstream_results, force, sandboxed),
-         :ok <- Context.Files.put(component, upstream_components(upstream_results), sandboxed),
-         :ok <- Toolchain.RunBuild.exec(component, changed_deps, envs),
+         {:ok, changed_deps} <- Context.Deps.put_upstream(component, force, sandboxed),
+         :ok <- Context.Files.put(component, sandboxed),
+         :ok <- Toolchain.RunBuild.exec(component, envs),
          :ok <- Context.Deps.mark_changed(changed_deps, sandboxed),
          {:ok, targets} <- Context.Targets.get(component, checksum, sandboxed),
          :ok <- Job.Cache.put_targets(config, id, checksum, targets) do
@@ -131,30 +122,5 @@ defmodule MBS.Workflow.Job.RunBuild do
       {:error, reason} ->
         {false, Reporter.Status.error(reason), nil}
     end
-  end
-
-  @spec transitive_cached_targets(BuildDeploy.Component.t(), String.t(), Job.upstream_results()) ::
-          MapSet.t(Job.FunResult.UpstreamCachedTarget.t())
-  defp transitive_cached_targets(
-         %BuildDeploy.Component{id: id, type: %BuildDeploy.Component.Build{targets: targets}},
-         checksum,
-         upstream_results
-       ) do
-    expanded_targets_set =
-      Job.Cache.expand_targets_path(id, checksum, targets)
-      |> Enum.map(&%Job.FunResult.UpstreamCachedTarget{component_id: id, target: &1})
-      |> MapSet.new()
-
-    upstream_results
-    |> Context.Deps.merge_upstream_cached_targets()
-    |> MapSet.union(expanded_targets_set)
-  end
-
-  @spec upstream_components(Job.upstream_results()) :: [BuildDeploy.Component.t()]
-  defp upstream_components(upstream_results) do
-    upstream_results
-    |> Map.values()
-    |> Enum.reject(&(&1.component == nil))
-    |> Enum.map(& &1.component)
   end
 end

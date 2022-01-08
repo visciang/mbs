@@ -5,14 +5,14 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Files do
   alias MBS.Manifest.BuildDeploy
   alias MBS.Utils
 
-  @spec put(BuildDeploy.Component.t(), [BuildDeploy.Component.t()], boolean()) :: :ok | {:error, term()}
-  def put(_component, _upstream_components, false), do: :ok
+  @spec put(BuildDeploy.Component.t(), boolean()) :: :ok | {:error, term()}
+  def put(_component, false = _sandboxed), do: :ok
 
-  def put(%BuildDeploy.Component{id: id} = component, upstream_components, true) do
+  def put(%BuildDeploy.Component{id: id, dependencies: dependencies} = component, true = _sandboxed) do
     temp_dir = Utils.mktemp()
 
     files =
-      [component | upstream_components]
+      [component | dependencies]
       |> Enum.flat_map(fn %BuildDeploy.Component{type: %BuildDeploy.Component.Build{files: files}} -> files end)
       |> MapSet.new()
 

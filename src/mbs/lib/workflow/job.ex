@@ -1,28 +1,13 @@
 defmodule MBS.Workflow.Job do
   @moduledoc false
 
-  alias MBS.Manifest.BuildDeploy
-
   defmodule FunResult do
     @moduledoc false
 
-    defstruct [:cached, :component, :upstream_cached_targets]
+    defstruct [:cached]
 
     @type t :: %__MODULE__{
-            cached: boolean(),
-            component: nil | BuildDeploy.Component.t(),
-            upstream_cached_targets: MapSet.t(FunResult.UpstreamCachedTarget.t())
-          }
-  end
-
-  defmodule FunResult.UpstreamCachedTarget do
-    @moduledoc false
-
-    defstruct [:component_id, :component_dir, :target]
-
-    @type t :: %__MODULE__{
-            component_id: String.t(),
-            target: BuildDeploy.Component.Target.t()
+            cached: nil | boolean()
           }
   end
 

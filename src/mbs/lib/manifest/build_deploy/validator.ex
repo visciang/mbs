@@ -97,11 +97,6 @@ defmodule MBS.Manifest.BuildDeploy.Validator do
       Utils.halt(message)
     end
 
-    unless toolchain["deps_change_step"] == nil or is_binary(toolchain["deps_change_step"]) do
-      message = error_message(dir, "Bad deps_change_step type")
-      Utils.halt(message)
-    end
-
     validate_list_of_strings(toolchain, ["files"], dir)
     validate_list_of_strings(toolchain, ["steps"], dir)
     validate_list_of_strings(toolchain, ["destroy_steps"], dir)

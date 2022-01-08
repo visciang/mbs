@@ -1,6 +1,8 @@
 defmodule MBS.Manifest.FileDeps do
   @moduledoc false
 
+  alias MBS.Const
+
   # Fast "glob" considering we have negated globs (eg. "!app/**.txt")
   # :path_glob deps is used here to match? a path against a glob expression
   # (at the time of writing :path_glob functionalities are not available
@@ -14,11 +16,17 @@ defmodule MBS.Manifest.FileDeps do
 
     include_globs =
       include_globs
-      |> Enum.map(&(Path.join(dir, &1) |> PathGlob.compile(opts)))
+      |> Enum.map(fn include_glob ->
+        Path.join(dir, include_glob)
+        |> PathGlob.compile(opts)
+      end)
 
     exclude_globs =
-      exclude_globs
-      |> Enum.map(&(Path.join(dir, String.slice(&1, 1..-1)) |> PathGlob.compile(opts)))
+      (exclude_globs ++ mbs_internal_dirs_exclude())
+      |> Enum.map(fn exclude_glob ->
+        Path.join(dir, String.slice(exclude_glob, 1..-1))
+        |> PathGlob.compile(opts)
+      end)
 
     _wildcard(dir, include_globs, exclude_globs, opts)
   end
@@ -53,5 +61,10 @@ defmodule MBS.Manifest.FileDeps do
         []
       end
     end
+  end
+
+  @spec mbs_internal_dirs_exclude :: [Path.t()]
+  defp mbs_internal_dirs_exclude do
+    ["!#{Const.local_dependencies_targets_dir()}"]
   end
 end

@@ -1,16 +1,14 @@
 defmodule MBS.Workflow.Job.RunBuild.Context.Deps do
   @moduledoc false
 
-  alias MBS.{Const, Docker, Utils}
+  alias MBS.{Const, Docker}
   alias MBS.Manifest.{BuildDeploy, Dependency}
-  alias MBS.Workflow.Job
 
   @type changed_deps :: [{Path.t(), Dependency.Type.t()}]
 
-  @spec put_upstream(BuildDeploy.Component.t(), Job.upstream_results(), boolean(), boolean()) ::
-          {:ok, changed_deps()} | {:error, term()}
-  def put_upstream(%BuildDeploy.Component{id: id, dir: dir} = component, upstream_results, force, sandboxed) do
-    changed_deps = get_changed_targets(component, upstream_results, force)
+  @spec put_upstream(BuildDeploy.Component.t(), boolean(), boolean()) :: {:ok, changed_deps()} | {:error, term()}
+  def put_upstream(%BuildDeploy.Component{id: id, dir: dir} = component, force, sandboxed) do
+    changed_deps = get_changed_targets(component, force)
 
     case put_dependencies(id, dir, changed_deps, sandboxed) do
       :ok -> {:ok, changed_deps}
@@ -34,43 +32,29 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Deps do
     end)
   end
 
-  @spec merge_upstream_cached_targets(Job.upstream_results()) :: MapSet.t(Job.FunResult.UpstreamCachedTarget.t())
-  def merge_upstream_cached_targets(upstream_results) do
-    upstream_results
-    |> Map.values()
-    |> Enum.map(& &1.upstream_cached_targets)
-    |> Utils.union_mapsets()
-  end
-
-  @spec get_changed_targets(BuildDeploy.Component.t(), Job.upstream_results(), boolean()) :: changed_deps()
+  @spec get_changed_targets(BuildDeploy.Component.t(), boolean()) :: changed_deps()
   defp get_changed_targets(
-         %BuildDeploy.Component{dir: component_dir, toolchain: toolchain},
-         upstream_results,
+         %BuildDeploy.Component{dir: component_dir, toolchain: toolchain, dependencies: dependencies},
          force
        ) do
     local_deps_dir = Path.join(component_dir, Const.local_dependencies_targets_dir())
 
-    upstream_targets_set = merge_upstream_cached_targets(upstream_results)
-
     res_deps_changed =
-      Enum.reduce(upstream_targets_set, [], fn
-        %Job.FunResult.UpstreamCachedTarget{
-          component_id: dep_id,
-          target: %BuildDeploy.Component.Target{type: :file, target: target_cache_path}
-        },
-        acc ->
-          target_checksum = target_cache_path |> Path.dirname() |> Path.basename()
-          dependency_manifest_path = Path.join([local_deps_dir, dep_id, Const.manifest_dependency_filename()])
+      dependencies
+      |> Enum.flat_map(fn %BuildDeploy.Component{id: dep_id, type: %BuildDeploy.Component.Build{targets: targets}} ->
+        Enum.map(targets, &{dep_id, &1})
+      end)
+      |> Enum.filter(&match?({_dep_id, %BuildDeploy.Component.Target{type: :file}}, &1))
+      |> Enum.reduce([], fn {dep_id, %BuildDeploy.Component.Target{target: target_cache_path}}, acc ->
+        target_checksum = target_cache_path |> Path.dirname() |> Path.basename()
+        dependency_manifest_path = Path.join([local_deps_dir, dep_id, Const.manifest_dependency_filename()])
 
-          if force or dependency_changed?(dependency_manifest_path, target_checksum) do
-            dependency = %Dependency.Type{id: dep_id, checksum: target_checksum, cache_path: target_cache_path}
-            [{dependency_manifest_path, dependency} | acc]
-          else
-            acc
-          end
-
-        %Job.FunResult.UpstreamCachedTarget{target: %BuildDeploy.Component.Target{type: :docker}}, acc ->
+        if force or dependency_changed?(dependency_manifest_path, target_checksum) do
+          dependency = %Dependency.Type{id: dep_id, checksum: target_checksum, cache_path: target_cache_path}
+          [{dependency_manifest_path, dependency} | acc]
+        else
           acc
+        end
       end)
 
     toolchain_manifest_path = Path.join(local_deps_dir, Const.manifest_dependency_filename())

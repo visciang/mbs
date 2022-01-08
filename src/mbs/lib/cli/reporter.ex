@@ -194,12 +194,30 @@ defmodule MBS.CLI.Reporter do
   @spec status_icon_info(Status.t()) :: {IO.chardata(), nil | IO.chardata()}
   defp status_icon_info(status) do
     case status do
-      Status.ok() -> {IO.ANSI.format([:green, "✔"]), nil}
-      Status.error(reason) -> {IO.ANSI.format([:red, "✘"]), inspect(reason)}
-      Status.uptodate() -> {"✔", nil}
-      Status.outdated() -> {IO.ANSI.format([:yellow, "!"]), nil}
-      Status.timeout() -> {"⏰", nil}
-      Status.log() -> {".", nil}
+      Status.ok() ->
+        {IO.ANSI.format([:green, "✔"]), nil}
+
+      Status.error(reason) ->
+        reason_str =
+          if is_binary(reason) do
+            reason
+          else
+            inspect(reason)
+          end
+
+        {IO.ANSI.format([:red, "✘"]), reason_str}
+
+      Status.uptodate() ->
+        {"✔", nil}
+
+      Status.outdated() ->
+        {IO.ANSI.format([:yellow, "!"]), nil}
+
+      Status.timeout() ->
+        {"⏰", nil}
+
+      Status.log() ->
+        {".", nil}
     end
   end
 

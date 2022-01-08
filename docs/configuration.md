@@ -149,9 +149,6 @@ MBS execution global configuration parameters.
             "build.sh"
         ],
         "files_profile": "...",
-        // [optional] deps_change_step: step executed if and only if
-        // a dependency (transitively) change
-        "deps_change_step": "deps_change",
         // steps: toolchains steps
         // the toolchain will be executed calling the toolchain docker
         // image with the following steps as command, sequentially
