@@ -31,7 +31,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
             {Reporter.Status.uptodate(), checksum}
 
           {:error, reason} ->
-            {Reporter.Status.error(reason), nil}
+            {Reporter.Status.error(reason, nil), nil}
         end
 
       end_time = Reporter.time()
@@ -69,7 +69,7 @@ defmodule MBS.Workflow.Job.RunDeploy do
           {Reporter.Status.ok(), deploy_checksum}
         else
           {:error, reason} ->
-            {Reporter.Status.error(reason), nil}
+            {Reporter.Status.error(reason, nil), nil}
         end
 
       end_time = Reporter.time()

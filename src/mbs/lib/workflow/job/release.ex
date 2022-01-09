@@ -24,7 +24,7 @@ defmodule MBS.Workflow.Job.Release do
             {Reporter.Status.ok(), targets_dir}
 
           {:error, reason} ->
-            {Reporter.Status.error(reason), nil}
+            {Reporter.Status.error(reason, nil), nil}
         end
 
       end_time = Reporter.time()
@@ -54,7 +54,7 @@ defmodule MBS.Workflow.Job.Release do
             {Reporter.Status.ok(), targets_dir}
 
           {:error, reason} ->
-            {Reporter.Status.error(reason), nil}
+            {Reporter.Status.error(reason, nil), nil}
         end
 
       end_time = Reporter.time()

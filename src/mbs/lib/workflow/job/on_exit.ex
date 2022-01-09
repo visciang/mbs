@@ -17,12 +17,12 @@ defmodule MBS.Workflow.Job.OnExit do
         :job_timeout ->
           Reporter.job_report(job_id, Reporter.Status.timeout(), "", elapsed_time_s)
 
-        {:job_error, %JobError{}} ->
+        {:job_error, %JobError{}, _stacktrace} ->
           :ok
 
-        {:job_error, reason} ->
+        {:job_error, reason, stacktrace} ->
           error_message = "Internal mbs error"
-          Reporter.job_report(job_id, Reporter.Status.error(reason), error_message, elapsed_time_s)
+          Reporter.job_report(job_id, Reporter.Status.error(reason, stacktrace), error_message, elapsed_time_s)
 
         _ ->
           :ok
