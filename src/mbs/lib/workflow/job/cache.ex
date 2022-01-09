@@ -51,6 +51,17 @@ defmodule MBS.Workflow.Job.Cache do
     end
   end
 
+  @spec target_cache_path(String.t(), String.t(), Target.t()) :: String.t()
+  def target_cache_path(id, checksum, target) do
+    case target do
+      %Target{type: :file, target: target} ->
+        Cache.File.path_local(id, checksum, target)
+
+      %Target{type: :docker, target: target} ->
+        Cache.Docker.path_local(checksum, target)
+    end
+  end
+
   @spec put_targets(Config.Data.t(), String.t(), String.t(), [Target.t()]) :: :ok
   def put_targets(%Config.Data{} = config, id, checksum, targets) do
     Enum.each(targets, fn
