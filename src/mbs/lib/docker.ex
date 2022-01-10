@@ -123,7 +123,7 @@ defmodule MBS.Docker do
     end
   end
 
-  @spec container_stop(String.t(), String.t()) :: :ok | {:error, {term(), pos_integer()}}
+  @spec container_stop(String.t(), String.t()) :: :ok | {:error, pos_integer()}
   def container_stop(container_id, job_id) do
     cmd_args = ["container", "stop", container_id]
     cmd_into = %Reporter.Log{job_id: job_id}
@@ -132,11 +132,11 @@ defmodule MBS.Docker do
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true, into: cmd_into) do
       {_, 0} -> :ok
-      {res, exit_status} -> {:error, {res, exit_status}}
+      {_, exit_status} -> {:error, exit_status}
     end
   end
 
-  @spec container_exec(String.t(), [String.t()], String.t()) :: :ok | {:error, {term(), pos_integer()}}
+  @spec container_exec(String.t(), [String.t()], String.t()) :: :ok | {:error, pos_integer()}
   def container_exec(container_id, command, job_id) do
     cmd_args = ["container", "exec", "-t", container_id | command]
     cmd_into = %Reporter.Log{job_id: job_id}
@@ -145,7 +145,7 @@ defmodule MBS.Docker do
 
     case System.cmd("docker", cmd_args, stderr_to_stdout: true, into: cmd_into) do
       {_, 0} -> :ok
-      {res, exit_status} -> {:error, {res, exit_status}}
+      {_, exit_status} -> {:error, exit_status}
     end
   end
 
@@ -198,7 +198,7 @@ defmodule MBS.Docker do
   end
 
   @spec container_run(String.t(), String.t(), [String.t()], env_list(), [String.t()], String.t()) ::
-          :ok | {:error, {term(), pos_integer()}}
+          :ok | {:error, pos_integer()}
   def container_run(repository, tag, opts, env, command, job_id) do
     cmd_args = container_run_cmd_args(repository, tag, opts, env) ++ command
     cmd_into = %Reporter.Log{job_id: job_id}
@@ -207,7 +207,7 @@ defmodule MBS.Docker do
 
     case System.cmd("docker", cmd_args, env: env, stderr_to_stdout: true, into: cmd_into) do
       {_, 0} -> :ok
-      {res, exit_status} -> {:error, {res, exit_status}}
+      {_, exit_status} -> {:error, exit_status}
     end
   end
 

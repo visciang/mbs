@@ -31,7 +31,7 @@ defmodule MBS.Workflow.Job.RunBuild do
             {true, Reporter.Status.uptodate(), checksum}
 
           {:error, reason} ->
-            {false, Reporter.Status.error(reason), nil}
+            {false, Reporter.Status.error(reason, nil), nil}
         end
 
       end_time = Reporter.time()
@@ -120,7 +120,7 @@ defmodule MBS.Workflow.Job.RunBuild do
         {true, Reporter.Status.uptodate(), checksum}
 
       {:error, reason} ->
-        {false, Reporter.Status.error(reason), nil}
+        {false, Reporter.Status.error(reason, nil), nil}
     end
   end
 end

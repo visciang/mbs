@@ -16,7 +16,8 @@ defmodule MBS.CLI.Reporter do
   defmodule State do
     @moduledoc false
 
-    defstruct [:logs_to_file, :logs_dir, :job_id_to_log_file, :start_time, :success_jobs, :failed_jobs]
+    @enforce_keys [:logs_to_file, :logs_dir, :job_id_to_log_file, :start_time, :success_jobs, :failed_jobs]
+    defstruct @enforce_keys
 
     @type t :: %__MODULE__{
             logs_to_file: boolean(),
@@ -179,7 +180,7 @@ defmodule MBS.CLI.Reporter do
   @spec track_jobs(String.t(), Status.t(), State.t()) :: State.t()
   defp track_jobs(job_id, status, %State{} = state) do
     case status do
-      Status.error(_reason) -> update_in(state.failed_jobs, &[job_id | &1])
+      Status.error(_reason, _stacktrace) -> update_in(state.failed_jobs, &[job_id | &1])
       Status.ok() -> update_in(state.success_jobs, &[job_id | &1])
       Status.uptodate() -> update_in(state.success_jobs, &[job_id | &1])
       _ -> state
@@ -197,12 +198,19 @@ defmodule MBS.CLI.Reporter do
       Status.ok() ->
         {IO.ANSI.format([:green, "✔"]), nil}
 
-      Status.error(reason) ->
+      Status.error(reason, stacktrace) ->
         reason_str =
           if is_binary(reason) do
             reason
           else
             inspect(reason)
+          end
+
+        reason_str =
+          if stacktrace != nil do
+            [reason_str, "\n", stacktrace]
+          else
+            reason_str
           end
 
         {IO.ANSI.format([:red, "✘"]), reason_str}

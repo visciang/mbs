@@ -1,7 +1,7 @@
 defmodule MBS.CLI.Reporter.Status do
   @moduledoc false
 
-  @type t :: :ok | :uptodate | :outdated | :timeout | :log | {:error, term()}
+  @type t :: :ok | :uptodate | :outdated | :timeout | :log | {:error, term(), nil | String.t()}
 
   defmacro ok, do: :ok
   defmacro uptodate, do: :uptodate
@@ -9,9 +9,9 @@ defmodule MBS.CLI.Reporter.Status do
   defmacro timeout, do: :timeout
   defmacro log, do: :log
 
-  defmacro error(reason) do
+  defmacro error(reason, stacktrace) do
     quote do
-      {:error, unquote(reason)}
+      {:error, unquote(reason), unquote(stacktrace)}
     end
   end
 end

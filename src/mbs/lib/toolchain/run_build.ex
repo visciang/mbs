@@ -32,7 +32,7 @@ defmodule MBS.Toolchain.RunBuild do
     end
   end
 
-  @spec down(BuildDeploy.Component.t()) :: :ok | {:error, {term(), pos_integer()}}
+  @spec down(BuildDeploy.Component.t()) :: :ok | {:error, pos_integer()}
   def down(%BuildDeploy.Component{id: id} = component) do
     exec_services(:down, component, [])
     Docker.container_stop(id, id)

@@ -39,7 +39,7 @@ defmodule MBS.Workflow.Job.DestroyDeploy do
           Reporter.Status.ok()
         else
           {:error, reason} ->
-            Reporter.Status.error(reason)
+            Reporter.Status.error(reason, nil)
         end
 
       end_time = Reporter.time()

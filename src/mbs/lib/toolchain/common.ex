@@ -68,9 +68,9 @@ defmodule MBS.Toolchain.Common do
           Reporter.job_report(reporter_id, Reporter.Status.ok(), nil, Reporter.time() - start_time)
           {:cont, :ok}
 
-        {:error, {cmd_result, cmd_exit_status}} ->
-          Reporter.job_report(reporter_id, Reporter.Status.error(""), nil, Reporter.time() - start_time)
-          {:halt, {:error, "exec error: exit status #{inspect(cmd_exit_status)}\n\n#{inspect(cmd_result)}"}}
+        {:error, cmd_exit_status} ->
+          Reporter.job_report(reporter_id, Reporter.Status.error("", nil), nil, Reporter.time() - start_time)
+          {:halt, {:error, "exec error: exit status #{inspect(cmd_exit_status)}"}}
       end
     end)
   end

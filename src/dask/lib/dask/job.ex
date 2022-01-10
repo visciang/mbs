@@ -3,7 +3,8 @@ defmodule Dask.Job do
 
   @type id :: term()
   @type result() :: term()
-  @type job_exec_result :: {:job_ok, result()} | {:job_error, result()} | :job_skipped | :job_timeout
+  @type stacktrace :: nil | String.t()
+  @type job_exec_result :: {:job_ok, result()} | {:job_error, result(), stacktrace()} | :job_skipped | :job_timeout
   @type upstream_results :: %{id() => result()}
   @type fun :: (id(), upstream_results() -> result())
   @type on_exit :: (id(), upstream_results(), job_exec_result(), non_neg_integer() -> :ok)

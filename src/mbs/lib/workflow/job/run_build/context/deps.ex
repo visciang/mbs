@@ -3,6 +3,7 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Deps do
 
   alias MBS.{Const, Docker}
   alias MBS.Manifest.{BuildDeploy, Dependency}
+  alias MBS.Workflow.Job
 
   @type changed_deps :: [{Path.t(), Dependency.Type.t()}]
 
@@ -17,7 +18,7 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Deps do
   end
 
   @spec mark_changed(changed_deps(), boolean()) :: :ok
-  def mark_changed(_changed_deps, true) do
+  def mark_changed(_changed_deps, true = _sandboxed) do
     # in sandbox mode we run in an hermetic context, we don't persist any
     # context file during execution (in this case external downloaded dependencies).
     # So there's no need to mark the dependencies that have been changed to optimize
@@ -26,7 +27,7 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Deps do
     :ok
   end
 
-  def mark_changed(changed_deps, false) do
+  def mark_changed(changed_deps, false = _sandboxed) do
     Enum.each(changed_deps, fn {path, type} ->
       Dependency.write(path, type)
     end)
@@ -41,16 +42,21 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Deps do
 
     res_deps_changed =
       dependencies
-      |> Enum.flat_map(fn %BuildDeploy.Component{id: dep_id, type: %BuildDeploy.Component.Build{targets: targets}} ->
-        Enum.map(targets, &{dep_id, &1})
+      |> Enum.flat_map(fn
+        %BuildDeploy.Component{
+          id: dep_id,
+          checksum: dep_checksum,
+          type: %BuildDeploy.Component.Build{targets: targets}
+        } ->
+          Enum.map(targets, &{dep_id, dep_checksum, &1})
       end)
-      |> Enum.filter(&match?({_dep_id, %BuildDeploy.Component.Target{type: :file}}, &1))
-      |> Enum.reduce([], fn {dep_id, %BuildDeploy.Component.Target{target: target_cache_path}}, acc ->
-        target_checksum = target_cache_path |> Path.dirname() |> Path.basename()
+      |> Enum.filter(&match?({_dep_id, _dep_checksum, %BuildDeploy.Component.Target{type: :file}}, &1))
+      |> Enum.reduce([], fn {dep_id, dep_checksum, %BuildDeploy.Component.Target{} = dep_target}, acc ->
+        dep_target_cache_path = Job.Cache.target_cache_path(dep_id, dep_checksum, dep_target)
         dependency_manifest_path = Path.join([local_deps_dir, dep_id, Const.manifest_dependency_filename()])
 
-        if force or dependency_changed?(dependency_manifest_path, target_checksum) do
-          dependency = %Dependency.Type{id: dep_id, checksum: target_checksum, cache_path: target_cache_path}
+        if force or dependency_changed?(dependency_manifest_path, dep_checksum) do
+          dependency = %Dependency.Type{id: dep_id, checksum: dep_checksum, cache_path: dep_target_cache_path}
           [{dependency_manifest_path, dependency} | acc]
         else
           acc
