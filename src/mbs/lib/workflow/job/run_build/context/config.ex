@@ -4,7 +4,7 @@ defmodule MBS.Workflow.Job.RunBuild.Context.Config do
   alias MBS.{Const, Docker, Utils}
   alias MBS.Manifest.BuildDeploy
 
-  @spec put(BuildDeploy.Component.t(), boolean()) :: :ok
+  @spec put(BuildDeploy.Component.t(), boolean()) :: :ok | {:error, term()}
   def put(%BuildDeploy.Component{}, false), do: :ok
 
   def put(%BuildDeploy.Component{id: id, project_dir: project_dir}, true) do
