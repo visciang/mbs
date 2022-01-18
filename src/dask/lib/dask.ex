@@ -27,11 +27,13 @@ defmodule Dask do
 
   @spec job(Dask.t(), Job.id(), Job.fun(), timeout(), Job.on_exit()) :: Dask.t()
   def job(%Dask{} = workflow, job_id, job_fun, job_timeout \\ :infinity, on_exit \\ fn _, _, _, _ -> :ok end) do
-    j = %Job{id: job_id, fun: job_fun, timeout: job_timeout, downstream_jobs: MapSet.new(), on_exit: on_exit}
-    put_in(workflow.jobs[job_id], j)
+    job = %Job{id: job_id, fun: job_fun, timeout: job_timeout, downstream_jobs: MapSet.new(), on_exit: on_exit}
+    put_in(workflow.jobs[job_id], job)
   end
 
-  @spec flow(Dask.t(), Job.id() | [Job.id()], Job.id() | [Job.id()]) :: Dask.t()
+  @spec flow(Dask.t(), Job.id(), Job.id()) :: Dask.t()
+  @spec flow(Dask.t(), Job.id(), [Job.id()]) :: Dask.t()
+  @spec flow(Dask.t(), [Job.id()], Job.id()) :: Dask.t()
   def flow(%Dask{} = workflow, job_up, jobs_down) when is_list(jobs_down) do
     Enum.reduce(jobs_down, workflow, &flow(&2, job_up, &1))
   end
@@ -53,7 +55,9 @@ defmodule Dask do
     put_in(workflow.jobs[job_up].downstream_jobs, downstream_jobs)
   end
 
-  @spec depends_on(Dask.t(), Job.id() | [Job.id()], Job.id() | [Job.id()]) :: Dask.t()
+  @spec depends_on(Dask.t(), Job.id(), [Job.id()]) :: Dask.t()
+  @spec depends_on(Dask.t(), [Job.id()], Job.id()) :: Dask.t()
+  @spec depends_on(Dask.t(), Job.id(), Job.id()) :: Dask.t()
   def depends_on(%Dask{} = workflow, job, depends_on_job) do
     flow(workflow, depends_on_job, job)
   end

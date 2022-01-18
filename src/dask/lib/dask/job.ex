@@ -1,7 +1,7 @@
 defmodule Dask.Job do
   @moduledoc false
 
-  @type id :: term()
+  @type id :: atom() | String.t()
   @type result() :: term()
   @type stacktrace :: nil | String.t()
   @type job_exec_result :: {:job_ok, result()} | {:job_error, result(), stacktrace()} | :job_skipped | :job_timeout
