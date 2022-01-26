@@ -1,4 +1,4 @@
-FROM elixir:1.13.1-alpine AS builder
+FROM elixir:1.13.2-alpine AS builder
 ENV MIX_ENV prod
 RUN apk add --no-cache git
 RUN mix local.rebar --force
@@ -14,7 +14,7 @@ WORKDIR /mbs
 RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
-FROM elixir:1.13.1-alpine
+FROM elixir:1.13.2-alpine
 # REF: https://github.com/docker-library/docker/blob/279ba9c93e8e26a15171645bd511ea8476c4706e/20.10/Dockerfile
 RUN [ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf
 RUN wget -q -O - "https://download.docker.com/linux/static/stable/x86_64/docker-20.10.12.tgz" \
