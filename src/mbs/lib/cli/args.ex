@@ -30,7 +30,7 @@ defmodule MBS.CLI.Args do
 
     Usage:  mbs --help | (build | deploy) [SUBCOMMAND] | version")
 
-    A Meta Build System
+    A Monorepo Build System
 
     Commands:
 

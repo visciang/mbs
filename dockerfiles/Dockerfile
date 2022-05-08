@@ -1,4 +1,4 @@
-FROM elixir:1.13.3-alpine AS builder
+FROM elixir:1.13.4-alpine AS builder
 ENV MIX_ENV prod
 RUN apk add --no-cache git
 RUN mix local.rebar --force
@@ -14,14 +14,14 @@ WORKDIR /mbs
 RUN mix compile --warnings-as-errors
 RUN mix escript.build
 
-FROM elixir:1.13.3-alpine
+FROM elixir:1.13.4-alpine
 # REF: https://github.com/docker-library/docker/blob/279ba9c93e8e26a15171645bd511ea8476c4706e/20.10/Dockerfile
 RUN [ ! -e /etc/nsswitch.conf ] && echo 'hosts: files dns' > /etc/nsswitch.conf
-RUN wget -q -O - "https://download.docker.com/linux/static/stable/x86_64/docker-20.10.14.tgz" \
+RUN wget -q -O - "https://download.docker.com/linux/static/stable/x86_64/docker-20.10.15.tgz" \
     | tar -xzf - --strip-components 1 --directory /usr/local/bin/
 RUN mkdir -p /usr/local/lib/docker/cli-plugins/ \
     && wget -q -O /usr/local/lib/docker/cli-plugins/docker-compose \
-       "https://github.com/docker/compose/releases/download/v2.3.4/docker-compose-linux-x86_64" \
+       "https://github.com/docker/compose/releases/download/v2.5.0/docker-compose-linux-x86_64" \
     && chmod +x /usr/local/lib/docker/cli-plugins/docker-compose
 RUN apk add --no-cache graphviz git jq gettext
 COPY dockerfiles/entrypoint.sh /entrypoint.sh

@@ -1,8 +1,8 @@
-# MBS - a Meta Build System
+# MBS - a Monorepo Build System
 
 *DISCLAIMER: this is a personal POC, it's not used in any product, it's not supported or sponsored by any company. Feel free to play with it and if interested keep in touch.*
 
-A fully dockerized **Meta Build System** to build, release and deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
+A fully dockerized **Monorepo Build System** to build, release and deploy a large service oriented mono-repository with focus on **consistency**, **reproducibility** and **extensibility**.
 
 **Containerization** is used both to run `mbs` and to define your own standardized toolchains to build and deploy your software components.
 
@@ -12,7 +12,7 @@ With MBS you can define the toolchains to build and deploy the different type of
 
 This will give you **parallelized** fast builds for free that can consistenly run on your dev machine (exactly like your CI runner) without any need for specific software installed, but only docker and your mono-repo.
 
-The user experience we aim to is a (meta) build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a service oriented solution.
+The user experience we aim to is a build system that let you properly work in a mono-repo that you feel like a modular monolith, but is built and deployed like a service oriented solution.
 
 To summarize:
 - build / release / deploy support
